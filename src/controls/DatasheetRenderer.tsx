@@ -55,7 +55,7 @@ export default function DatasheetRenderer({
 
   // Derive table/query from record source
   const table = useMemo(() => {
-    const rs = rsOverride || (definition as Record<string, unknown>)?.["record-source"];
+    const rs = rsOverride || (definition as Record<string, unknown>)?.["record-source"] as string || (definition as Record<string, unknown>)?.["recordSource"] as string;
     if (!rs || typeof rs !== "string") return undefined;
     const rsTrimmed = rs.trim();
     const fromMatch = rsTrimmed.match(/FROM\s+"?(\w+)"?\b/i);

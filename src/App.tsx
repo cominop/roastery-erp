@@ -1,8 +1,10 @@
-// App shell — categorized sidebar: Tables · Forms · Reports
+// App shell — sidebar with Settings panel
 import { useState, useEffect, useCallback } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Menu,
   ChevronDown,
@@ -10,6 +12,12 @@ import {
   Table2,
   Layout,
   FileText,
+  Settings,
+  X,
+  Paintbrush,
+  Type,
+  Square,
+  PanelTop,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
@@ -34,6 +42,71 @@ type ActiveView =
   | { type: "form"; name: string }
   | { type: "report"; name: string }
   | null;
+
+// ─── Appearance Settings ───────────────────────────────
+
+interface AppearanceSettings {
+  fieldFontSize: string;
+  fieldFontColor: string;
+  fieldFontFamily: string;
+  fieldBackgroundColor: string;
+  labelFontSize: string;
+  labelFontColor: string;
+  labelFontFamily: string;
+  formBackgroundColor: string;
+  formResizable: boolean;
+  formHeaderBackgroundColor: string;
+  formHeaderFontColor: string;
+  formHeaderResizable: boolean;
+  formFooterBackgroundColor: string;
+  formFooterFontColor: string;
+  formFooterResizable: boolean;
+}
+
+const DEFAULT_APPEARANCE: AppearanceSettings = {
+  fieldFontSize: "11px",
+  fieldFontColor: "#1F2937",
+  fieldFontFamily: "Geist Variable, sans-serif",
+  fieldBackgroundColor: "#FFFFFF",
+  labelFontSize: "10px",
+  labelFontColor: "#374151",
+  labelFontFamily: "Geist Variable, sans-serif",
+  formBackgroundColor: "#FFFFFF",
+  formResizable: true,
+  formHeaderBackgroundColor: "#F3F4F6",
+  formHeaderFontColor: "#6B7280",
+  formHeaderResizable: true,
+  formFooterBackgroundColor: "#F3F4F6",
+  formFooterFontColor: "#6B7280",
+  formFooterResizable: true,
+};
+
+const FONT_SIZES = ["9px", "10px", "11px", "12px", "13px", "14px"];
+const FONT_FAMILIES = ["Geist Variable, sans-serif", "Arial, sans-serif", "Helvetica, sans-serif", "System-ui, sans-serif", "monospace"];
+
+// ─── Color swatch picker ───────────────────────────────
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Label className="text-xs text-muted-foreground w-20 shrink-0">{label}</Label>
+      <div className="relative">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 w-8 h-8 opacity-0 cursor-pointer"
+        />
+        <div className="w-8 h-8 rounded border border-border" style={{ backgroundColor: value }} />
+      </div>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-24 text-[10px] font-mono"
+      />
+    </div>
+  );
+}
 
 // ─── Collapsible section ──────────────────────────────
 
@@ -72,7 +145,7 @@ function NavSection({
         </span>
       </button>
       {open && (
-        <div key={`${title}-items`} className="pb-0.5">
+        <div className="pb-0.5">
           {items.map((item) => {
             const isActive =
               active?.name === item.name &&
@@ -101,7 +174,40 @@ function NavSection({
   );
 }
 
-// ─── Table Data Browser (simple) ──────────────────────
+// ─── Settings Panel ────────────────────────────────────
+
+function SettingRow({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        {label}
+      </div>
+      <div className="pl-5 space-y-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Label className="text-xs text-muted-foreground w-20 shrink-0">{label}</Label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 text-xs border rounded px-2 bg-background flex-1"
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ─── Table Data Browser ──────────────────────────────
 
 function TableBrowser({ table }: { table: string }) {
   const [data, setData] = useState<{ rows: Record<string, unknown>[]; total: number } | null>(null);
@@ -166,6 +272,9 @@ export default function App() {
   const [nav, setNav] = useState<NavData>({ tables: [], forms: [], reports: [] });
   const [active, setActive] = useState<ActiveView>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appearance, setAppearance] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
+  const [draft, setDraft] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const win = useFormWindowManager();
 
   useEffect(() => {
@@ -175,21 +284,90 @@ export default function App() {
       .catch(() => setNav({ tables: [], forms: [], reports: [] }));
   }, []);
 
-  // When a nav item is clicked, open forms in windows and tables/reports inline
+  // Load saved appearance settings
+  useEffect(() => {
+    fetch("/api/settings/appearance")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Object.keys(data).length > 0) {
+          const merged = { ...DEFAULT_APPEARANCE, ...data };
+          setAppearance(merged);
+          setDraft(merged);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Apply appearance as CSS custom properties
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--app-field-font-size", appearance.fieldFontSize);
+    root.style.setProperty("--app-field-font-color", appearance.fieldFontColor);
+    root.style.setProperty("--app-field-font-family", appearance.fieldFontFamily);
+    root.style.setProperty("--app-field-bg-color", appearance.fieldBackgroundColor);
+    root.style.setProperty("--app-label-font-size", appearance.labelFontSize);
+    root.style.setProperty("--app-label-font-color", appearance.labelFontColor);
+    root.style.setProperty("--app-label-font-family", appearance.labelFontFamily);
+    root.style.setProperty("--app-form-bg-color", appearance.formBackgroundColor);
+    root.style.setProperty("--app-form-header-bg", appearance.formHeaderBackgroundColor);
+    root.style.setProperty("--app-form-header-color", appearance.formHeaderFontColor);
+    root.style.setProperty("--app-form-header-resizable", appearance.formHeaderResizable ? "true" : "false");
+    root.style.setProperty("--app-form-footer-bg", appearance.formFooterBackgroundColor);
+    root.style.setProperty("--app-form-footer-color", appearance.formFooterFontColor);
+    root.style.setProperty("--app-form-footer-resizable", appearance.formFooterResizable ? "true" : "false");
+  }, [appearance]);
+
   const handleSelect = useCallback(
     (v: ActiveView) => {
       setActive(v);
       if (v?.type === "form") {
-        win.openWindow(v.name);
+        // Load saved window size from API and open with it
+        fetch(`/api/settings/form-size/${encodeURIComponent(v.name)}`)
+          .then((r) => r.json())
+          .then((data) => {
+            const savedSize = data.windowWidth && data.windowHeight
+              ? { width: data.windowWidth, height: data.windowHeight }
+              : undefined;
+            win.openWindow(v.name, savedSize);
+          })
+          .catch(() => win.openWindow(v.name));
       }
     },
     [win]
   );
 
+  const openSettings = useCallback(() => {
+    setDraft({ ...appearance });
+    setSettingsOpen(true);
+  }, [appearance]);
+
+  const saveSettings = useCallback(async () => {
+    setAppearance({ ...draft });
+    try {
+      await fetch("/api/settings/appearance", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+    } catch {}
+    setSettingsOpen(false);
+  }, [draft]);
+
+  const cancelSettings = useCallback(() => {
+    setSettingsOpen(false);
+  }, []);
+
+  const resetSettings = useCallback(() => {
+    setDraft({ ...DEFAULT_APPEARANCE });
+  }, []);
+
   const sidebar = (
     <div className="flex flex-col h-full">
-      <div className="p-3 font-semibold text-sm border-b">☕ Roastery ERP</div>
-      <nav className="flex-1 overflow-auto py-1">
+      {/* Fixed header */}
+      <div className="p-3 font-semibold text-sm border-b shrink-0">☕ Roastery ERP</div>
+
+      {/* Scrollable nav */}
+      <nav className="min-h-0 flex-1 overflow-y-auto py-1">
         <NavSection
           key="tables"
           title="Tables"
@@ -218,9 +396,25 @@ export default function App() {
           onSelect={handleSelect}
         />
       </nav>
+
+      {/* Fixed footer */}
       <Separator />
-      <div className="p-2 text-[10px] text-muted-foreground">
-        Francesco's Coffee Co.
+      <div className="shrink-0 border-t bg-muted/10">
+        <button
+          onClick={openSettings}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+            settingsOpen
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <Settings className="h-4 w-4" />
+          <span>Settings</span>
+        </button>
+        <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t">
+          Francesco's Coffee Co.
+        </div>
       </div>
     </div>
   );
@@ -241,6 +435,123 @@ export default function App() {
         </SheetTrigger>
         <SheetContent side="left" className="w-56 p-0">
           {sidebar}
+        </SheetContent>
+      </Sheet>
+
+      {/* Settings panel */}
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent side="right" className="w-[480px] max-w-[100vw] p-0 flex flex-col">
+          <SheetTitle className="sr-only">Settings</SheetTitle>
+          <SheetDescription className="sr-only">Appearance settings for Roastery ERP</SheetDescription>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Settings className="h-4 w-4" />
+              Settings
+            </div>
+            <button onClick={cancelSettings} className="p-1 rounded hover:bg-muted">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+            <p className="text-[10px] text-muted-foreground">
+              These appearance settings apply to all forms and users.
+            </p>
+
+            {/* Fields */}
+            <SettingRow icon={Type} label="Fields">
+              <SelectField label="Font Size" value={draft.fieldFontSize} options={FONT_SIZES} onChange={(v) => setDraft({ ...draft, fieldFontSize: v })} />
+              <ColorField label="Font Color" value={draft.fieldFontColor} onChange={(v) => setDraft({ ...draft, fieldFontColor: v })} />
+              <SelectField label="Font Family" value={draft.fieldFontFamily} options={FONT_FAMILIES} onChange={(v) => setDraft({ ...draft, fieldFontFamily: v })} />
+              <ColorField label="BG Color" value={draft.fieldBackgroundColor} onChange={(v) => setDraft({ ...draft, fieldBackgroundColor: v })} />
+            </SettingRow>
+
+            <Separator />
+
+            {/* Labels */}
+            <SettingRow icon={Paintbrush} label="Labels">
+              <SelectField label="Font Size" value={draft.labelFontSize} options={FONT_SIZES} onChange={(v) => setDraft({ ...draft, labelFontSize: v })} />
+              <ColorField label="Font Color" value={draft.labelFontColor} onChange={(v) => setDraft({ ...draft, labelFontColor: v })} />
+              <SelectField label="Font Family" value={draft.labelFontFamily} options={FONT_FAMILIES} onChange={(v) => setDraft({ ...draft, labelFontFamily: v })} />
+            </SettingRow>
+
+            <Separator />
+
+            {/* Form */}
+            <SettingRow icon={Square} label="Form">
+              <ColorField label="BG Color" value={draft.formBackgroundColor} onChange={(v) => setDraft({ ...draft, formBackgroundColor: v })} />
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground w-20 shrink-0">Resizable</Label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={draft.formResizable}
+                    onChange={(e) => setDraft({ ...draft, formResizable: e.target.checked })}
+                    className="toggle"
+                  />
+                  {draft.formResizable ? "On" : "Off"}
+                </label>
+              </div>
+            </SettingRow>
+
+            <Separator />
+
+            {/* Form Header */}
+            <SettingRow icon={PanelTop} label="Form Header">
+              <ColorField label="BG Color" value={draft.formHeaderBackgroundColor} onChange={(v) => setDraft({ ...draft, formHeaderBackgroundColor: v })} />
+              <ColorField label="Font Color" value={draft.formHeaderFontColor} onChange={(v) => setDraft({ ...draft, formHeaderFontColor: v })} />
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground w-20 shrink-0">Resizable</Label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={draft.formHeaderResizable}
+                    onChange={(e) => setDraft({ ...draft, formHeaderResizable: e.target.checked })}
+                    className="toggle"
+                  />
+                  {draft.formHeaderResizable ? "On" : "Off"}
+                </label>
+              </div>
+            </SettingRow>
+
+            <Separator />
+
+            {/* Form Footer */}
+            <SettingRow icon={PanelTop} label="Form Footer">
+              <ColorField label="BG Color" value={draft.formFooterBackgroundColor} onChange={(v) => setDraft({ ...draft, formFooterBackgroundColor: v })} />
+              <ColorField label="Font Color" value={draft.formFooterFontColor} onChange={(v) => setDraft({ ...draft, formFooterFontColor: v })} />
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground w-20 shrink-0">Resizable</Label>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={draft.formFooterResizable}
+                    onChange={(e) => setDraft({ ...draft, formFooterResizable: e.target.checked })}
+                    className="toggle"
+                  />
+                  {draft.formFooterResizable ? "On" : "Off"}
+                </label>
+              </div>
+            </SettingRow>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between px-4 py-3 border-t shrink-0 gap-2">
+            <Button variant="outline" size="sm" onClick={resetSettings}>
+              Reset
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={cancelSettings}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={saveSettings}>
+                Save
+              </Button>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -269,7 +580,21 @@ export default function App() {
                 onFocus={win.bringToFront}
                 onStateChange={win.updateState}
                 onPositionChange={win.updatePosition}
-                onSizeChange={win.updateSize}
+                onSizeChange={(id, size) => {
+                  win.updateSize(id, size);
+                  // Persist window size — merge with existing saved data
+                  fetch(`/api/settings/form-size/${encodeURIComponent(id)}`)
+                    .then((r) => r.json())
+                    .then((existing) => {
+                      const merged = { ...existing, windowWidth: size.width, windowHeight: size.height };
+                      fetch(`/api/settings/form-size/${encodeURIComponent(id)}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(merged),
+                      });
+                    })
+                    .catch(() => {});
+                }}
               >
                 <ErrorBoundary>
                   <FormRenderer formName={w.id} />

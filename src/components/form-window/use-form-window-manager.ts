@@ -19,7 +19,7 @@ export function useFormWindowManager() {
   }, []);
 
   const openWindow = useCallback(
-    (id: string) => {
+    (id: string, savedSize?: { width: number; height: number }) => {
       const existing = windows.find((w) => w.id === id);
       if (existing) {
         // Bring to front
@@ -27,13 +27,14 @@ export function useFormWindowManager() {
         return existing;
       }
       const cascade = nextCascade();
+      const size = savedSize ?? DEFAULT_SIZE;
       const newWindow: FormWindowLayout = {
         id,
         state: "normal",
         position: cascade,
-        size: { ...DEFAULT_SIZE },
+        size: { ...size },
         normalPosition: { ...cascade },
-        normalSize: { ...DEFAULT_SIZE },
+        normalSize: { ...size },
         zIndex: nextZIndex++,
       };
       setWindows((prev) => [...prev, newWindow]);

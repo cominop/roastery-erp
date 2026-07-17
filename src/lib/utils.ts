@@ -186,7 +186,9 @@ export function stripAccessHotkey(s: string): string {
 // ─── Display text ─────────────────────────────────────
 
 export function displayText(ctrl: Control): string {
-  return (ctrl.text as string) || ctrl.caption || "";
+  const raw = (ctrl.text as string) || ctrl.caption || "";
+  // Decode Access octal escape sequences: \015 = CR, \012 = LF
+  return raw.replace(/\\015\\012/g, "\n").replace(/\\015/g, "\n").replace(/\\012/g, "\n");
 }
 
 // ─── Section helpers ──────────────────────────────────

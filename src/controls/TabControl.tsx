@@ -17,12 +17,7 @@ interface Props {
   currentRecord: Record<string, unknown>;
   onChange: (field: string, value: unknown) => void;
   allowEdits: boolean;
-  renderControl: (
-    ctrl: Control,
-    record: Record<string, unknown>,
-    onChange: (f: string, v: unknown) => void,
-    opts: Record<string, unknown>
-  ) => React.ReactNode;
+  renderControl: (ctrl: Control, idx: number) => React.ReactNode;
   onActiveTabChange?: (tabName: string) => void;
 }
 
@@ -118,12 +113,9 @@ export default function TabControl({
 
       {/* Active page body — only this page's controls render */}
       <div className="relative flex-1">
-        {activeChildControls.map((c) => (
+        {activeChildControls.map((c, i) => (
           <div key={c.name}>
-            {renderControl(c, currentRecord, onChange, {
-              allowEdits,
-              allControls,
-            })}
+            {renderControl(c, i)}
           </div>
         ))}
       </div>

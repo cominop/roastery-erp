@@ -354,6 +354,86 @@ app.get("/api/schema/:table", async (req, res) => {
   }
 });
 
+// ─── Settings ──────────────────────────────────────────
+
+// GET /api/settings/appearance — load saved appearance settings
+app.get("/api/settings/appearance", async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT definition FROM shared.objects WHERE type = 'appearance' LIMIT 1`
+    );
+    if (rows.length === 0) return res.json({});
+    res.json(rows[0].definition);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/settings/appearance — save appearance settings
+app.put("/api/settings/appearance", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM shared.objects WHERE type = 'appearance' LIMIT 1`
+    );
+    if (rows.length === 0) {
+      await pool.query(
+        `INSERT INTO shared.objects (type, name, definition, database_id, version, is_current, hidden)
+         VALUES ('appearance', 'appearance', $1, 'fcc_erp', 1, true, false)`,
+        [JSON.stringify(req.body)]
+      );
+    } else {
+      await pool.query(
+        `UPDATE shared.objects SET definition = $1 WHERE id = $2`,
+        [JSON.stringify(req.body), rows[0].id]
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Form Size Persistence ───────────────────────────
+
+// GET /api/settings/form-size/:name
+app.get("/api/settings/form-size/:name", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT definition FROM shared.objects WHERE type = 'form-size' AND name = $1 LIMIT 1`,
+      [req.params.name]
+    );
+    if (rows.length === 0) return res.json({});
+    res.json(rows[0].definition);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/settings/form-size/:name
+app.put("/api/settings/form-size/:name", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM shared.objects WHERE type = 'form-size' AND name = $1 LIMIT 1`,
+      [req.params.name]
+    );
+    if (rows.length === 0) {
+      await pool.query(
+        `INSERT INTO shared.objects (type, name, definition, database_id, version, is_current, hidden)
+         VALUES ('form-size', $1, $2, 'fcc_erp', 1, true, false)`,
+        [req.params.name, JSON.stringify(req.body)]
+      );
+    } else {
+      await pool.query(
+        `UPDATE shared.objects SET definition = $1 WHERE id = $2`,
+        [JSON.stringify(req.body), rows[0].id]
+      );
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {

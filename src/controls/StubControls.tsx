@@ -42,7 +42,16 @@ export function ListBoxControl({
 // ─── OptionGroup ──────────────────────────────────────
 
 export function OptionGroupControl({ ctrl }: { ctrl: Control }) {
-  return <div className="p-1 text-xs text-muted-foreground">(Option Group)</div>;
+  const caption = ctrl.caption || "";
+  return (
+    <fieldset className="w-full h-full border border-border rounded p-1 overflow-hidden">
+      {caption && (
+        <legend className="text-[10px] font-semibold px-1 text-muted-foreground">
+          {caption}
+        </legend>
+      )}
+    </fieldset>
+  );
 }
 
 // ─── Rectangle ────────────────────────────────────────
