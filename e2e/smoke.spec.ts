@@ -113,3 +113,23 @@ test.describe("Event Dispatch", () => {
     expect(result.chain.length).toBe(2);
   });
 });
+
+// ─── Event Handler Editor UI ─────────────────────────
+
+test.describe("Event Handler Editor", () => {
+  test("sidebar has Event Handlers button", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1500);
+    const editorBtn = page.getByRole("button", { name: "Event Handlers" });
+    await expect(editorBtn).toBeVisible();
+  });
+
+  test("clicking Event Handlers shows the editor page", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1500);
+    await page.getByRole("button", { name: "Event Handlers" }).click();
+    await page.waitForTimeout(1000);
+    // Should see the editor header
+    await expect(page.locator("text=Event Handlers").first()).toBeVisible();
+  });
+});

@@ -93,3 +93,65 @@ export function runLookup(sql: string) {
 export function getTableSchema(table: string) {
   return request<{ name: string; type: string; nullable: boolean }[]>(`/schema/${table}`);
 }
+
+// ─── Event handlers ───────────────────────────────────
+
+export interface EventHandler {
+  id: string;
+  level: string;
+  scope: string;
+  event_name: string;
+  handler: string;
+  vba_module: string | null;
+  vba_control: string | null;
+  language: string;
+  enabled: boolean;
+  sort_order: number | null;
+  description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export function getGroups() {
+  return request<Record<string, string[]>>(`/events/groups`);
+}
+
+export function getEventHandlers(scope?: string) {
+  const qs = scope ? `?scope=${encodeURIComponent(scope)}` : "";
+  return request<EventHandler[]>(`/events${qs}`);
+}
+
+export function createEventHandler(data: {
+  level: string;
+  scope: string;
+  event_name: string;
+  handler: string;
+  language?: string;
+  description?: string;
+}) {
+  return request<EventHandler>(`/events`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateEventHandler(
+  id: string,
+  data: Partial<{
+    level: string;
+    scope: string;
+    event_name: string;
+    handler: string;
+    enabled: boolean;
+    description: string;
+  }>
+) {
+  return request<EventHandler>(`/events/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteEventHandler(id: string) {
+  return request<{ ok: boolean }>(`/events/${id}`, { method: "DELETE" });
+}

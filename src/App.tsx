@@ -18,6 +18,7 @@ import {
   Type,
   Square,
   PanelTop,
+  Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
@@ -26,6 +27,7 @@ import { EventProvider } from "@/events/EventProvider";
 import FormWorkspace from "@/components/form-window/form-workspace";
 import FormWindow from "@/components/form-window/form-window";
 import { useFormWindowManager } from "@/components/form-window/use-form-window-manager";
+import EventHandlerEditorPage from "@/components/EventHandlerEditorPage";
 
 interface NavItem {
   name: string;
@@ -42,6 +44,7 @@ type ActiveView =
   | { type: "table"; name: string }
   | { type: "form"; name: string }
   | { type: "report"; name: string }
+  | { type: "events" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -151,8 +154,10 @@ function NavSection({
         <div className="pb-0.5">
           {items.map((item) => {
             const isActive =
-              active?.name === item.name &&
-              active?.type === title.toLowerCase().slice(0, -1);
+              active != null && active.type !== "events"
+                ? active.name === item.name &&
+                  active.type === title.toLowerCase().slice(0, -1)
+                : false;
             return (
               <button
                 key={item.name}
@@ -345,6 +350,10 @@ export default function App() {
     setSettingsOpen(true);
   }, [appearance]);
 
+  const goToEvents = useCallback(() => {
+    setActive({ type: "events" });
+  }, []);
+
   const saveSettings = useCallback(async () => {
     setAppearance({ ...draft });
     try {
@@ -404,6 +413,18 @@ export default function App() {
       {/* Fixed footer */}
       <Separator />
       <div className="shrink-0 border-t bg-muted/10">
+        <button
+          onClick={goToEvents}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+            active?.type === "events"
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <Code className="h-4 w-4" />
+          <span>Event Handlers</span>
+        </button>
         <button
           onClick={openSettings}
           className={cn(
@@ -609,6 +630,9 @@ export default function App() {
               </FormWindow>
             ))}
           </FormWorkspace>
+        )}
+        {active?.type === "events" && (
+          <EventHandlerEditorPage onBack={() => setActive(null)} />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
