@@ -16,7 +16,7 @@ export default function ButtonControl({ ctrl, tabIdx, onClick }: Props) {
     <Button
       variant="outline"
       size="sm"
-      className="h-full w-full text-xs font-normal justify-start rounded-none"
+      className="h-full w-full text-xs font-normal justify-start rounded-[var(--app-field-border-radius,6px)]"
       tabIndex={tabIdx}
       onClick={() => onClick?.(ctrl.name)}
     >

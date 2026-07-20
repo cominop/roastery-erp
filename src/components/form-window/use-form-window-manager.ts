@@ -3,7 +3,7 @@ import type { FormWindowLayout, FormWindowState } from "./form-window-types";
 
 const CASCADE_OFFSET = 24;
 const WORKSPACE_MARGIN = 32;
-const DEFAULT_SIZE = { width: 640, height: 440 };
+const DEFAULT_SIZE = { width: 800, height: 600 };
 
 let nextZIndex = 10;
 

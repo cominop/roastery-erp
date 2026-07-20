@@ -15,7 +15,12 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Convert Access twips to CSS pixels (1 twip = 1/1440 inch, 96 DPI → 15 twips/px) */
 export function twipsToPx(twips: number): number {
-  return twips / 15;
+  return Math.round(twips / 15);
+}
+
+/** Convert Access twips to CSS pixels for height only — slightly larger to prevent clipping */
+export function twipsToPxHeight(twips: number): number {
+  return Math.round(twips / 14);
 }
 
 export function snapToGrid(value: number, ctrlKey: boolean, gridSize = 8): number {
@@ -58,7 +63,7 @@ export function controlStyle(ctrl: Control): React.CSSProperties {
     left: twipsToPx(ctrl.left),
     top: twipsToPx(ctrl.top),
     width: twipsToPx(ctrl.width),
-    height: twipsToPx(ctrl.height),
+    height: twipsToPxHeight(ctrl.height),
   };
 
   // Font

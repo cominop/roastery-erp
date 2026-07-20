@@ -48,15 +48,31 @@ export function useRecordSource(table: string | undefined, filter?: string) {
     isDirty: false,
     isNew: false,
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
   const LIMIT = 1; // Form view — one record at a time
 
+  const composeFilter = useCallback(
+    (baseFilter: string | undefined, search: string): string | undefined => {
+      const parts: string[] = [];
+      if (baseFilter) parts.push(baseFilter);
+      if (search && search.trim()) {
+        // Search across all text fields via cast-to-text ILIKE
+        const safe = search.trim().replace(/'/g, "''");
+        parts.push(`CAST(row_to_json(${table})::text AS text) ILIKE '%${safe}%'`);
+      }
+      return parts.length > 0 ? parts.join("%20AND%20") : undefined;
+    },
+    [table]
+  );
+
   const fetchPage = useCallback(
-    (page: number) => {
+    (page: number, search?: string) => {
       if (!table) return;
       setState((s) => ({ ...s, loading: true, error: null }));
+      const combinedFilter = composeFilter(filter, search ?? searchTerm);
       api
-        .getRecords(table, { page, limit: LIMIT, filter })
+        .getRecords(table, { page, limit: LIMIT, filter: combinedFilter })
         .then((res) => {
           setState((s) => ({
             ...s,
@@ -71,12 +87,24 @@ export function useRecordSource(table: string | undefined, filter?: string) {
         })
         .catch((e) => setState((s) => ({ ...s, loading: false, error: e.message })));
     },
-    [table, filter]
+    [table, filter, composeFilter, searchTerm]
   );
 
   useEffect(() => {
     fetchPage(1);
   }, [fetchPage]);
+
+  const handleSearch = useCallback(
+    (term: string) => {
+      setSearchTerm(term);
+      // Debounce search — let the state settle, then fetch
+      const timer = setTimeout(() => {
+        fetchPage(1, term);
+      }, 300);
+      return () => clearTimeout(timer);
+    },
+    [fetchPage]
+  );
 
   const gotoRecord = useCallback(
     (target: "first" | "last" | "next" | "previous" | "new") => {
@@ -145,7 +173,7 @@ export function useRecordSource(table: string | undefined, filter?: string) {
     }
   }, [table, state.current, state.page, fetchPage]);
 
-  return { ...state, gotoRecord, goToPage, saveRecord, deleteRecord, setField, fetchPage };
+  return { ...state, gotoRecord, goToPage, saveRecord, deleteRecord, setField, fetchPage, handleSearch, searchTerm };
 }
 
 // ─── Lookup Data (combo-box row sources) ──────────────

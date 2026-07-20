@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FormDefinition, Control } from "@/types";
+import { GRID_COLUMN_OVERRIDES } from "@/subforms/subform-metadata-overrides";
 
 interface DatasheetRendererProps {
   formName: string;
@@ -26,6 +27,8 @@ interface DatasheetRendererProps {
   linkMasterFields?: string;
   currentRecord?: Record<string, unknown>;
   onRowClick?: (record: Record<string, unknown>) => void;
+  /** Default values for new child records — auto-populated link fields (spec §13) */
+  newChildDefaults?: Record<string, unknown>;
 }
 
 const PAGE_SIZE = 50;
@@ -39,6 +42,7 @@ export default function DatasheetRenderer({
   linkMasterFields,
   currentRecord,
   onRowClick,
+  newChildDefaults,
 }: DatasheetRendererProps) {
   // Fetch the form definition
   const [definition, setDefinition] = useState<FormDefinition | null>(null);
@@ -91,6 +95,7 @@ export default function DatasheetRenderer({
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const fetchData = useCallback(async (pg: number) => {
     if (!table) return;
@@ -114,6 +119,25 @@ export default function DatasheetRenderer({
       setDataLoading(false);
     }
   }, [table, effectiveFilter, sortField, sortDir]);
+
+  // Create new record with auto-populated link fields (spec §13)
+  const handleCreateNew = useCallback(async () => {
+    if (!table || !newChildDefaults || Object.keys(newChildDefaults).length === 0) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await api.createRecord(table, newChildDefaults);
+      // Refresh to show the new record
+      await fetchData(1);
+      // Go to the last page to see the new record
+      const lastPage = Math.max(1, Math.ceil((total + 1) / PAGE_SIZE));
+      await fetchData(lastPage);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  }, [table, newChildDefaults, fetchData, total]);
 
   useEffect(() => {
     fetchData(1);
@@ -154,6 +178,18 @@ export default function DatasheetRenderer({
 
   // If no columns from controls, derive from data keys
   const displayColumns = useMemo(() => {
+    // Check GRID_COLUMN_OVERRIDES first (spec §14 — Grid display mode)
+    // This handles forms whose controls live in the header section
+    const overrides = GRID_COLUMN_OVERRIDES[formName];
+    if (overrides && overrides.length > 0) {
+      return overrides.map((col) => ({
+        name: col.field,
+        label: col.label,
+        type: "text-box" as const,
+        width: col.width ?? 0,
+        controlSource: col.field,
+      }));
+    }
     if (columns.length > 0) return columns;
     if (rows.length === 0) return [];
     return Object.keys(rows[0]).map((key) => ({
@@ -163,18 +199,39 @@ export default function DatasheetRenderer({
       width: 0,
       controlSource: key,
     }));
-  }, [columns, rows]);
+  }, [columns, rows, formName]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const formatValue = (val: unknown): string => {
+  const formatValue = (val: unknown, columnName?: string): string => {
     if (val === null || val === undefined) return "";
     if (typeof val === "boolean") return val ? "Yes" : "No";
-    if (val instanceof Date) return val.toLocaleDateString();
+    if (val instanceof Date) return val.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+    // Detect ISO date strings like "2006-04-05T04:00:00.000Z"
+    if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      }
+    }
+
+    // Detect phone numbers — raw 10+ digit strings in phone/fax columns
+    if (typeof val === "string" && /^\d{10,}$/.test(val) && columnName && /phone|fax|tel/i.test(columnName)) {
+      const cleaned = val.replace(/\D/g, "");
+      if (cleaned.length === 10) {
+        return `+1 (${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+      }
+      if (cleaned.length === 11 && cleaned[0] === "1") {
+        return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+      }
+    }
+
     if (typeof val === "number") {
-      // Check if it looks like a currency amount
-      if (Math.abs(val) > 1 || val === 0) return Number(val.toFixed(2)).toLocaleString();
-      return String(val);
+      // IDs and small integers — no comma formatting
+      if (Number.isInteger(val) && (val < 1000 || val > 999999)) return String(val);
+      // Currency — format with commas but no decimals if whole
+      return Number(val.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     return String(val);
   };
@@ -192,6 +249,17 @@ export default function DatasheetRenderer({
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-2 py-1 border-b text-xs text-muted-foreground bg-muted/20">
         <span className="font-medium">{definition.caption || formName}</span>
+        {newChildDefaults && Object.keys(newChildDefaults).length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-5 text-xs px-2"
+            disabled={creating || dataLoading}
+            onClick={handleCreateNew}
+          >
+            {creating ? "Creating..." : "+ New"}
+          </Button>
+        )}
         <span className="ml-auto">
           {total > 0 ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total}` : "0 records"}
         </span>
@@ -228,13 +296,14 @@ export default function DatasheetRenderer({
       )}
 
       {/* Data grid */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
         {dataLoading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Loading data...</div>
         ) : rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">No records found</div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 {displayColumns.map((col) => (
@@ -275,13 +344,14 @@ export default function DatasheetRenderer({
                       key={col.name}
                       className="px-2 py-1 whitespace-nowrap border-b border-muted/30"
                     >
-                      {formatValue(row[col.controlSource || col.name])}
+                      {formatValue(row[col.controlSource || col.name], col.controlSource || col.name)}
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
     </div>

@@ -434,6 +434,104 @@ app.put("/api/settings/form-size/:name", async (req, res) => {
   }
 });
 
+// ─── Event Handlers ─────────────────────────────────────
+
+// GET /api/events — list event handlers (optional ?scope= filter)
+app.get("/api/events", async (req, res) => {
+  try {
+    let query = "SELECT * FROM shared.event_handlers";
+    const params = [];
+    if (req.query.scope) {
+      query += " WHERE scope ILIKE $1";
+      params.push(req.query.scope);
+    }
+    query += " ORDER BY sort_order, created_at";
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/events/by-form/:formName — events scoped to a specific form
+app.get("/api/events/by-form/:formName", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.event_handlers 
+       WHERE scope ILIKE $1 AND level = 'item'
+       ORDER BY event_name, sort_order`,
+      [req.params.formName]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/events — create a new event handler
+app.post("/api/events", async (req, res) => {
+  try {
+    const { level, scope, event_name, handler, vba_module, vba_control, language, description } = req.body;
+    if (!level || !scope || !event_name || !handler) {
+      return res.status(400).json({ error: "level, scope, event_name, and handler are required" });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO shared.event_handlers (level, scope, event_name, handler, vba_module, vba_control, language, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [level, scope, event_name, handler, vba_module || null, vba_control || null, language || 'vba', description || null]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/events/:id — update an event handler
+app.put("/api/events/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { level, scope, event_name, handler, enabled, description } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE shared.event_handlers 
+       SET level = COALESCE($1, level),
+           scope = COALESCE($2, scope),
+           event_name = COALESCE($3, event_name),
+           handler = COALESCE($4, handler),
+           enabled = COALESCE($5, enabled),
+           description = COALESCE($6, description),
+           updated_at = NOW()
+       WHERE id = $7
+       RETURNING *`,
+      [level, scope, event_name, handler, enabled, description, id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Event not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/events/:id — delete an event handler
+app.delete("/api/events/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rowCount } = await pool.query(
+      "DELETE FROM shared.event_handlers WHERE id = $1",
+      [id]
+    );
+    if (rowCount === 0) return res.status(404).json({ error: "Event not found" });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Event Engine — hierarchical dispatch chain ──────
+
+const { mountEventEngine } = require("./event-engine.cjs");
+mountEventEngine(app);
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {

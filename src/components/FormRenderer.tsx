@@ -20,8 +20,11 @@ import {
   OptionGroupControl,
   RectangleControl,
   ToggleButtonControl,
-  SubFormControl,
 } from "@/controls/StubControls";
+import SubformControl from "@/subforms/subform-control";
+import { resolveSubformDefinition } from "@/subforms/subform-metadata-overrides";
+import FormNavigation from "@/components/FormNavigation";
+import { useFormEvent, useEvent } from "@/events/EventProvider";
 
 const CONTROL_MAP: Record<
   string,
@@ -57,6 +60,8 @@ const CONTROL_MAP: Record<
 
 interface Props {
   formName: string;
+  /** Optional external filter to apply (e.g., parent-child link filter for subforms) */
+  externalFilter?: string;
 }
 
 function isTabChild(ctrl: Control, allControls: Control[]): boolean {
@@ -68,7 +73,7 @@ function isTabChild(ctrl: Control, allControls: Control[]): boolean {
   return allControls.some((c) => c.type === "page" && c.name === parentPage);
 }
 
-export default function FormRenderer({ formName }: Props) {
+export default function FormRenderer({ formName, externalFilter }: Props) {
   const { definition, loading, error } = useFormDefinition(formName);
   const table = useMemo(() => {
     const rs = (definition as Record<string, unknown>)?.["record-source"];
@@ -81,7 +86,15 @@ export default function FormRenderer({ formName }: Props) {
     return rsTrimmed.toLowerCase();
   }, [definition]);
 
-  const recordSource = useRecordSource(table, definition?.filter);
+  // Combine form's own filter with external filter (e.g., parent-child link)
+  const combinedFilter = useMemo(() => {
+    const formFilter = definition?.filter;
+    if (!formFilter && !externalFilter) return undefined;
+    if (formFilter && externalFilter) return formFilter + "%20AND%20" + externalFilter;
+    return formFilter || externalFilter;
+  }, [definition, externalFilter]);
+
+  const recordSource = useRecordSource(table, combinedFilter);
   const allowEdits = (definition?.["allow-edits"] ?? 1) !== 0;
   const showNavButtons = (definition?.["navigation-buttons"] ?? 1) !== 0;
   const [headerHeight, setHeaderHeight] = useState<number | null>(null);
@@ -89,6 +102,50 @@ export default function FormRenderer({ formName }: Props) {
   const [detailHeight, setDetailHeight] = useState<number | null>(null);
   const [dragging, setDragging] = useState<"header" | "detail" | "footer" | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // ─── Event dispatch hooks ────────────────────────────
+  const { dispatchFormEvent } = useEvent();
+  const prevRecordRef = useRef(recordSource.current);
+
+  // on_load: fire when form definition first loads
+  useEffect(() => {
+    if (definition && formName && !loading) {
+      dispatchFormEvent(formName, "on_load");
+    }
+  }, [definition, formName, loading, dispatchFormEvent]);
+
+  // on_open: fire when form becomes visible
+  const firedOpen = useRef(false);
+  useEffect(() => {
+    if (definition && formName && !loading && !firedOpen.current) {
+      firedOpen.current = true;
+      dispatchFormEvent(formName, "on_open");
+    }
+  }, [definition, formName, loading, dispatchFormEvent]);
+
+  // on_current: fire when the current record changes
+  useEffect(() => {
+    if (recordSource.current && recordSource.current !== prevRecordRef.current) {
+      prevRecordRef.current = recordSource.current;
+      dispatchFormEvent(formName, "on_current");
+    }
+  }, [recordSource.current, formName, dispatchFormEvent]);
+
+  // ─── Form definition events ─────────────────────────
+  // Parse `events` object in the definition and dispatch mapped events
+  const formEvents = (definition as Record<string, unknown>)?.events as
+    Record<string, string> | undefined;
+
+  useEffect(() => {
+    if (!formEvents || !formName) return;
+    // Log which VBA events the form definition declares
+    const declared = Object.keys(formEvents).filter(
+      (k) => formEvents[k] === "[Event Procedure]"
+    );
+    if (declared.length > 0) {
+      console.debug(`[Event] ${formName} declares ${declared.length} VBA events: ${declared.join(", ")}`);
+    }
+  }, [formEvents, formName]);
 
   // Load saved form sizes on mount
   useEffect(() => {
@@ -178,15 +235,19 @@ export default function FormRenderer({ formName }: Props) {
       (ctrl: Control, idx: number) => {
         // Subform special case — must come before the CONTROL_MAP fallback
         if (ctrl.type === "subform") {
+          const subformDefinition = resolveSubformDefinition(
+            formName,
+            ctrl as Record<string, unknown>,
+          );
           return (
             <div
               key={ctrl.name || idx}
               style={controlStyle(ctrl)}
               className="overflow-hidden border rounded"
             >
-              <SubFormControl
-                ctrl={ctrl}
-                currentRecord={recordSource.current ?? {}}
+              <SubformControl
+                definition={subformDefinition}
+                parentRecord={recordSource.current ?? {}}
               />
             </div>
           );
@@ -288,8 +349,6 @@ export default function FormRenderer({ formName }: Props) {
     );
   }
 
-  const totalPages = Math.max(1, Math.ceil(recordSource.total / 1));
-
   return (
     <div className="flex flex-col h-full"
         style={{ backgroundColor: 'var(--app-form-bg-color, #FFFFFF)' }}>
@@ -308,7 +367,7 @@ export default function FormRenderer({ formName }: Props) {
           className="shrink-0 overflow-hidden"
           style={{
             position: 'relative',
-            height: headerHeight ?? Math.max(28, detailH),
+            height: headerHeight ?? Math.max(60, detailH),
             backgroundColor: 'var(--app-form-header-bg, #F3F4F6)',
           }}
         >
@@ -320,7 +379,7 @@ export default function FormRenderer({ formName }: Props) {
               e.preventDefault();
               setDragging("header");
               const startY = e.clientY;
-              const startH = headerHeight ?? Math.max(28, detailH);
+              const startH = headerHeight ?? Math.max(60, detailH);
               const onMouseMove = (ev: MouseEvent) => {
                 const delta = ev.clientY - startY;
                 setHeaderHeight(Math.max(20, startH + delta));
@@ -353,7 +412,7 @@ export default function FormRenderer({ formName }: Props) {
           className="shrink-0 overflow-hidden"
           style={{
             position: 'relative',
-            height: footerHeight ?? Math.max(28, footerH),
+            height: footerHeight ?? Math.max(60, footerH),
             backgroundColor: 'var(--app-form-footer-bg, #F3F4F6)',
             color: 'var(--app-form-footer-color, #6B7280)',
           }}
@@ -365,7 +424,7 @@ export default function FormRenderer({ formName }: Props) {
               e.preventDefault();
               setDragging("footer");
               const startY = e.clientY;
-              const startH = footerHeight ?? Math.max(28, footerH);
+              const startH = footerHeight ?? Math.max(60, footerH);
               const onMouseMove = (ev: MouseEvent) => {
                 const delta = startY - ev.clientY;
                 setFooterHeight(Math.max(20, startH + delta));
@@ -385,22 +444,12 @@ export default function FormRenderer({ formName }: Props) {
 
       {/* Record navigation */}
       {showNavButtons && (
-        <div className="flex items-center gap-1 px-2 py-1 border-t bg-muted/30 text-xs shrink-0">
-          <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30" onClick={() => recordSource.gotoRecord("first")} disabled={recordSource.total === 0} title="First record">|◄</button>
-          <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30" onClick={() => recordSource.gotoRecord("previous")} disabled={recordSource.total === 0 || recordSource.page <= 1} title="Previous record">◄</button>
-          <span className="ml-1 text-[10px] text-muted-foreground">Record</span>
-          <input type="number" min={1} max={totalPages} value={recordSource.total > 0 ? recordSource.page : 0}
-            onChange={(e) => { const val = parseInt(e.target.value, 10); if (!isNaN(val) && val >= 1 && val <= totalPages) recordSource.goToPage(val); }}
-            className="w-10 h-5 px-1 text-[10px] border rounded text-center tabular-nums bg-background" title="Go to record number" />
-          <span className="text-[10px] text-muted-foreground">{recordSource.total > 0 ? `of ${totalPages}` : "No records"}</span>
-          <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30" onClick={() => recordSource.gotoRecord("next")} disabled={recordSource.total === 0 || recordSource.page >= totalPages} title="Next record">►</button>
-          <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30" onClick={() => recordSource.gotoRecord("last")} disabled={recordSource.total === 0} title="Last record">►|</button>
-          <span className="ml-auto flex items-center gap-2">
-            <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30 text-[10px]" onClick={() => recordSource.gotoRecord("new")} disabled={!allowEdits} title="New record">+ New</button>
-            <button className="px-1.5 py-0.5 rounded hover:bg-muted disabled:opacity-30 text-[10px]" onClick={recordSource.saveRecord} disabled={!recordSource.isDirty} title="Save changes">Save</button>
-            {recordSource.isDirty && <span className="text-amber-500 text-[10px]" title="Unsaved changes">●</span>}
-          </span>
-        </div>
+        <FormNavigation
+          recordSource={recordSource}
+          filter={definition?.filter}
+          allowNew={allowEdits}
+          allowSave={allowEdits}
+        />
       )}
     </div>
   );

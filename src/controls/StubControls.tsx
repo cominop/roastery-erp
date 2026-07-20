@@ -28,7 +28,7 @@ export function ListBoxControl({
 }) {
   return (
     <select
-      className="w-full h-full text-xs border rounded bg-background"
+      className="w-full h-full text-xs border rounded-[var(--app-field-border-radius,6px)] bg-background"
       value={String(value ?? "")}
       disabled={!allowEdits}
       size={3}
@@ -44,13 +44,23 @@ export function ListBoxControl({
 export function OptionGroupControl({ ctrl }: { ctrl: Control }) {
   const caption = ctrl.caption || "";
   return (
-    <fieldset className="w-full h-full border border-border rounded p-1 overflow-hidden">
+    <div className="access-group-box" style={{ position: 'absolute', inset: 0, border: '1px solid var(--border)', borderRadius: 'var(--app-field-border-radius, 5px)', overflow: 'visible' }}>
       {caption && (
-        <legend className="text-[10px] font-semibold px-1 text-muted-foreground">
+        <div className="access-group-title" style={{
+          position: 'absolute',
+          top: '-0.65em',
+          left: '8px',
+          padding: '0 4px',
+          background: 'var(--background)',
+          fontSize: '10px',
+          fontWeight: 600,
+          lineHeight: '1.1',
+          whiteSpace: 'nowrap',
+        }}>
           {caption}
-        </legend>
+        </div>
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -78,7 +88,7 @@ export function ToggleButtonControl({
   const caption = (ctrl.text as string) || ctrl.caption || "";
   return (
     <button
-      className={`w-full h-full text-xs border rounded px-1 ${
+      className={`w-full h-full text-xs border rounded-[var(--app-field-border-radius,6px)] px-1 ${
         value ? "bg-primary text-primary-foreground" : "bg-background"
       }`}
       disabled={!allowEdits}
@@ -147,7 +157,7 @@ export function SubFormControl({
   }
 
   return (
-    <div className="p-2 text-xs text-muted-foreground border border-dashed rounded">
+    <div className="p-2 text-xs text-muted-foreground border border-dashed rounded-[var(--app-field-border-radius,6px)]">
       Subform: {source ?? "(no source)"}
     </div>
   );

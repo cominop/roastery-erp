@@ -58,7 +58,7 @@ export default function TextBoxControl({
   if (multiLine) {
     return (
       <Textarea
-        className={`w-full resize-none text-xs ${memo ? "overflow-y-auto" : ""}`}
+        className={`w-full resize-none text-xs rounded-[var(--app-field-border-radius,6px)] ${memo ? "overflow-y-auto" : ""}`}
         rows={memo ? 6 : undefined}
         value={strVal}
         readOnly={!allowEdits}
@@ -74,7 +74,7 @@ export default function TextBoxControl({
 
   return (
     <Input
-      className="h-full w-full text-xs rounded-none"
+      className="h-full w-full text-xs rounded-[var(--app-field-border-radius,6px)]"
       type={password ? "password" : "text"}
       value={strVal}
       readOnly={!allowEdits}

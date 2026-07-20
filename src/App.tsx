@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { EventProvider } from "@/events/EventProvider";
 import FormWorkspace from "@/components/form-window/form-workspace";
 import FormWindow from "@/components/form-window/form-window";
 import { useFormWindowManager } from "@/components/form-window/use-form-window-manager";
@@ -50,6 +51,7 @@ interface AppearanceSettings {
   fieldFontColor: string;
   fieldFontFamily: string;
   fieldBackgroundColor: string;
+  fieldBorderRadius: string;
   labelFontSize: string;
   labelFontColor: string;
   labelFontFamily: string;
@@ -64,11 +66,12 @@ interface AppearanceSettings {
 }
 
 const DEFAULT_APPEARANCE: AppearanceSettings = {
-  fieldFontSize: "11px",
+  fieldFontSize: "12px",
   fieldFontColor: "#1F2937",
   fieldFontFamily: "Geist Variable, sans-serif",
   fieldBackgroundColor: "#FFFFFF",
-  labelFontSize: "10px",
+  fieldBorderRadius: "6px",
+  labelFontSize: "11px",
   labelFontColor: "#374151",
   labelFontFamily: "Geist Variable, sans-serif",
   formBackgroundColor: "#FFFFFF",
@@ -305,6 +308,7 @@ export default function App() {
     root.style.setProperty("--app-field-font-color", appearance.fieldFontColor);
     root.style.setProperty("--app-field-font-family", appearance.fieldFontFamily);
     root.style.setProperty("--app-field-bg-color", appearance.fieldBackgroundColor);
+    root.style.setProperty("--app-field-border-radius", appearance.fieldBorderRadius);
     root.style.setProperty("--app-label-font-size", appearance.labelFontSize);
     root.style.setProperty("--app-label-font-color", appearance.labelFontColor);
     root.style.setProperty("--app-label-font-family", appearance.labelFontFamily);
@@ -467,6 +471,7 @@ export default function App() {
               <ColorField label="Font Color" value={draft.fieldFontColor} onChange={(v) => setDraft({ ...draft, fieldFontColor: v })} />
               <SelectField label="Font Family" value={draft.fieldFontFamily} options={FONT_FAMILIES} onChange={(v) => setDraft({ ...draft, fieldFontFamily: v })} />
               <ColorField label="BG Color" value={draft.fieldBackgroundColor} onChange={(v) => setDraft({ ...draft, fieldBackgroundColor: v })} />
+              <SelectField label="Corner Radius" value={draft.fieldBorderRadius} options={["0px", "2px", "4px", "6px", "8px", "12px"]} onChange={(v) => setDraft({ ...draft, fieldBorderRadius: v })} />
             </SettingRow>
 
             <Separator />
@@ -597,7 +602,9 @@ export default function App() {
                 }}
               >
                 <ErrorBoundary>
-                  <FormRenderer formName={w.id} />
+                  <EventProvider>
+                    <FormRenderer formName={w.id} />
+                  </EventProvider>
                 </ErrorBoundary>
               </FormWindow>
             ))}

@@ -68,7 +68,7 @@ export default function ComboBoxControl({
         if (field && allowEdits) onChange(field, v);
       }}
     >
-      <SelectTrigger className="h-full w-full text-xs rounded-none border-0">
+      <SelectTrigger className="h-full w-full text-xs rounded-[var(--app-field-border-radius,6px)] border-0">
         <SelectValue placeholder="" />
       </SelectTrigger>
       <SelectContent>

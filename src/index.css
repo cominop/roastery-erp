@@ -148,6 +148,22 @@
   background: var(--accent);
 }
 
+/* Normalize box-sizing and margins for imported Access controls */
+.form-section,
+.form-section *,
+.form-section *::before,
+.form-section *::after {
+  box-sizing: border-box;
+}
+
+.form-section input,
+.form-section select,
+.form-section textarea,
+.form-section button,
+.form-section label {
+  margin: 0;
+}
+
 /* ─── Form Body CSS Grid ────────────────────────────── */
 
 .form-body {
@@ -178,13 +194,17 @@
 
 /* Label controls with proper styling */
 .form-label-cell {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--muted-foreground);
-  line-height: 1.2;
-  min-height: 16px;
-  padding-bottom: 1px;
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0 2px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 /* Button cells */
@@ -216,7 +236,26 @@
   color: var(--app-label-font-color, #374151);
   font-weight: 600;
 }
-/* Form inputs — use CSS custom properties for appearance settings */
+/* Detail viewport should scroll, group boxes should not clip */
+.access-detail-viewport {
+  overflow: auto;
+}
+
+.access-group-box {
+  overflow: visible;
+}
+
+/* Consistent field height model for Access controls */
+.form-field-pair input,
+.form-field-pair select,
+.form-field-pair textarea {
+  padding: 1px 4px;
+  line-height: normal;
+  min-height: 26px;
+  height: auto;
+}
+
+/* ─── Form inputs — use CSS custom properties for appearance settings */
 .form-field-pair input,
 .form-field-pair textarea,
 .form-field-pair select {
@@ -272,4 +311,22 @@
   .form-section {
     grid-template-columns: 1fr;
   }
+}
+
+/* ─── Form Navigation Footer ─────────────────────────── */
+.form-navigation {
+  height: 28px;
+  font-size: 10px;
+}
+.form-navigation button {
+  padding: 2px 4px;
+  height: 20px;
+  min-width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.form-navigation input[type="text"] {
+  height: 18px;
+  font-size: 10px;
 }
