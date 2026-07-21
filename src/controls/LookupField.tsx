@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useLookupSearch, type LookupResult } from './hooks/useLookupSearch';
 import { runLookup } from '@/lib/api';
 import { Loader2, Search } from 'lucide-react';
+import LookupBrowser from './LookupBrowser';
 
 function getDisplayFields(field: FieldDefinition): string[] {
   return [field.lookupField, field.lookupField2, field.lookupField3].filter(
@@ -33,6 +34,7 @@ export default function LookupField({
   const [resolving, setResolving] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [showBrowser, setShowBrowser] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -172,12 +174,25 @@ export default function LookupField({
     }
   }, [displayText, value]);
 
-  // ── Open browser modal (placeholder) ─────────────────────────────
+  // ── Open browser modal ──────────────────────────────────────────
   const openBrowser = useCallback(() => {
-    // Placeholder: for now, just do a full search
     if (isReadOnly) return;
-    search('');
-  }, [isReadOnly, search]);
+    setShowBrowser(true);
+  }, [isReadOnly]);
+
+  // ── Browser select handler ──────────────────────────────────────
+  const handleBrowserSelect = useCallback(
+    (result: LookupResult) => {
+      setShowBrowser(false);
+      selectResult(result);
+    },
+    [selectResult],
+  );
+
+  // ── Browser close handler ───────────────────────────────────────
+  const handleBrowserClose = useCallback(() => {
+    setShowBrowser(false);
+  }, []);
 
   // ── Render ───────────────────────────────────────────────────────
   return (
@@ -282,6 +297,16 @@ export default function LookupField({
       )}
       {error && (
         <p className="text-[10px] text-destructive">{error}</p>
+      )}
+
+      {/* Lookup Browser modal */}
+      {showBrowser && (
+        <LookupBrowser
+          lookupItem={lookupItem}
+          displayFields={displayFields}
+          onSelect={handleBrowserSelect}
+          onClose={handleBrowserClose}
+        />
       )}
     </div>
   );
