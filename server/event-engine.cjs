@@ -55,15 +55,26 @@ function resolveGroup(formName) {
 // ─── Event Registry ────────────────────────────────────
 
 async function loadHandlers(scope, eventName, level) {
-  const { rows } = await pool.query(
-    `SELECT * FROM shared.event_handlers 
-     WHERE scope ILIKE $1 
-       AND event_name = $2 
-       AND level = $3
-       AND enabled = true
-     ORDER BY sort_order, created_at`,
-    [scope, eventName, level]
-  );
+  // Empty eventName = return ALL handlers for this scope+level (used by inherited fetch)
+  const getAll = !eventName;
+  let query, params;
+  if (getAll) {
+    query = `SELECT * FROM shared.event_handlers 
+             WHERE scope ILIKE $1 
+               AND level = $2
+               AND enabled = true
+             ORDER BY sort_order, created_at`;
+    params = [scope, level];
+  } else {
+    query = `SELECT * FROM shared.event_handlers 
+             WHERE scope ILIKE $1 
+               AND event_name = $2 
+               AND level = $3
+               AND enabled = true
+             ORDER BY sort_order, created_at`;
+    params = [scope, eventName, level];
+  }
+  const { rows } = await pool.query(query, params);
   return rows;
 }
 
@@ -111,12 +122,14 @@ function mountEventEngine(app) {
   app.post("/api/events/dispatch", async (req, res) => {
     try {
       const { formName, eventName, context } = req.body;
-      if (!formName || !eventName) {
-        return res.status(400).json({ error: "formName and eventName required" });
+      if (!formName) {
+        return res.status(400).json({ error: "formName is required" });
       }
 
-      const execute = req.query.execute === "true";
-      const result = await dispatchEvent(formName, eventName, context || {});
+      // Empty eventName = return ALL handlers at each chain level (used by inherited display)
+      const resolveEventName = eventName || "";
+      const execute = req.query.execute === "true" && !!eventName;
+      const result = await dispatchEvent(formName, resolveEventName, context || {});
 
       // Count total handlers resolved
       let totalHandlers = 0;
@@ -126,7 +139,7 @@ function mountEventEngine(app) {
 
       const response = {
         formName,
-        eventName,
+        eventName: resolveEventName,
         group: resolveGroup(formName),
         totalHandlers,
         chain: result.dispatched.map((link) => ({
@@ -134,7 +147,8 @@ function mountEventEngine(app) {
           handler_count: link.handlers.length,
           handlers: link.handlers.map((h) => ({
             id: h.id,
-            vba_control: h.vba_control,
+            event_name: h.event_name,
+            level: h.level,
             language: h.language,
             enabled: h.enabled,
             description: h.description,

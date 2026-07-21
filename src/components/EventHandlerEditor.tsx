@@ -27,8 +27,10 @@ import {
   runEventHandler,
   getFormList,
   getGroups,
+  fetchDispatchChain,
   type EventHandler,
   type ExecutionResult,
+  type DispatchChainHandler,
 } from "@/lib/api";
 import {
   Code,
@@ -56,6 +58,12 @@ interface EditorState {
   error: string | null;
 }
 
+interface InheritedGroup {
+  level: string;   // e.g., "group:catalogs", "task"
+  label: string;   // display label
+  handlers: DispatchChainHandler[];
+}
+
 // ─── Helpers ────────────────────────────────────────────
 
 function eventColor(eventName: string): string {
@@ -67,16 +75,19 @@ function eventColor(eventName: string): string {
 }
 
 function levelBadge(level: string): { label: string; cls: string } {
-  switch (level) {
-    case "item":
-      return { label: "Item", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" };
-    case "group":
-      return { label: "Group", cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" };
-    case "task":
-      return { label: "Task", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" };
-    default:
-      return { label: level, cls: "bg-gray-100 text-gray-600" };
+  if (level.startsWith("item")) return { label: "Item", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" };
+  if (level.startsWith("group")) return { label: "Group", cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" };
+  if (level.startsWith("task")) return { label: "Task", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" };
+  return { label: level, cls: "bg-gray-100 text-gray-600" };
+}
+
+function levelSectionLabel(level: string): string {
+  if (level.startsWith("group:")) {
+    const groupName = level.split(":")[1];
+    return `Group: ${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
   }
+  if (level === "task") return "Task Level";
+  return level;
 }
 
 // ─── Component ──────────────────────────────────────────
@@ -90,8 +101,9 @@ export default function EventHandlerEditor() {
 
   // Handler state
   const [handlers, setHandlers] = useState<EventHandler[]>([]);
-  const [inherited, setInherited] = useState<EventHandler[]>([]);
+  const [inheritedGroups, setInheritedGroups] = useState<InheritedGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingInherited, setFetchingInherited] = useState(false);
   const [editor, setEditor] = useState<EditorState>({ saving: null, error: null });
 
   // "Add new" form state
@@ -156,37 +168,79 @@ export default function EventHandlerEditor() {
     }
   }, [mode, scopeOptions]);
 
-  // ─── Fetch handlers when scope changes ──────────────────
+  // ─── Fetch direct handlers when scope changes ───────────
 
   useEffect(() => {
     if (!scopeValue) return;
     setLoading(true);
     setEditor({ saving: null, error: null });
+    setInheritedGroups([]);
 
-    Promise.all([
-      getEventHandlers(scopeValue),
-      // Also fetch inherited: for form mode, get the group and task handlers
-      // For group mode, get task handlers
-      // For task mode, nothing inherited
-      mode === "form"
-        ? getEventHandlers("task")
-            .then((t) => t.filter((h) => h.level === "task"))
-        : mode === "group"
-        ? getEventHandlers("task")
-            .then((t) => t.filter((h) => h.level === "task"))
-        : Promise.resolve([] as EventHandler[]),
-    ])
-      .then(([direct, inh]) => {
+    getEventHandlers(scopeValue)
+      .then((direct) => {
         setHandlers(direct);
-        setInherited(inh);
       })
       .catch((err) => {
         setEditor({ saving: null, error: `Failed to load: ${err.message}` });
         setHandlers([]);
-        setInherited([]);
       })
       .finally(() => setLoading(false));
   }, [scopeValue, mode]);
+
+  // ─── Fetch inherited handlers when toggle is on ────────
+
+  useEffect(() => {
+    if (!showInherited || !scopeValue) {
+      setInheritedGroups([]);
+      return;
+    }
+
+    const fetchInherited = async () => {
+      setFetchingInherited(true);
+      try {
+        if (mode === "form") {
+          const result = await fetchDispatchChain(scopeValue, "");
+          const groups: InheritedGroup[] = result.chain
+            .filter((link) => link.level !== "item")
+            .map((link) => ({
+              level: link.level,
+              label: levelSectionLabel(link.level),
+              handlers: link.handlers,
+            }))
+            .filter((g) => g.handlers.length > 0);
+          setInheritedGroups(groups);
+        } else if (mode === "group") {
+          const taskHandlers = await getEventHandlers("task");
+          const taskLevel = taskHandlers.filter((h) => h.level === "task");
+          if (taskLevel.length > 0) {
+            setInheritedGroups([
+              {
+                level: "task",
+                label: "Task Level",
+                handlers: taskLevel.map((h) => ({
+                  id: h.id,
+                  event_name: h.event_name,
+                  level: h.level,
+                  language: h.language,
+                  enabled: h.enabled,
+                  description: h.description,
+                })),
+              },
+            ]);
+          } else {
+            setInheritedGroups([]);
+          }
+        }
+      } catch (err: any) {
+        setEditor({ saving: null, error: `Failed to load inherited: ${err.message}` });
+        setInheritedGroups([]);
+      } finally {
+        setFetchingInherited(false);
+      }
+    };
+
+    fetchInherited();
+  }, [showInherited, mode, scopeValue]);
 
   // ─── Mutations ──────────────────────────────────────────
 
@@ -487,34 +541,59 @@ export default function EventHandlerEditor() {
           )}
 
           {/* ─── Inherited handlers section ───────────────── */}
-          {showInherited && inherited.length > 0 && (
-            <div className="mt-6 pt-4 border-t">
-              <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
-                Inherited from Task Level
-              </h4>
-              <div className="space-y-2">
-                {inherited.map((h) => (
-                  <div
-                    key={h.id}
-                    className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground"
-                  >
-                    <span
-                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${levelBadge(h.level).cls}`}
-                    >
-                      {levelBadge(h.level).label}
-                    </span>
-                    <code className="font-mono text-foreground/70">{h.event_name}</code>
-                    <span className="text-muted-foreground/50 truncate">
-                      — {h.description || "No description"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {showInherited && fetchingInherited && (
+            <div className="flex items-center gap-2 py-4 text-xs text-muted-foreground">
+              <div className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Loading inherited handlers...
             </div>
           )}
 
-          {showInherited && inherited.length === 0 && (
+          {showInherited && !fetchingInherited && inheritedGroups.length > 0 && (
+            <div className="mt-6 pt-4 border-t space-y-4">
+              {inheritedGroups.map((group) => (
+                <div key={group.level}>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                    <span className={`inline-block w-2 h-2 rounded-full ${
+                      group.level.startsWith("group") ? "bg-purple-400" : "bg-amber-400"
+                    }`} />
+                    Inherited from {group.label}
+                  </h4>
+                  <div className="space-y-2">
+                    {group.handlers.map((h) => (
+                      <div
+                        key={h.id}
+                        className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground"
+                      >
+                        <span
+                          className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${levelBadge(h.level).cls}`}
+                        >
+                          {levelBadge(h.level).label}
+                        </span>
+                        <code className="font-mono text-foreground/70">{h.event_name}</code>
+                        <span className="text-muted-foreground/50 truncate min-w-0">
+                          — {h.description || "No description"}
+                        </span>
+                        <span className="ml-auto flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40">
+                            {h.language}
+                          </span>
+                          <span
+                            className={`text-[10px] ${
+                              h.enabled ? "text-emerald-500" : "text-muted-foreground/40"
+                            }`}
+                          >
+                            {h.enabled ? "Enabled" : "Disabled"}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showInherited && !fetchingInherited && inheritedGroups.length === 0 && (
             <div className="mt-4 text-xs text-muted-foreground italic">
               No inherited handlers from parent levels.
             </div>

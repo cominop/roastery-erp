@@ -175,3 +175,38 @@ export function runEventHandler(code: string, context?: Record<string, unknown>,
     body: JSON.stringify({ code, context: context || {}, event_name: eventName }),
   });
 }
+
+// ─── Dispatch chain (inherited handler resolution) ─────
+
+export interface DispatchChainHandler {
+  id: string;
+  event_name: string;
+  level: string;
+  language: string;
+  enabled: boolean;
+  description: string | null;
+}
+
+export interface DispatchChainLink {
+  level: string;
+  handler_count: number;
+  handlers: DispatchChainHandler[];
+}
+
+export interface DispatchResult {
+  formName: string;
+  eventName: string;
+  group: string | null;
+  totalHandlers: number;
+  chain: DispatchChainLink[];
+  stopped_at: string | null;
+  stopped_handler_id: string | null;
+}
+
+/** Fetch the full dispatch chain for a form — used by 'Show inherited' */
+export function fetchDispatchChain(formName: string, eventName?: string) {
+  return request<DispatchResult>("/events/dispatch", {
+    method: "POST",
+    body: JSON.stringify({ formName, eventName: eventName || "" }),
+  });
+}
