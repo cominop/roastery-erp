@@ -1,0 +1,129 @@
+Build Step 14 of the Roastery ERP: FormField dispatcher with text, number, and boolean controls.
+
+## Task
+Create the `FormField` component dispatcher and the first three concrete field controls (TextField, NumberField, BooleanField) in `src/controls/`. This is a NEW data-aware field system — NOT the existing Access legacy control rendering (which renders by control type like "text-box", "check-box").
+
+## What to Build
+
+### 1. `src/controls/schema/controlSchema.ts`
+Define these types:
+```typescript
+export type FieldType = 'TEXT' | 'INTEGER' | 'FLOAT' | 'CURRENCY' | 'DATE' | 'DATETIME' | 'BOOLEAN' | 'LONGTEXT' | 'FILE' | 'IMAGE' | 'LOOKUP' | 'CALCULATED';
+
+export interface FieldDefinition {
+  id: string;
+  name: string;
+  caption: string;
+  type: FieldType;
+  lookupItem?: string;
+  lookupField?: string;
+  lookupField2?: string;
+  lookupField3?: string;
+  masterField?: string;
+  mask?: string;
+  placeholder?: string;
+  size?: number;
+  min?: number;
+  max?: number;
+  decimals?: number;
+  currency?: string;
+  format?: string;
+  rows?: number;
+  maxRows?: number;
+  accept?: string;
+  maxSize?: number;
+  calcType?: string;
+  calcExpression?: string;
+  defaultValue?: string;
+  required?: boolean;
+  readOnly?: boolean;
+  help?: string;
+  alignment?: 'left' | 'center' | 'right';
+  tabIndex?: number;
+}
+
+export interface FormFieldProps {
+  field: FieldDefinition;
+  value: any;
+  onChange: (value: any) => void;
+  readOnly?: boolean;
+  error?: string;
+  tabIndex?: number;
+}
+```
+
+### 2. `src/controls/TextField.tsx`
+- Renders TEXT field type as `<input type="text">`
+- Uses shadcn Input component (`@/components/ui/input`)
+- Supports: placeholder, size/maxLength, mask display (placeholder char), help text, alignment
+- Shows error message when `error` prop is set
+- Properly handles `readOnly`
+- CSS class: `w-full text-xs rounded-[var(--app-field-border-radius,6px)]`
+- Displays label above the input using `field.caption`
+
+### 3. `src/controls/NumberField.tsx`
+- Renders INTEGER / FLOAT / CURRENCY field types
+- INTEGER → `<input type="number">` with no decimals
+- FLOAT → `<input type="number" step="0.01">` 
+- CURRENCY → `<input type="text">` with currency prefix display (e.g., "$ ")
+- Supports: min, max, decimals, currency symbol, format display
+- Shows error message
+- Properly handles readOnly
+- Displays label above using `field.caption`
+
+### 4. `src/controls/BooleanField.tsx`
+- Renders BOOLEAN field type
+- Default: Checkbox with label to the right
+- Alternative: Toggle switch (controlled by field.format === 'toggle')
+- Label uses `field.caption`
+- Properly handles readOnly (disabled checkbox)
+
+### 5. `src/controls/FormField.tsx` (the dispatcher)
+```tsx
+function FormField({ field, value, onChange, readOnly, error, tabIndex }: FormFieldProps) {
+  switch (field.type) {
+    case 'TEXT':
+      return <TextField ... />;
+    case 'INTEGER':
+    case 'FLOAT':
+    case 'CURRENCY':
+      return <NumberField ... />;
+    case 'BOOLEAN':
+      return <BooleanField ... />;
+    default:
+      return <UnsupportedField field={field} />;
+  }
+}
+```
+
+### 6. `src/controls/UnsupportedField.tsx`
+- Fallback for unknown/unimplemented field types
+- Shows a dashed-border placeholder with the type name
+
+## Codebase Context
+- Project: Vite + React + TypeScript
+- UI library: shadcn/ui (already has `@/components/ui/input`, `@/components/ui/checkbox`, etc.)
+- Existing controls in `src/controls/`: TextBoxControl, CheckBoxControl, ComboBoxControl, etc. (these are Access legacy — do NOT modify them)
+- Existing types in `src/types/index.ts` has the `Control` and `FormDefinition` types (Access model)
+- Path alias `@/` points to `src/`
+- Tailwind CSS is configured
+
+## Testing
+After building, verify:
+1. All files compile without TypeScript errors: `npx tsc --noEmit`
+2. Create `src/controls/__tests__/FormField.test.tsx` with a basic render test using vitest + @testing-library/react
+   - Test that FormField renders correct control based on field.type
+   - Test TextField renders input with placeholder
+   - Test NumberField renders number input (or currency input)
+   - Test BooleanField renders checkbox or toggle
+
+## Files to Create
+1. src/controls/schema/controlSchema.ts — types
+2. src/controls/TextField.tsx — text input
+3. src/controls/NumberField.tsx — number/currency input
+4. src/controls/BooleanField.tsx — checkbox/toggle
+5. src/controls/FormField.tsx — main dispatcher
+6. src/controls/UnsupportedField.tsx — fallback
+7. src/controls/__tests__/FormField.test.tsx — unit test
+
+Do NOT modify any existing files. All new code in the new files listed above.
