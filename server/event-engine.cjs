@@ -107,6 +107,7 @@ async function dispatchEvent(formName, eventName, context = {}) {
 
 function mountEventEngine(app) {
   // POST /api/events/dispatch — execute event dispatch chain
+  //   ?execute=true — also run item-level handlers through the sandbox
   app.post("/api/events/dispatch", async (req, res) => {
     try {
       const { formName, eventName, context } = req.body;
@@ -114,6 +115,7 @@ function mountEventEngine(app) {
         return res.status(400).json({ error: "formName and eventName required" });
       }
 
+      const execute = req.query.execute === "true";
       const result = await dispatchEvent(formName, eventName, context || {});
 
       // Count total handlers resolved
@@ -122,7 +124,7 @@ function mountEventEngine(app) {
         totalHandlers += link.handlers.length;
       }
 
-      res.json({
+      const response = {
         formName,
         eventName,
         group: resolveGroup(formName),
@@ -140,6 +142,46 @@ function mountEventEngine(app) {
         })),
         stopped_at: result.stopped_at,
         stopped_handler_id: result.handler_id,
+      };
+
+      // ── Sandbox execution ───────────────────────────
+      if (execute) {
+        const { runHandlers } = require("./sandbox.cjs");
+
+        // Only execute python handlers from the item-level
+        const itemLink = result.dispatched.find((l) => l.level === "item");
+        if (itemLink) {
+          const pythonHandlers = itemLink.handlers.filter(
+            (h) => h.language === "python" && h.enabled
+          );
+          response.execution_results = await runHandlers(pythonHandlers, context || {});
+        } else {
+          response.execution_results = [];
+        }
+      }
+
+      res.json(response);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/events/run — run a single handler through the sandbox
+  //   Body: { handler_id, code, context, event_name }
+  //   Used by the "▶ Run" test button in the UI
+  app.post("/api/events/run", async (req, res) => {
+    try {
+      const { code, context, event_name } = req.body;
+      if (!code) {
+        return res.status(400).json({ error: "code is required" });
+      }
+
+      const { runHandler } = require("./sandbox.cjs");
+      const result = await runHandler(code, context || {});
+
+      res.json({
+        event_name: event_name || "manual",
+        ...result,
       });
     } catch (err) {
       res.status(500).json({ error: err.message });

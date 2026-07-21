@@ -24,15 +24,18 @@ import {
   createEventHandler,
   updateEventHandler,
   deleteEventHandler,
+  runEventHandler,
   getFormList,
   getGroups,
   type EventHandler,
+  type ExecutionResult,
 } from "@/lib/api";
 import {
   Code,
   Plus,
   Trash2,
   Save,
+  Play,
   Eye,
   EyeOff,
   CheckCircle2,
@@ -540,6 +543,10 @@ function EventHandlerCard({
   const [editing, setEditing] = useState(false);
   const [draftCode, setDraftCode] = useState(h.handler);
 
+  // Run state
+  const [running, setRunning] = useState(false);
+  const [runResult, setRunResult] = useState<ExecutionResult | null>(null);
+
   // Sync draft when handler changes (e.g., after save)
   useEffect(() => {
     setDraftCode(h.handler);
@@ -547,6 +554,26 @@ function EventHandlerCard({
 
   const badge = levelBadge(h.level);
   const dirty = draftCode !== h.handler;
+
+  const handleRun = useCallback(async () => {
+    setRunning(true);
+    setRunResult(null);
+    try {
+      const result = await runEventHandler(draftCode, {}, h.event_name);
+      setRunResult(result);
+    } catch (err: any) {
+      setRunResult({
+        success: false,
+        result: null,
+        stdout: "",
+        stderr: "",
+        execution_time_ms: 0,
+        error: err.message,
+      });
+    } finally {
+      setRunning(false);
+    }
+  }, [draftCode, h.event_name]);
 
   return (
     <Card
@@ -602,6 +629,49 @@ function EventHandlerCard({
           )}
         </div>
       </CardContent>
+
+      {/* ─── Run result output ──────────────────────────── */}
+      {runResult && (
+        <div className={`mx-4 mb-2 rounded-md border p-2.5 text-xs font-mono ${
+          runResult.success
+            ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+            : "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
+        }`}>
+          <div className="flex items-center gap-1.5 mb-1">
+            {runResult.success ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+            )}
+            <span className={`font-semibold ${runResult.success ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
+              {runResult.success ? "Success" : "Error"}
+            </span>
+            <span className="text-muted-foreground ml-auto">{runResult.execution_time_ms}ms</span>
+          </div>
+          {runResult.error && (
+            <div className="text-red-600 dark:text-red-400 mb-1 whitespace-pre-wrap">{runResult.error}</div>
+          )}
+          {runResult.stdout && (
+            <div className="text-foreground/80 mb-1">
+              <span className="text-[10px] font-semibold text-muted-foreground">stdout:</span>
+              <pre className="whitespace-pre-wrap mt-0.5">{runResult.stdout}</pre>
+            </div>
+          )}
+          {runResult.stderr && (
+            <div className="text-amber-600 dark:text-amber-400">
+              <span className="text-[10px] font-semibold text-muted-foreground">stderr:</span>
+              <pre className="whitespace-pre-wrap mt-0.5">{runResult.stderr}</pre>
+            </div>
+          )}
+          {runResult.success && runResult.result !== undefined && runResult.result !== null && (
+            <div className="mt-1 pt-1 border-t border-emerald-200 dark:border-emerald-800">
+              <span className="text-[10px] font-semibold text-muted-foreground">returned:</span>
+              <pre className="whitespace-pre-wrap mt-0.5 text-foreground">{JSON.stringify(runResult.result, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      )}
+
       <CardFooter className="flex justify-end gap-1.5">
         {dirty && (
           <Button
@@ -620,6 +690,25 @@ function EventHandlerCard({
             Saved
           </span>
         )}
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={handleRun}
+          disabled={running || saving}
+          className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
+        >
+          {running ? (
+            <span className="flex items-center gap-1">
+              <div className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Running...
+            </span>
+          ) : (
+            <>
+              <Play className="h-3 w-3" />
+              Run
+            </>
+          )}
+        </Button>
         <Button
           variant="ghost"
           size="xs"

@@ -155,3 +155,23 @@ export function updateEventHandler(
 export function deleteEventHandler(id: string) {
   return request<{ ok: boolean }>(`/events/${id}`, { method: "DELETE" });
 }
+
+// ─── Sandbox execution ───────────────────────────────
+
+export interface ExecutionResult {
+  success: boolean;
+  result: unknown;
+  stdout: string;
+  stderr: string;
+  execution_time_ms: number;
+  error: string | null;
+  handler_id?: string;
+  event_name?: string;
+}
+
+export function runEventHandler(code: string, context?: Record<string, unknown>, eventName?: string) {
+  return request<ExecutionResult>(`/events/run`, {
+    method: "POST",
+    body: JSON.stringify({ code, context: context || {}, event_name: eventName }),
+  });
+}
