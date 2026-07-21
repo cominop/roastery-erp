@@ -1,0 +1,109 @@
+IMPLEMENT STEP 15: LookupField with typeahead debounced search
+
+You're building the LOOKUP field control for the Roastery ERP form system. This is Step 15 of the project roadmap (Data-Aware Controls, Step 2).
+
+## What to build
+
+### 1. `src/controls/hooks/useLookupSearch.ts`
+A React hook that provides debounced typeahead search:
+
+```typescript
+interface LookupResult {
+  id: string | number;
+  displayValue: string;
+  raw: Record<string, unknown>;
+}
+
+function useLookupSearch(lookupItem: string): {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  results: LookupResult[];
+  loading: boolean;
+  error: string | null;
+  search: (term: string) => void; // immediate search (for browser)
+}
+```
+
+- Debounce at 300ms (min 2 chars to trigger)
+- Uses the existing API client's `runLookup()` for search — SELECT id, display_fields FROM lookupItem WHERE display_field ILIKE '%term%' LIMIT 20
+- The lookupItem is the table name. The first display field is lookupField from the FieldDefinition, then lookupField2, lookupField3.
+
+### 2. `src/controls/LookupField.tsx`
+The main LookupField component from Section 7 of the SPEC:
+
+- Text input showing the current display value
+- Placeholder: "Search {lookupItem}..."
+- 🔍 button that opens the LookupBrowser modal (for now, show a simple placeholder modal that lists results)
+- Typeahead dropdown appears below the input when results are present (absolute positioned)
+- Clicking a result selects it
+- Clicking outside closes the dropdown
+- Read-only mode: just shows the display value with no search
+- Loading spinner when searching
+- Error state display
+
+### Props:
+```typescript
+interface LookupFieldProps {
+  field: FieldDefinition;
+  value: any; // the ID value
+  onChange: (value: any) => void;
+  readOnly?: boolean;
+  error?: string;
+  tabIndex?: number;
+}
+```
+
+The display value needs to be resolved from the ID. On mount, if `value` is set, fetch the display value for that ID.
+
+### 3. Update `src/controls/FormField.tsx`
+Add the LOOKUP case:
+```typescript
+case 'LOOKUP':
+  return <LookupField field={field} value={value} onChange={onChange} readOnly={readOnly} error={error} tabIndex={tabIndex} />;
+```
+
+Import LookupField from './LookupField'.
+
+### 4. Styling
+Use Tailwind classes. Styles needed:
+- `.lookup-field`: relative container
+- Text input: w-full border rounded px-3 py-2
+- Search button: absolute right-0 top-0 h-full px-3
+- Typeahead dropdown: absolute top-full left-0 w-full bg-white border rounded shadow-lg z-50 max-h-48 overflow-y-auto
+- Dropdown item: px-3 py-2 hover:bg-gray-100 cursor-pointer
+- Active/highlighted item: bg-blue-50
+- Loading: small spinner in the dropdown area
+- Error: red text below input
+
+### 5. Tests in `src/controls/__tests__/LookupField.test.tsx`
+Write comprehensive tests:
+- Renders text input
+- Shows display value when value is set (mock the fetch)
+- Shows placeholder with lookupItem name
+- Shows search button
+- Does not show search button when readOnly
+- Typing triggers debounced search (mock runLookup)
+- Shows dropdown with results
+- Clicking result calls onChange with correct ID
+- Shows loading state
+- Shows error state
+- Closes dropdown on outside click
+- Does not search with < 2 chars
+
+### 6. Update test file `src/controls/__tests__/FormField.test.tsx`
+Add test: "renders LookupField for LOOKUP type"
+
+## Project context
+- Working dir: /home/fcc-student/Desktop/_DEV/roastery-ui/
+- This is Step 15 of the roadmap. Step 14 (FormField dispatcher) is already done.
+- API client lives at src/lib/api.ts with `runLookup(sql)` for SQL lookups
+- FieldDefinition type is in src/controls/schema/controlSchema.ts
+- Use vitest for unit tests (already configured)
+- Follow the existing patterns from TextField.tsx, NumberField.tsx, BooleanField.tsx
+- Use Tailwind CSS v4 (already configured)
+- Package manager: npm
+
+## After implementation
+1. Run `npx vitest run` to verify tests pass
+2. If tests fail, fix them
+3. Make sure the TypeScript compiles: `npx tsc --noEmit`

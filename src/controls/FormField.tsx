@@ -5,6 +5,7 @@ import TextField from './TextField';
 import NumberField from './NumberField';
 import BooleanField from './BooleanField';
 import UnsupportedField from './UnsupportedField';
+import LookupField from './LookupField';
 
 export default function FormField({
   field,
@@ -42,6 +43,17 @@ export default function FormField({
     case 'BOOLEAN':
       return (
         <BooleanField
+          field={field}
+          value={value}
+          onChange={onChange}
+          readOnly={readOnly}
+          error={error}
+          tabIndex={tabIndex}
+        />
+      );
+    case 'LOOKUP':
+      return (
+        <LookupField
           field={field}
           value={value}
           onChange={onChange}
