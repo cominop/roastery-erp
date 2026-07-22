@@ -74,16 +74,18 @@ describe('FormField dispatcher', () => {
     expect(screen.getByText('Test Field')).toBeInTheDocument();
   });
 
-  it('renders UnsupportedField for unimplemented field types', () => {
-  render(
-    <FormField
-      field={makeField({ type: 'LONGTEXT' })}
-      value={null}
-      onChange={() => {}}
-    />,
-  );
-  expect(screen.getByText(/Unsupported field type/)).toBeInTheDocument();
-  expect(screen.getByText(/LONGTEXT/)).toBeInTheDocument();
+  it('renders RichTextField for LONGTEXT type', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'LONGTEXT', caption: 'Description' })}
+        value={null}
+        onChange={() => {}}
+      />,
+    );
+    // TipTap renders a ProseMirror editor div with contentEditable
+    expect(screen.getByText('Description')).toBeInTheDocument();
+    const editorEl = document.querySelector('.ProseMirror');
+    expect(editorEl).toBeInTheDocument();
   });
 
   it('renders LookupField for LOOKUP type', () => {

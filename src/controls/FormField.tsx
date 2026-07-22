@@ -9,6 +9,7 @@ import LookupField from './LookupField';
 import DateField from './DateField';
 import FileField from './FileField';
 import ImageField from './ImageField';
+import RichTextField from './RichTextField';
 
 export default function FormField({
   field,
@@ -73,6 +74,17 @@ export default function FormField({
     case 'DATETIME':
       return (
         <DateField
+          field={field}
+          value={value}
+          onChange={onChange}
+          readOnly={readOnly}
+          error={error}
+          tabIndex={tabIndex}
+        />
+      );
+    case 'LONGTEXT':
+      return (
+        <RichTextField
           field={field}
           value={value}
           onChange={onChange}
