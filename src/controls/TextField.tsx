@@ -1,7 +1,9 @@
 // TextField — renders TEXT field type as <input type="text">
-import type { FieldDefinition, FormFieldProps } from './schema/controlSchema';
+// Supports input masking via field.mask (useFieldMask hook).
+import type { FormFieldProps } from './schema/controlSchema';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useFieldMask } from './hooks/useFieldMask';
 
 export default function TextField({
   field,
@@ -12,6 +14,9 @@ export default function TextField({
   tabIndex,
 }: FormFieldProps) {
   const strVal = value == null ? '' : String(value);
+  const { formatDisplay, getUnmaskedValue } = useFieldMask(field.mask);
+
+  const displayValue = field.mask ? formatDisplay(strVal) : strVal;
 
   return (
     <div className="flex flex-col gap-1">
@@ -30,13 +35,16 @@ export default function TextField({
           field.alignment === 'center' && 'text-center',
           field.alignment === 'right' && 'text-right',
         )}
-        value={strVal}
+        value={displayValue}
         readOnly={readOnly ?? field.readOnly ?? false}
         placeholder={field.placeholder ?? (field.mask ? field.mask.replace(/[^X09?]/g, '_') : undefined)}
         maxLength={field.size}
         tabIndex={tabIndex ?? field.tabIndex}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          if (!(readOnly ?? field.readOnly)) onChange(e.target.value);
+          if (!(readOnly ?? field.readOnly)) {
+            const raw = field.mask ? getUnmaskedValue(e.target.value) : e.target.value;
+            onChange(raw);
+          }
         }}
       />
       {field.help && !error && (

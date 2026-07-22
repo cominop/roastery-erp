@@ -1,0 +1,89 @@
+Implement input masking for the Roastery ERP data-aware form controls (Step 22 of the Data-Aware Controls spec).
+
+## What to build
+
+Create a `useFieldMask` hook at `src/controls/hooks/useFieldMask.ts` that applies input masks to text fields based on the `field.mask` pattern from the FieldDefinition. Then integrate it into `TextField.tsx`.
+
+### Mask format
+
+The mask string uses these placeholder characters:
+- `#` — digit only (0-9)
+- `@` — letter only (A-Z, a-z)  
+- `X` — alphanumeric (digit or letter)
+- `?` — optional preceding character (the character before `?` is optional)
+- All other characters are treated as **literal separators** and are inserted automatically as the user types
+
+### Examples
+
+| Mask | Input | Display |
+|------|-------|---------|
+| `(###) ###-####` | 2125550142 | `(212) 555-0142` |
+| `###-##-####` | 123456789 | `123-45-6789` |
+| `#####` | 94117 | `94117` |
+| `#####-####` | 941170001 | `94117-0001` |
+| `@######` | A12345 | `A12345` |
+
+### Behavior
+
+1. **As the user types**, the mask characters auto-format the input (parentheses, dashes, spaces inserted at correct positions)
+2. **Backspace** removes the last entered character, skipping past literal separators
+3. **Pasting** a string (e.g. "2125550142") should be automatically formatted through the mask
+4. **The stored value** (the `onChange` payload) should be the **unmasked, raw value** — just the actual user-entered characters, no formatting
+5. If `field.mask` is undefined or empty, the TextField behaves as normal (no masking)
+
+### File structure
+
+```
+src/controls/
+├── hooks/
+│   └── useFieldMask.ts          # NEW — the hook
+├── TextField.tsx                # UPDATE — integrate the hook
+└── __tests__/
+    └── useFieldMask.test.ts     # NEW — tests for the hook
+```
+
+### useFieldMask hook API
+
+```typescript
+function useFieldMask(mask: string | undefined): {
+  applyMask: (inputValue: string) => string;
+  getUnmaskedValue: (maskedValue: string) => string;
+  formatDisplay: (rawValue: string) => string;
+}
+```
+
+- `applyMask` — applies formatting as the user types (for onChange handler)
+- `getUnmaskedValue` — strips formatting to get the raw value (for onChange callback)
+- `formatDisplay` — formats a raw value for display (for initial rendering or pasted values)
+
+### Integration in TextField.tsx
+
+1. Import the hook
+2. If `field.mask` exists, use the hook to format both the display value and handle onChange
+3. When the user types, call `applyMask(value)` and then pass the unmasked value via `onChange(getUnmaskedValue(...))`
+4. The display value shown to the user should be the masked/formatting version
+
+### Testing
+
+Write comprehensive tests for `useFieldMask` covering:
+- Phone mask: `(###) ###-####` → type "2125550142" → displays "(212) 555-0142", stores "2125550142"
+- SSN mask: `###-##-####` → type "123456789" → displays "123-45-6789", stores "123456789"
+- ZIP mask: `#####` → type "94117" → displays "94117"
+- ZIP+4 mask: `#####-####` → displays "94117-0001"
+- Partial input (don't complete the mask) still works
+- Backspace removes characters correctly past literals
+- No mask defined → passthrough (no formatting)
+- Paste handling
+- Leading literal characters work (e.g., `+# (###) ###-####` for international phone)
+
+Then update `FormField.test.tsx` to verify a TEXT field with mask still renders the basic text field.
+
+### Run tests
+
+After implementing:
+```bash
+npx vitest run src/controls/__tests__/useFieldMask.test.ts 2>&1
+npx vitest run src/controls/__tests__/FormField.test.tsx 2>&1
+```
+
+All tests must pass. Do NOT commit — just implement and verify tests pass.
