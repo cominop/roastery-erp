@@ -9,6 +9,7 @@ export default function ImageField({
   value,
   onChange,
   readOnly,
+  error,
   tabIndex,
 }: FormFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -311,7 +312,12 @@ export default function ImageField({
         </div>
       )}
 
-      {field.help && (
+      {error && (
+        <p className="text-[10px] text-destructive" role="alert">
+          {error}
+        </p>
+      )}
+      {!error && field.help && (
         <p className="text-[10px] text-muted-foreground">{field.help}</p>
       )}
     </div>

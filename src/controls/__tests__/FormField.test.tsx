@@ -341,3 +341,106 @@ describe('DateField', () => {
     expect(screen.queryByText('Select the due date')).not.toBeInTheDocument();
   });
 });
+
+describe('FormField — validate prop', () => {
+  it('shows required validation error when validate=true and value is empty', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'TEXT',
+          caption: 'Name',
+          required: true,
+        })}
+        value=""
+        onChange={() => {}}
+        validate={true}
+      />,
+    );
+    expect(screen.getByText('Name is required')).toBeInTheDocument();
+  });
+
+  it('does not show validation error when validate=false and value is empty', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'TEXT',
+          caption: 'Name',
+          required: true,
+        })}
+        value=""
+        onChange={() => {}}
+        validate={false}
+      />,
+    );
+    expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
+  });
+
+  it('shows external error when validate=true and both external and validation errors exist', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'TEXT',
+          caption: 'Name',
+          required: true,
+        })}
+        value=""
+        onChange={() => {}}
+        validate={true}
+        error="Custom external error"
+      />,
+    );
+    // With validate=true, validation error takes priority
+    expect(screen.getByText('Name is required')).toBeInTheDocument();
+    expect(screen.queryByText('Custom external error')).not.toBeInTheDocument();
+  });
+
+  it('shows external error when validate=true but no validation error', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'TEXT',
+          caption: 'Name',
+        })}
+        value="hello"
+        onChange={() => {}}
+        validate={true}
+        error="External server error"
+      />,
+    );
+    expect(screen.getByText('External server error')).toBeInTheDocument();
+  });
+
+  it('shows external error when value is valid and no validation error', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'INTEGER',
+          caption: 'Age',
+          min: 0,
+          max: 150,
+        })}
+        value={25}
+        onChange={() => {}}
+        validate={true}
+        error="Server error"
+      />,
+    );
+    expect(screen.getByText('Server error')).toBeInTheDocument();
+  });
+
+  it('shows type validation error for non-numeric INTEGER input', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'INTEGER',
+          caption: 'Quantity',
+          required: true,
+        })}
+        onChange={() => {}}
+        validate={true}
+      />,
+    );
+    // value=undefined (empty) → "Quantity is required"
+    expect(screen.getByText('Quantity is required')).toBeInTheDocument();
+  });
+});

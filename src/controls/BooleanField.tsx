@@ -8,6 +8,7 @@ export default function BooleanField({
   value,
   onChange,
   readOnly,
+  error,
   tabIndex,
 }: FormFieldProps) {
   const isToggle = field.format === 'toggle';
@@ -17,12 +18,38 @@ export default function BooleanField({
 
   if (isToggle) {
     return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Switch
+            id={id}
+            checked={checked}
+            disabled={disabled}
+            onCheckedChange={(c: boolean) => {
+              if (!disabled) onChange(c);
+            }}
+          />
+          <label htmlFor={id} className="text-xs font-medium text-foreground cursor-pointer">
+            {field.caption}
+          </label>
+        </div>
+        {error && (
+          <p className="text-[10px] text-destructive" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <Switch
+        <Checkbox
           id={id}
           checked={checked}
           disabled={disabled}
-          onCheckedChange={(c: boolean) => {
+          tabIndex={tabIndex ?? field.tabIndex}
+          onCheckedChange={(c) => {
             if (!disabled) onChange(c);
           }}
         />
@@ -30,23 +57,11 @@ export default function BooleanField({
           {field.caption}
         </label>
       </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <Checkbox
-        id={id}
-        checked={checked}
-        disabled={disabled}
-        tabIndex={tabIndex ?? field.tabIndex}
-        onCheckedChange={(c) => {
-          if (!disabled) onChange(c);
-        }}
-      />
-      <label htmlFor={id} className="text-xs font-medium text-foreground cursor-pointer">
-        {field.caption}
-      </label>
+      {error && (
+        <p className="text-[10px] text-destructive" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

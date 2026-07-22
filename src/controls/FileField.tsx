@@ -15,10 +15,11 @@ export default function FileField({
   value,
   onChange,
   readOnly,
+  error,
   tabIndex,
 }: FormFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [internalError, setInternalError] = useState<string | null>(null);
 
   const maxSize = field.maxSize ?? 10;
   const isReadOnly = readOnly ?? field.readOnly ?? false;
@@ -26,12 +27,12 @@ export default function FileField({
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setError(null);
+      setInternalError(null);
       const file = e.target.files?.[0];
       if (!file) return;
 
       if (file.size > maxSize * 1024 * 1024) {
-        setError(`File exceeds maximum size of ${maxSize} MB`);
+        setInternalError(`File exceeds maximum size of ${maxSize} MB`);
         // Reset the input so the same file can be re-selected
         e.target.value = '';
         return;
@@ -63,7 +64,7 @@ export default function FileField({
 
   const handleDelete = useCallback(() => {
     onChange(null);
-    setError(null);
+    setInternalError(null);
   }, [onChange]);
 
   return (
@@ -167,12 +168,17 @@ export default function FileField({
         </div>
       )}
 
+      {internalError && (
+        <p className="text-[10px] text-destructive" role="alert">
+          {internalError}
+        </p>
+      )}
       {error && (
         <p className="text-[10px] text-destructive" role="alert">
           {error}
         </p>
       )}
-      {field.help && !error && (
+      {field.help && !error && !internalError && (
         <p className="text-[10px] text-muted-foreground">{field.help}</p>
       )}
     </div>

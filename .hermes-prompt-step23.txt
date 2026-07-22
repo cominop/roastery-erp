@@ -1,0 +1,36 @@
+You are implementing Step 23 of 98 for the Roastery ERP: Field validation.
+
+The control system is already built: FormField dispatches to TextField, NumberField, DateField, BooleanField, LookupField, FileField, ImageField, RichTextField. Each control receives an error prop. FieldDefinition already has required field.
+
+What to build:
+
+1. Create src/controls/hooks/useFieldValidation.ts
+A hook: useFieldValidation with params field and value, returns error string or null.
+
+Validation rules:
+- Required: if field.required and value is null/undefined/empty string, return error message
+- Type check: INTEGER must be valid integer, FLOAT and CURRENCY must be valid number
+- Min/Max range: for INTEGER/FLOAT/CURRENCY, if value outside min/max range, return range error
+- Date constraints: for DATE/DATETIME, check value against min and max
+- Custom validation: add validationRule and validationText to FieldDefinition. If set, evaluate the rule.
+
+2. Wire error prop into controls that don't display it:
+- FileField: display error prop alongside internal error state
+- ImageField: add error display below the field
+- BooleanField: add error display below the control
+
+3. Add tests in src/controls/__tests__/useFieldValidation.test.ts
+
+4. Update FormField: add validate prop. When true, use useFieldValidation hook and pass computed error.
+
+Files to modify:
+- src/controls/schema/controlSchema.ts: add validationRule and validationText
+- src/controls/hooks/useFieldValidation.ts: NEW
+- src/controls/FileField.tsx: display error prop
+- src/controls/ImageField.tsx: display error prop
+- src/controls/BooleanField.tsx: display error prop
+- src/controls/FormField.tsx: add validate prop
+- src/controls/__tests__/useFieldValidation.test.ts: NEW
+- Update src/controls/__tests__/FormField.test.tsx
+
+Verification: npx vitest run src/controls/__tests__/useFieldValidation.test.ts src/controls/__tests__/FormField.test.tsx

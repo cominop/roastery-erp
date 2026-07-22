@@ -55,6 +55,10 @@ export interface FieldDefinition {
   help?: string;
   alignment?: 'left' | 'center' | 'right';
   tabIndex?: number;
+  /** Custom validation rule (JS expression where `value` is the field value) */
+  validationRule?: string;
+  /** Error message when custom validation rule fails */
+  validationText?: string;
 }
 
 export interface FormFieldProps {
@@ -68,4 +72,6 @@ export interface FormFieldProps {
   dependentValues?: Record<string, unknown>;
   /** Called when a lookup result is selected, passing the raw row data */
   onDependentValuesChange?: (values: Record<string, unknown>) => void;
+  /** When true, run client-side field validation using useFieldValidation */
+  validate?: boolean;
 }

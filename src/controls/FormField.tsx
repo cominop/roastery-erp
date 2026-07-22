@@ -10,17 +10,21 @@ import DateField from './DateField';
 import FileField from './FileField';
 import ImageField from './ImageField';
 import RichTextField from './RichTextField';
+import { useFieldValidation } from './hooks/useFieldValidation';
 
 export default function FormField({
   field,
   value,
   onChange,
   readOnly,
-  error,
+  error: externalError,
   tabIndex,
   dependentValues,
   onDependentValuesChange,
-}: FormFieldProps) {
+  validate,
+}: FormFieldProps & { validate?: boolean }) {
+  const validationError = useFieldValidation(field, value);
+  const error = validate ? (validationError ?? externalError ?? undefined) : externalError;
   switch (field.type) {
     case 'TEXT':
       return (
@@ -100,6 +104,7 @@ export default function FormField({
           value={value}
           onChange={onChange}
           readOnly={readOnly}
+          error={error}
           tabIndex={tabIndex}
         />
       );
@@ -110,6 +115,7 @@ export default function FormField({
           value={value}
           onChange={onChange}
           readOnly={readOnly}
+          error={error}
           tabIndex={tabIndex}
         />
       );
