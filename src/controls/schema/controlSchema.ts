@@ -54,4 +54,8 @@ export interface FormFieldProps {
   readOnly?: boolean;
   error?: string;
   tabIndex?: number;
+  /** Raw row data from the selected master lookup record, used to auto-fill dependent fields */
+  dependentValues?: Record<string, unknown>;
+  /** Called when a lookup result is selected, passing the raw row data */
+  onDependentValuesChange?: (values: Record<string, unknown>) => void;
 }

@@ -21,6 +21,8 @@ export default function LookupField({
   readOnly,
   error,
   tabIndex,
+  dependentValues,
+  onDependentValuesChange,
 }: FormFieldProps) {
   const lookupItem = field.lookupItem ?? '';
   const displayFields = getDisplayFields(field);
@@ -106,9 +108,11 @@ export default function LookupField({
       setSearchTerm('');
       setDropdownOpen(false);
       onChange(result.id);
+      // Pass raw row data up so the form can auto-fill dependent fields
+      onDependentValuesChange?.(result.raw);
       inputRef.current?.focus();
     },
-    [setSearchTerm, onChange],
+    [setSearchTerm, onChange, onDependentValuesChange],
   );
 
   // ── Keyboard navigation ──────────────────────────────────────────

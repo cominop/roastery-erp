@@ -14,6 +14,8 @@ export default function FormField({
   readOnly,
   error,
   tabIndex,
+  dependentValues,
+  onDependentValuesChange,
 }: FormFieldProps) {
   switch (field.type) {
     case 'TEXT':
@@ -60,6 +62,8 @@ export default function FormField({
           readOnly={readOnly}
           error={error}
           tabIndex={tabIndex}
+          dependentValues={dependentValues}
+          onDependentValuesChange={onDependentValuesChange}
         />
       );
     default:
