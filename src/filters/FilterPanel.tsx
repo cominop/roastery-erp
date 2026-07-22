@@ -1,6 +1,8 @@
 // FilterPanel — collapsible filter management UI
 // Integrates with the useFilters hook to let users view, add, remove,
 // toggle, and search filters.
+// When columns are provided, the "Add Filter" section uses type-specific
+// filter controls (text ILIKE, number range, date range, boolean, lookup).
 import { useState, useCallback } from "react";
 import {
   Filter,
@@ -14,8 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { UseFiltersReturn } from "@/hooks/useFilters";
+import type { FilterColumn } from "./types";
+import FilterControlFactory from "./FilterControlFactory";
 import FilterSummary from "./FilterSummary";
 
 type FilterPanelProps = Omit<UseFiltersReturn, "activeFilters" | "combinedFilter" | "hasActiveFilters" | "setFilterActive" | "updateFilter" | "setFilters"> & {
@@ -29,6 +40,12 @@ type FilterPanelProps = Omit<UseFiltersReturn, "activeFilters" | "combinedFilter
   updateFilter: UseFiltersReturn["updateFilter"];
   /** Replace all filters (bulk set) */
   setFilters: UseFiltersReturn["setFilters"];
+  /** Optional column definitions for type-specific filter controls.
+   *  When provided, the "Add Filter" section shows a column picker
+   *  followed by the appropriate control (text ILIKE, number range,
+   *  date range, boolean dropdown, or lookup).
+   *  When omitted, the old free-form name + expression inputs are used. */
+  columns?: FilterColumn[];
 };
 
 export default function FilterPanel({
@@ -42,9 +59,16 @@ export default function FilterPanel({
   clearFilters,
   updateFilter,
   setFilters,
+  columns,
 }: FilterPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Column-based add flow state
+  const [selectedColumn, setSelectedColumn] = useState<FilterColumn | null>(null);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+
+  // Legacy free-form add flow state
   const [newName, setNewName] = useState("");
   const [newExpression, setNewExpression] = useState("");
 
@@ -52,6 +76,7 @@ export default function FilterPanel({
     setExpanded((prev) => !prev);
   }, []);
 
+  // ── Legacy free-form add handler ──
   const handleAddFilter = useCallback(() => {
     const name = newName.trim();
     const expression = newExpression.trim();
@@ -60,6 +85,29 @@ export default function FilterPanel({
     setNewName("");
     setNewExpression("");
   }, [newName, newExpression, addFilter]);
+
+  // ── Column-based add handler ──
+  const handleColumnApply = useCallback(
+    (name: string, expression: string) => {
+      addFilter(name, expression);
+      setSelectedColumn(null);
+      setShowColumnPicker(false);
+    },
+    [addFilter]
+  );
+
+  const handleColumnCancel = useCallback(() => {
+    setSelectedColumn(null);
+    setShowColumnPicker(false);
+  }, []);
+
+  const handleColumnSelect = useCallback(
+    (field: string) => {
+      const col = columns?.find((c) => c.field === field) ?? null;
+      setSelectedColumn(col);
+    },
+    [columns]
+  );
 
   const handleClearAll = useCallback(() => {
     clearFilters();
@@ -77,6 +125,9 @@ export default function FilterPanel({
       ? f.name.toLowerCase().includes(searchQuery.toLowerCase())
       : true
   );
+
+  // Determine if we should show the column-based add flow
+  const hasColumns = columns && columns.length > 0;
 
   return (
     <div
@@ -215,7 +266,7 @@ export default function FilterPanel({
             </p>
           )}
 
-          {/* Add Filter form */}
+          {/* Add Filter section */}
           <div
             className="rounded-md border border-dashed border-border bg-muted/30 p-2.5 space-y-2"
             data-testid="filter-add-form"
@@ -224,39 +275,107 @@ export default function FilterPanel({
               <Plus className="size-3" />
               <span>Add Filter</span>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Input
-                data-testid="filter-new-name"
-                className="h-7 text-xs"
-                placeholder="Filter name..."
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFilter();
-                }}
-              />
-              <Input
-                data-testid="filter-new-expression"
-                className="h-7 text-xs font-mono"
-                placeholder="SQL expression (e.g., status = 'Active')"
-                value={newExpression}
-                onChange={(e) => setNewExpression(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFilter();
-                }}
-              />
-            </div>
-            <Button
-              data-testid="filter-add-button"
-              size="xs"
-              variant="outline"
-              onClick={handleAddFilter}
-              disabled={!newName.trim() || !newExpression.trim()}
-              className="w-full"
-            >
-              <Plus className="size-3" />
-              Add Filter
-            </Button>
+
+            {hasColumns ? (
+              // ── Column-based add flow ──
+              <>
+                {!showColumnPicker ? (
+                  <Button
+                    data-testid="filter-add-column-btn"
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setShowColumnPicker(true)}
+                    className="w-full"
+                  >
+                    <Plus className="size-3" />
+                    Choose a column to filter...
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Select
+                      value={selectedColumn?.field ?? ""}
+                      onValueChange={handleColumnSelect}
+                    >
+                      <SelectTrigger
+                        data-testid="filter-column-picker"
+                        className="w-full h-7 text-xs"
+                      >
+                        <SelectValue placeholder="Select a column..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {columns.map((col) => (
+                          <SelectItem
+                            key={col.field}
+                            value={col.field}
+                            data-testid={`filter-column-option-${col.field}`}
+                          >
+                            <span className="flex items-center gap-1.5">
+                              {col.label}
+                              <span className="text-[10px] text-muted-foreground">
+                                {col.type === "text"
+                                  ? "text"
+                                  : col.type === "number"
+                                    ? "num"
+                                    : col.type === "date"
+                                      ? "date"
+                                      : col.type === "boolean"
+                                        ? "bool"
+                                        : "lookup"}
+                              </span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {selectedColumn && (
+                      <FilterControlFactory
+                        column={selectedColumn}
+                        onApply={handleColumnApply}
+                        onCancel={handleColumnCancel}
+                      />
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              // ── Legacy free-form add flow ──
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Input
+                    data-testid="filter-new-name"
+                    className="h-7 text-xs"
+                    placeholder="Filter name..."
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddFilter();
+                    }}
+                  />
+                  <Input
+                    data-testid="filter-new-expression"
+                    className="h-7 text-xs font-mono"
+                    placeholder="SQL expression (e.g., status = 'Active')"
+                    value={newExpression}
+                    onChange={(e) => setNewExpression(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddFilter();
+                    }}
+                  />
+                </div>
+                <Button
+                  data-testid="filter-add-button"
+                  size="xs"
+                  variant="outline"
+                  onClick={handleAddFilter}
+                  disabled={!newName.trim() || !newExpression.trim()}
+                  className="w-full"
+                >
+                  <Plus className="size-3" />
+                  Add Filter
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
