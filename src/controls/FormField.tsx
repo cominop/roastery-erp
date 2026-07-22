@@ -6,6 +6,7 @@ import NumberField from './NumberField';
 import BooleanField from './BooleanField';
 import UnsupportedField from './UnsupportedField';
 import LookupField from './LookupField';
+import DateField from './DateField';
 
 export default function FormField({
   field,
@@ -64,6 +65,18 @@ export default function FormField({
           tabIndex={tabIndex}
           dependentValues={dependentValues}
           onDependentValuesChange={onDependentValuesChange}
+        />
+      );
+    case 'DATE':
+    case 'DATETIME':
+      return (
+        <DateField
+          field={field}
+          value={value}
+          onChange={onChange}
+          readOnly={readOnly}
+          error={error}
+          tabIndex={tabIndex}
         />
       );
     default:

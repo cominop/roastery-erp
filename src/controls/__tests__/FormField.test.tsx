@@ -1,5 +1,5 @@
 // FormField unit tests
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import FormField from '../FormField';
 import type { FieldDefinition } from '../schema/controlSchema';
@@ -77,13 +77,13 @@ describe('FormField dispatcher', () => {
   it('renders UnsupportedField for unimplemented field types', () => {
     render(
       <FormField
-        field={makeField({ type: 'DATE' })}
+        field={makeField({ type: 'FILE' })}
         value={null}
         onChange={() => {}}
       />,
     );
     expect(screen.getByText(/Unsupported field type/)).toBeInTheDocument();
-    expect(screen.getByText(/DATE/)).toBeInTheDocument();
+    expect(screen.getByText(/FILE/)).toBeInTheDocument();
   });
 
   it('renders LookupField for LOOKUP type', () => {
@@ -184,5 +184,158 @@ describe('BooleanField', () => {
     const toggle = screen.getByRole('switch');
     expect(toggle).toBeInTheDocument();
     expect(screen.getByText('Enabled')).toBeInTheDocument();
+  });
+});
+
+describe('DateField', () => {
+  it('renders date input for DATE type', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'DATE', caption: 'Order Date' })}
+        value="2026-07-21"
+        onChange={() => {}}
+      />,
+    );
+    const input = screen.getByLabelText('Order Date') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.type).toBe('date');
+  });
+
+  it('renders datetime-local input for DATETIME type', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'DATETIME', caption: 'Created At' })}
+        value="2026-07-21T14:30"
+        onChange={() => {}}
+      />,
+    );
+    const input = screen.getByLabelText('Created At') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.type).toBe('datetime-local');
+  });
+
+  it('displays label with required indicator', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'DATE', caption: 'Ship Date', required: true })}
+        value="2026-07-21"
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByText('Ship Date')).toBeInTheDocument();
+    expect(screen.getByText('*')).toBeInTheDocument();
+  });
+
+  it('sets min attribute on the input', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'DATE', caption: 'Start Date', min: '2026-01-01' as unknown as number })}
+        value="2026-06-15"
+        onChange={() => {}}
+      />,
+    );
+    const input = screen.getByLabelText('Start Date') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.min).toBe('2026-01-01');
+  });
+
+  it('sets max attribute on the input', () => {
+    render(
+      <FormField
+        field={makeField({ type: 'DATE', caption: 'End Date', max: '2026-12-31' as unknown as number })}
+        value="2026-06-15"
+        onChange={() => {}}
+      />,
+    );
+    const input = screen.getByLabelText('End Date') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.max).toBe('2026-12-31');
+  });
+
+  it('disables past dates when min is set to "today"', () => {
+    // Use fake timers to control the date
+    vi.useFakeTimers();
+    // Set the fake date to 2026-07-21
+    vi.setSystemTime(new Date('2026-07-21T12:00:00'));
+
+    render(
+      <FormField
+        field={makeField({ type: 'DATE', caption: 'Appointment Date', min: 'today' as unknown as number })}
+        value="2026-07-21"
+        onChange={() => {}}
+      />,
+    );
+    const input = screen.getByLabelText('Appointment Date') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.min).toBe('2026-07-21');
+
+    vi.useRealTimers();
+  });
+
+  it('renders formatted date text in readOnly mode', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'DATE',
+          caption: 'Birth Date',
+          format: 'MM/DD/YYYY',
+        })}
+        value="1990-03-15"
+        onChange={() => {}}
+        readOnly={true}
+      />,
+    );
+    // In readOnly mode, the formatted date should be displayed as text
+    expect(screen.getByText('03/15/1990')).toBeInTheDocument();
+  });
+
+  it('renders formatted datetime text in readOnly mode', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'DATETIME',
+          caption: 'Timestamp',
+          format: 'YYYY-MM-DD',
+        })}
+        value="2026-07-21T14:30:00"
+        onChange={() => {}}
+        readOnly={true}
+      />,
+    );
+    // Should show formatted date + time
+    expect(screen.getByText(/2026-07-21/)).toBeInTheDocument();
+  });
+
+  it('shows help text when no error', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'DATE',
+          caption: 'Due Date',
+          help: 'Select the due date for this order',
+        })}
+        value="2026-07-21"
+        onChange={() => {}}
+      />,
+    );
+    expect(screen.getByText('Select the due date for this order')).toBeInTheDocument();
+  });
+
+  it('shows error text instead of help text', () => {
+    render(
+      <FormField
+        field={makeField({
+          type: 'DATE',
+          caption: 'Due Date',
+          help: 'Select the due date',
+        })}
+        value="2026-07-21"
+        onChange={() => {}}
+        error="Date is required"
+      />,
+    );
+    expect(screen.getByText('Date is required')).toBeInTheDocument();
+    // Help text should not be visible when there's an error
+    expect(screen.queryByText('Select the due date')).not.toBeInTheDocument();
   });
 });
