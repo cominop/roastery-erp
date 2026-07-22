@@ -211,3 +211,7 @@ export function useTableSchema(table: string | undefined) {
 
   return columns;
 }
+
+// ─── Filter State Management ───────────────────────────
+export { useFilters } from "./useFilters";
+export type { FilterItem, UseFiltersOptions, UseFiltersReturn } from "./useFilters";
