@@ -1,5 +1,5 @@
 // App shell — sidebar with Settings panel
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +28,9 @@ import FormWorkspace from "@/components/form-window/form-workspace";
 import FormWindow from "@/components/form-window/form-window";
 import { useFormWindowManager } from "@/components/form-window/use-form-window-manager";
 import EventHandlerEditorPage from "@/components/EventHandlerEditorPage";
+import { useFilters, useFilterUrlSync } from "@/hooks";
+import { FilterPanel, QuickFilterBar } from "@/filters";
+import type { QuickFilterPreset } from "@/filters";
 
 interface NavItem {
   name: string;
@@ -215,17 +218,141 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   );
 }
 
+// ─── Table-specific quick filter presets ─────────────
+
+function getTablePresets(table: string): QuickFilterPreset[] {
+  const name = table.toLowerCase();
+
+  if (name === "orders") {
+    return [
+      {
+        id: "orders-open",
+        label: "Open Orders",
+        expression: "status IN ('Pending', 'Processing', 'Shipped')",
+        icon: "clock",
+        description: "Orders not yet completed or cancelled",
+      },
+      {
+        id: "orders-today",
+        label: "Today",
+        expression: "order_date >= CURRENT_DATE",
+        icon: "calendar",
+        description: "Orders placed today",
+      },
+      {
+        id: "orders-high-value",
+        label: "High Value",
+        expression: "total_amount > 500",
+        icon: "dollar",
+        description: "Orders over $500",
+      },
+      {
+        id: "orders-pending",
+        label: "Pending",
+        expression: "status = 'Pending'",
+        icon: "alert",
+        description: "Orders awaiting processing",
+      },
+    ];
+  }
+
+  if (name === "customers" || name === "customer") {
+    return [
+      {
+        id: "cust-active",
+        label: "Active",
+        expression: "status = 'Active' OR status IS NULL",
+        icon: "check",
+        description: "Active customers",
+      },
+      {
+        id: "cust-recent",
+        label: "Recent",
+        expression: "created_date >= CURRENT_DATE - INTERVAL '30 days'",
+        icon: "clock",
+        description: "Customers created in the last 30 days",
+      },
+      {
+        id: "cust-high-balance",
+        label: "High Balance",
+        expression: "balance > 1000",
+        icon: "dollar",
+        description: "Customers with balance over $1,000",
+      },
+    ];
+  }
+
+  if (name === "products" || name === "product" || name === "inventory") {
+    return [
+      {
+        id: "prod-active",
+        label: "Active",
+        expression: "discontinued IS DISTINCT FROM true",
+        icon: "check",
+        description: "Active products",
+      },
+      {
+        id: "prod-low-stock",
+        label: "Low Stock",
+        expression: "quantity_on_hand <= reorder_level AND quantity_on_hand > 0",
+        icon: "alert",
+        description: "Products below reorder threshold",
+      },
+      {
+        id: "prod-out-of-stock",
+        label: "Out of Stock",
+        expression: "quantity_on_hand = 0 OR quantity_on_hand IS NULL",
+        icon: "archive",
+        description: "Products with no inventory",
+      },
+    ];
+  }
+
+  // Generic presets for any table
+  return [
+    {
+      id: "recently-created",
+      label: "Recently Created",
+      expression: "created_date >= CURRENT_DATE - INTERVAL '7 days'",
+      icon: "clock",
+      description: "Records created in the last 7 days",
+    },
+  ];
+}
+
 // ─── Table Data Browser ──────────────────────────────
 
 function TableBrowser({ table }: { table: string }) {
   const [data, setData] = useState<{ rows: Record<string, unknown>[]; total: number } | null>(null);
+  const {
+    filters,
+    activeFilters,
+    hasActiveFilters,
+    addFilter,
+    removeFilter,
+    toggleFilter,
+    setFilterActive,
+    clearFilters,
+    updateFilter,
+    setFilters,
+    combinedFilter,
+  } = useFilters();
+
+  // Sync filter state to/from URL
+  useFilterUrlSync(filters, setFilters);
+
+  const presets = useMemo(() => getTablePresets(table), [table]);
 
   useEffect(() => {
-    fetch(`/api/data/${table}?limit=50`)
+    const params = new URLSearchParams({ limit: "50" });
+    if (combinedFilter) {
+      params.set("filter", combinedFilter);
+    }
+    fetch(`/api/data/${encodeURIComponent(table)}?${params}`)
       .then((r) => r.json())
       .then(setData)
       .catch(() => setData(null));
-  }, [table]);
+  }, [table, combinedFilter]);
 
   if (!data) return <div className="p-4 text-sm text-muted-foreground">Loading...</div>;
 
@@ -235,9 +362,32 @@ function TableBrowser({ table }: { table: string }) {
         <Table2 className="h-4 w-4" />
         {table}
         <span className="text-xs text-muted-foreground">
-          ({data.total} rows)
+          ({data.total} rows{hasActiveFilters ? ", filtered" : ""})
         </span>
       </div>
+
+      {/* Quick filter preset buttons */}
+      <QuickFilterBar
+        presets={presets}
+        filters={filters}
+        addFilter={addFilter}
+        removeFilter={removeFilter}
+      />
+
+      {/* Filter panel */}
+      <FilterPanel
+        filters={filters}
+        activeFilters={activeFilters}
+        hasActiveFilters={hasActiveFilters}
+        addFilter={addFilter}
+        removeFilter={removeFilter}
+        toggleFilter={toggleFilter}
+        setFilterActive={setFilterActive}
+        clearFilters={clearFilters}
+        updateFilter={updateFilter}
+        setFilters={setFilters}
+      />
+
       <div className="flex-1 overflow-auto">
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-muted/50">

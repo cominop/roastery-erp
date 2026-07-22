@@ -7,4 +7,6 @@ export { default as NumberRangeFilterControl } from "./NumberRangeFilterControl"
 export { default as DateRangeFilterControl } from "./DateRangeFilterControl";
 export { default as BooleanFilterControl } from "./BooleanFilterControl";
 export { default as LookupFilterControl } from "./LookupFilterControl";
+export { default as QuickFilterBar } from "./QuickFilterBar";
+export type { QuickFilterPreset } from "./QuickFilterBar";
 export type { FilterColumn, FilterColumnType, FilterControlProps } from "./types";
