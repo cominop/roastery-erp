@@ -1,0 +1,86 @@
+Implement Step 28: URL persistence (encode/decode filter state in query params)
+
+## Context
+This is the Roastery ERP, a form-based ERP UI built with React 19, TypeScript, Vite, and Tailwind CSS 4. Filtering infrastructure (Steps 24-27) is already complete:
+- Step 24: `useFilters` hook at `src/hooks/useFilters.ts` — manages filter state (add/remove/toggle/clear filters, combined SQL WHERE clause)
+- Step 25: `FilterPanel` component at `src/filters/FilterPanel.tsx` — collapsible filter UI
+- Step 26: Type-specific filter controls at `src/filters/FilterControlFactory.tsx`
+- Step 27: Server-side filter → SQL translation at `server/index.cjs`
+
+The app does NOT use react-router. There is no router installed. Use native `URLSearchParams` + `window.history.replaceState` / `window.history.pushState` for URL persistence.
+
+## Task
+
+Add URL persistence to the filtering system so that filter state survives page refreshes and can be shared via URL.
+
+### Requirements
+
+1. **Encode filters into URL query params:**
+   - When any filter changes (add, remove, toggle, update, clear, bulk set), serialize the full `filters` state array into a URL query parameter named `filters`.
+   - Use `encodeURIComponent(JSON.stringify(filters))` for serialization.
+   - Update the URL via `window.history.replaceState` (not pushState) so each filter change doesn't create a new history entry.
+
+2. **Decode filters from URL query params on mount:**
+   - When `useFilters` mounts, check `window.location.search` for a `filters` parameter.
+   - If present, `JSON.parse(decodeURIComponent(...))` to restore the filter array.
+   - Set the initial state from URL params if available, otherwise default to empty array.
+   - Handle JSON parse errors gracefully (fall back to empty array).
+
+3. **Sync filters → URL on every change:**
+   - All filter mutations (addFilter, removeFilter, toggleFilter, setFilterActive, clearFilters, updateFilter, setFilters) should call a `syncToUrl` helper that updates `window.location.search` with the current filter state.
+
+4. **Existing tests must still pass:**
+   - `src/hooks/__tests__/useFilters.test.ts` — all existing tests must pass without modification
+   - `src/filters/__tests__/FilterPanel.test.tsx` — all existing tests must pass
+   - `src/filters/__tests__/TypeSpecificFilterControls.test.tsx` — must pass
+
+5. **Make URL persistence testable:**
+   - Add new unit tests in `src/hooks/__tests__/useFilters.test.ts` for URL persistence:
+     - Test that filters are encoded into URL on add/remove/toggle/clear
+     - Test that filters are decoded from URL on mount
+     - Test graceful handling of malformed URL params
+   - Use `vi.stubGlobal('window', ...)` to mock `window.location` in tests, or use jsdom's built-in URL support.
+
+6. **No dependencies:**
+   - Do NOT install react-router or any new packages. Use native browser APIs only.
+
+### Files to modify
+- `src/hooks/useFilters.ts` — add URL sync logic
+- `src/hooks/__tests__/useFilters.test.ts` — add URL persistence tests
+
+### Current `useFilters` interface (keep unchanged)
+```typescript
+export interface FilterItem {
+  id: string;
+  name: string;
+  expression: string;
+  active: boolean;
+}
+```
+
+The existing `useFilters` hook returns `{ filters, activeFilters, combinedFilter, hasActiveFilters, addFilter, removeFilter, toggleFilter, setFilterActive, clearFilters, updateFilter, setFilters }`.
+
+### Implementation approach
+Create a helper function `syncFiltersToUrl(filters: FilterItem[])` that:
+1. Creates a `URLSearchParams` from the current URL
+2. Sets the `filters` param to `JSON.stringify(filters)` 
+3. Calls `window.history.replaceState(null, '', '?' + params.toString())`
+
+Create a helper function `readFiltersFromUrl(): FilterItem[]` that:
+1. Reads `window.location.search`
+2. Parses the `filters` param
+3. Returns the parsed array or `[]` on error
+
+Integrate these into the `useFilters` hook so state is initialized from URL and synced on every change.
+
+### Important notes
+- The `generateId()` function creates sequential IDs like `filter_1`, `filter_2`, etc. When restoring from URL, preserve the original IDs so the URL is stable.
+- Use `useEffect` or `useRef` to avoid syncing to URL on initial mount (when we're reading from URL, not writing).
+- Use `useInsertionEffect` or schedule the sync after mount to avoid SSR/hydration issues. Actually, since there's no SSR, a simple `useEffect` with a ref-based "has initialized" flag works.
+
+Run the unit tests after implementing:
+```
+npx vitest run src/hooks/__tests__/useFilters.test.ts
+npx vitest run src/filters/__tests__/FilterPanel.test.tsx
+npx vitest run src/filters/__tests__/TypeSpecificFilterControls.test.tsx
+```

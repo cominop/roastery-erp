@@ -215,3 +215,10 @@ export function useTableSchema(table: string | undefined) {
 // ─── Filter State Management ───────────────────────────
 export { useFilters } from "./useFilters";
 export type { FilterItem, UseFiltersOptions, UseFiltersReturn } from "./useFilters";
+export { useFilterUrlSync } from "./useFilterUrlSync";
+export {
+  serializeFilters,
+  deserializeFilters,
+  readFiltersFromUrl,
+  writeFiltersToUrl,
+} from "./useFilterUrlSync";
