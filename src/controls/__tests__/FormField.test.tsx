@@ -75,15 +75,15 @@ describe('FormField dispatcher', () => {
   });
 
   it('renders UnsupportedField for unimplemented field types', () => {
-    render(
-      <FormField
-        field={makeField({ type: 'FILE' })}
-        value={null}
-        onChange={() => {}}
-      />,
-    );
-    expect(screen.getByText(/Unsupported field type/)).toBeInTheDocument();
-    expect(screen.getByText(/FILE/)).toBeInTheDocument();
+  render(
+    <FormField
+      field={makeField({ type: 'IMAGE' })}
+      value={null}
+      onChange={() => {}}
+    />,
+  );
+  expect(screen.getByText(/Unsupported field type/)).toBeInTheDocument();
+  expect(screen.getByText(/IMAGE/)).toBeInTheDocument();
   });
 
   it('renders LookupField for LOOKUP type', () => {

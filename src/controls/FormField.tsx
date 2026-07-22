@@ -7,6 +7,7 @@ import BooleanField from './BooleanField';
 import UnsupportedField from './UnsupportedField';
 import LookupField from './LookupField';
 import DateField from './DateField';
+import FileField from './FileField';
 
 export default function FormField({
   field,
@@ -76,6 +77,16 @@ export default function FormField({
           onChange={onChange}
           readOnly={readOnly}
           error={error}
+          tabIndex={tabIndex}
+        />
+      );
+    case 'FILE':
+      return (
+        <FileField
+          field={field}
+          value={value}
+          onChange={onChange}
+          readOnly={readOnly}
           tabIndex={tabIndex}
         />
       );
