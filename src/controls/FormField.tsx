@@ -8,6 +8,7 @@ import UnsupportedField from './UnsupportedField';
 import LookupField from './LookupField';
 import DateField from './DateField';
 import FileField from './FileField';
+import ImageField from './ImageField';
 
 export default function FormField({
   field,
@@ -83,6 +84,16 @@ export default function FormField({
     case 'FILE':
       return (
         <FileField
+          field={field}
+          value={value}
+          onChange={onChange}
+          readOnly={readOnly}
+          tabIndex={tabIndex}
+        />
+      );
+    case 'IMAGE':
+      return (
+        <ImageField
           field={field}
           value={value}
           onChange={onChange}

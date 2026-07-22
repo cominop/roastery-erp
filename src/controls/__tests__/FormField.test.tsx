@@ -77,13 +77,13 @@ describe('FormField dispatcher', () => {
   it('renders UnsupportedField for unimplemented field types', () => {
   render(
     <FormField
-      field={makeField({ type: 'IMAGE' })}
+      field={makeField({ type: 'LONGTEXT' })}
       value={null}
       onChange={() => {}}
     />,
   );
   expect(screen.getByText(/Unsupported field type/)).toBeInTheDocument();
-  expect(screen.getByText(/IMAGE/)).toBeInTheDocument();
+  expect(screen.getByText(/LONGTEXT/)).toBeInTheDocument();
   });
 
   it('renders LookupField for LOOKUP type', () => {

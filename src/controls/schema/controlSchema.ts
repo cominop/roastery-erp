@@ -37,6 +37,16 @@ export interface FieldDefinition {
   maxRows?: number;
   accept?: string;
   maxSize?: number;
+  /** Image preview dimensions (read-only mode) */
+  viewWidth?: number;
+  viewHeight?: number;
+  /** Image upload/edit area dimensions */
+  editWidth?: number;
+  editHeight?: number;
+  /** Show camera capture button */
+  captureFromCamera?: boolean;
+  /** Fallback placeholder image URL */
+  placeholderImage?: string;
   calcType?: string;
   calcExpression?: string;
   defaultValue?: string;
