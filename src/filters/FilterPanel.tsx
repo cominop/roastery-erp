@@ -12,6 +12,7 @@ import {
   Plus,
   X,
   Search,
+  Bookmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,8 @@ import type { UseFiltersReturn } from "@/hooks/useFilters";
 import type { FilterColumn } from "./types";
 import FilterControlFactory from "./FilterControlFactory";
 import FilterSummary from "./FilterSummary";
+import FilterPresetManager from "./FilterPresetManager";
+import { useFilterPresets } from "./useFilterPresets";
 
 type FilterPanelProps = Omit<UseFiltersReturn, "activeFilters" | "combinedFilter" | "hasActiveFilters" | "setFilterActive" | "updateFilter" | "setFilters"> & {
   /** Active filters (for collapsed summary display) */
@@ -67,6 +70,10 @@ export default function FilterPanel({
   // Column-based add flow state
   const [selectedColumn, setSelectedColumn] = useState<FilterColumn | null>(null);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [presetDialogOpen, setPresetDialogOpen] = useState(false);
+
+  // Saved presets
+  const presetsApi = useFilterPresets();
 
   // Legacy free-form add flow state
   const [newName, setNewName] = useState("");
@@ -112,6 +119,21 @@ export default function FilterPanel({
   const handleClearAll = useCallback(() => {
     clearFilters();
   }, [clearFilters]);
+
+  const handleLoadPreset = useCallback(
+    (filters: import("./useFilterPresets").PresetFilterItem[]) => {
+      const items: import("@/hooks/useFilters").FilterItem[] = filters.map(
+        (f, i) => ({
+          id: `preset_loaded_${i}`,
+          name: f.name,
+          expression: f.expression,
+          active: f.active,
+        })
+      );
+      setFilters(items);
+    },
+    [setFilters]
+  );
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +206,7 @@ export default function FilterPanel({
           className="px-3 pb-3 pt-2 space-y-3"
           data-testid="filter-panel-content"
         >
-          {/* Search + Clear All row */}
+          {/* Search + Clear All + Presets row */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -207,6 +229,16 @@ export default function FilterPanel({
                 Clear All
               </Button>
             )}
+            <Button
+              data-testid="filter-presets-button"
+              variant="outline"
+              size="xs"
+              onClick={() => setPresetDialogOpen(true)}
+              className="shrink-0"
+            >
+              <Bookmark className="size-3" />
+              Presets
+            </Button>
           </div>
 
           {/* Active filter list */}
@@ -379,6 +411,19 @@ export default function FilterPanel({
           </div>
         </div>
       )}
+
+      {/* Preset Manager Dialog */}
+      <FilterPresetManager
+        open={presetDialogOpen}
+        onOpenChange={setPresetDialogOpen}
+        currentFilters={filters.map((f) => ({
+          name: f.name,
+          expression: f.expression,
+          active: f.active,
+        }))}
+        presetsApi={presetsApi}
+        onLoadPreset={handleLoadPreset}
+      />
     </div>
   );
 }

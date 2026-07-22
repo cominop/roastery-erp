@@ -1,0 +1,258 @@
+Implement Step 30 — Saved Presets (CRUD, share, per-user)
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+
+## Context
+You are implementing saved filter presets for the Roastery ERP's filtering system. Steps 1-6 of the Filtering system are already complete (filter state management, panel UI, type-specific controls, SQL translation, URL persistence, and quick filter buttons are built and tested).
+
+## What to Build
+
+### 1. Database — Create `db_fcc_erp.filter_presets` table
+Add a SQL migration script at `server/sql/step-30-filter-presets.sql`:
+```sql
+CREATE TABLE IF NOT EXISTS db_fcc_erp.filter_presets (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  table_name VARCHAR(255) NOT NULL,
+  filters JSONB NOT NULL DEFAULT '[]',
+  filter_logic VARCHAR(3) NOT NULL DEFAULT 'AND',
+  user_id INTEGER NOT NULL DEFAULT 1,
+  shared BOOLEAN NOT NULL DEFAULT false,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_filter_presets_user_id ON db_fcc_erp.filter_presets(user_id);
+CREATE INDEX IF NOT EXISTS idx_filter_presets_shared ON db_fcc_erp.filter_presets(shared);
+CREATE INDEX IF NOT EXISTS idx_filter_presets_table_name ON db_fcc_erp.filter_presets(table_name);
+```
+
+Run it via a terminal call: `psql -d polyaccess -f server/sql/step-30-filter-presets.sql`
+
+### 2. Server — API Endpoints in `server/index.cjs`
+Add the following endpoints BEFORE the `// ─── Start ───` line:
+
+**GET /api/filter-presets**
+- Query params: `table_name` (optional), `user_id` (default 1)
+- Returns: user's own presets + shared presets, ordered by sort_order
+- Filter: `WHERE (user_id = $1 OR shared = true) AND (table_name = $2 OR $2 IS NULL)`
+
+**POST /api/filter-presets**
+- Body: `{ name, table_name, filters, filter_logic, user_id, shared }`
+- Insert and return the created record
+- Validate: name and table_name required, filters must be valid JSON array
+
+**PUT /api/filter-presets/:id**
+- Body: any updatable fields (name, filters, filter_logic, shared, sort_order)
+- Only allow updating presets owned by the user (check user_id matches)
+- Return 403 if not owner
+- Set updated_at = NOW()
+
+**DELETE /api/filter-presets/:id**
+- Only allow deleting presets owned by the user
+- Return 403 if not owner
+- Return 404 if not found
+
+### 3. Types — `src/filters/types.ts`
+Add to the existing file:
+```typescript
+export interface FilterPreset {
+  id: number;
+  name: string;
+  tableName: string;
+  filters: Array<{ field: string; value: any; operator?: string }>;
+  filterLogic: 'AND' | 'OR';
+  userId: number;
+  shared: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FilterPresetCreate {
+  name: string;
+  tableName: string;
+  filters: Array<{ field: string; value: any; operator?: string }>;
+  filterLogic?: 'AND' | 'OR';
+  shared?: boolean;
+}
+```
+
+Note: The server uses snake_case (user_id, table_name, filter_logic, sort_order, created_at, updated_at) and the frontend uses camelCase. The API response will have snake_case keys. Handle the conversion in the hook.
+
+### 4. Hook — `src/filters/hooks/useFilterPresets.ts`
+Create the directory `src/filters/hooks/` if it doesn't exist.
+
+```typescript
+// useFilterPresets — CRUD hook for saved filter presets
+// Fetches from /api/filter-presets and provides create/update/delete operations.
+// Automatically converts between camelCase (frontend) and snake_case (API).
+
+export function useFilterPresets(tableName?: string, userId?: number): UseFilterPresetsReturn {
+  // State: presets, loading, error
+  // Fetch on mount and when tableName/userId changes
+  // Operations:
+  //   createPreset(data: FilterPresetCreate) => POST
+  //   updatePreset(id, data) => PUT
+  //   deletePreset(id) => DELETE
+  //   refresh() => re-fetch
+  // Returns: { presets, loading, error, createPreset, updatePreset, deletePreset, refresh }
+}
+```
+
+Handle the snake_case ↔ camelCase mapping:
+- From API: `user_id` → `userId`, `table_name` → `tableName`, `filter_logic` → `filterLogic`, `sort_order` → `sortOrder`, `created_at` → `createdAt`, `updated_at` → `updatedAt`
+- To API: Reverse the mapping
+
+### 5. Component — `src/filters/PresetManager.tsx`
+A modal dialog for managing saved filter presets, matching Section 8.1 of the spec:
+
+```
+┌─ Saved Filter Presets ───────────────────────┐
+│                                               │
+│  ┌─ My Presets ────────────────────────────┐  │
+│  │  📁 Pending orders this month       [▶] │  │
+│  │  📁 High-value customers            [▶] │  │
+│  │  📁 Low stock products              [▶] │  │
+│  │  [Save Current...]                        │  │
+│  └──────────────────────────────────────────┘  │
+│                                               │
+│  ┌─ Shared Presets (all users) ────────────┐  │
+│  │  📁 Weekly sales report              [▶] │  │
+│  │  📁 Overdue invoices                 [▶] │  │
+│  │  📁 Today's production               [▶] │  │
+│  └──────────────────────────────────────────┘  │
+│                                               │
+│  [Apply]  [Edit]  [Share]  [Delete]           │
+└──────────────────────────────────────────────┘
+```
+
+Props:
+```typescript
+interface PresetManagerProps {
+  open: boolean;
+  onClose: () => void;
+  tableName: string;
+  currentFilters: FilterItem[];
+  onApplyPreset: (preset: FilterPreset) => void;
+}
+```
+
+Features:
+- **My Presets** section: lists presets where userId matches current user (or shared=true)
+- **Shared Presets** section: lists presets where shared=true
+- **Apply** button: calls onApplyPreset which should restore the filter state
+- **Save Current** button: opens a sub-dialog to name the preset, toggle shared, then create
+- **Edit** button: opens a sub-dialog to rename, toggle shared
+- **Delete** button: confirms then deletes
+- **Share** button: toggles the shared flag
+- Loading state: show spinner while fetching
+- Empty state: "No saved presets yet"
+
+Use the shadcn Dialog component (already available at `@/components/ui/dialog.tsx`).
+Use the existing Button, Input, Switch components.
+Use lucide-react icons: Save, FolderOpen, Trash2, Share2, Pencil, X, Loader2.
+
+### 6. Save Preset Dialog — `src/filters/SavePresetDialog.tsx`
+A simpler inline dialog for saving/editing a single preset:
+
+```typescript
+interface SavePresetDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: FilterPresetCreate) => void;
+  initial?: Partial<FilterPreset>; // For edit mode
+  loading?: boolean;
+}
+```
+
+Fields: Name (required), Shared (toggle), Cancel/Save buttons.
+
+### 7. Integration — Update FilterPanel
+In `src/filters/FilterPanel.tsx`, add to the expanded state header area (between the search bar and the filter list):
+
+- Add a "Save Preset..." button that opens the SavePresetDialog
+- Add a "Load..." button that opens the PresetManager
+- Both buttons only appear when the panel is expanded and columns are provided
+
+Add new state:
+```typescript
+const [showPresetManager, setShowPresetManager] = useState(false);
+const [showSaveDialog, setShowSaveDialog] = useState(false);
+```
+
+### 8. Barrel Export — Update `src/filters/index.ts`
+Add exports:
+```typescript
+export { default as PresetManager } from "./PresetManager";
+export { default as SavePresetDialog } from "./SavePresetDialog";
+export { useFilterPresets } from "./hooks/useFilterPresets";
+export type { FilterPreset, FilterPresetCreate } from "./types";
+```
+
+### 9. Tests — `src/filters/__tests__/PresetManager.test.tsx`
+Write comprehensive tests:
+- Renders dialog when open
+- Shows loading state
+- Shows empty state
+- Lists My Presets and Shared Presets sections
+- Calls onApplyPreset when Apply clicked
+- Opens save dialog on Save Current
+- Opens edit dialog on Edit
+- Calls deletePreset on Delete with confirmation
+- Toggles shared on Share click
+- Renders nothing when open=false
+
+### 10. Tests — `src/filters/__tests__/SavePresetDialog.test.tsx`
+- Renders dialog when open
+- Validates name is required
+- Calls onSave with correct data
+- Shows loading state on save button
+- Pre-fills name in edit mode
+
+### 11. Tests — `src/filters/__tests__/useFilterPresets.test.ts`
+- Unit test the hook using mock fetch:
+  - Returns presets on successful fetch
+  - Handles empty response
+  - createPreset calls POST and refreshes
+  - updatePreset calls PUT
+  - deletePreset calls DELETE
+  - Handles API errors
+
+## Implementation Order
+1. Create SQL migration and run it
+2. Add API endpoints to server/index.cjs
+3. Add types to src/filters/types.ts
+4. Create src/filters/hooks/ directory and useFilterPresets.ts
+5. Create SavePresetDialog.tsx
+6. Create PresetManager.tsx
+7. Update FilterPanel.tsx with Save/Load buttons
+8. Update src/filters/index.ts barrel export
+9. Write tests
+10. Run vitest: `npx vitest run src/filters/__tests__/`
+11. If tests fail, fix and re-run until green
+
+## Patterns to Follow
+- Use @/ path aliases for imports
+- Use data-testid attributes for testability
+- Follow existing code style in FilterPanel.tsx and QuickFilterBar.tsx
+- Use vi.fn() for mocked functions in tests
+- Use render, screen, fireEvent from @testing-library/react
+- Use lucide-react for all icons
+- Use shadcn/ui components (Dialog, Button, Input, Switch)
+- The server uses CommonJS (require/module.exports)
+- The frontend uses ES modules (import/export)
+
+## Key Files
+- `server/index.cjs` — add API routes before the `// ─── Start ───` line
+- `src/filters/types.ts` — add FilterPreset and FilterPresetCreate types
+- `src/filters/hooks/useFilterPresets.ts` — new file
+- `src/filters/SavePresetDialog.tsx` — new file
+- `src/filters/PresetManager.tsx` — new file
+- `src/filters/FilterPanel.tsx` — add Save/Load buttons
+- `src/filters/index.ts` — add barrel exports
+- `src/filters/__tests__/PresetManager.test.tsx` — new test file
+- `src/filters/__tests__/SavePresetDialog.test.tsx` — new test file
+- `src/filters/__tests__/useFilterPresets.test.ts` — new test file
+- `server/sql/step-30-filter-presets.sql` — new migration

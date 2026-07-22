@@ -10,3 +10,11 @@ export { default as LookupFilterControl } from "./LookupFilterControl";
 export { default as QuickFilterBar } from "./QuickFilterBar";
 export type { QuickFilterPreset } from "./QuickFilterBar";
 export type { FilterColumn, FilterColumnType, FilterControlProps } from "./types";
+export { default as FilterPresetManager } from "./FilterPresetManager";
+export {
+  useFilterPresets,
+  type SavedFilterPreset,
+  type PresetFilterItem,
+  type UseFilterPresetsOptions,
+  type UseFilterPresetsReturn,
+} from "./useFilterPresets";
