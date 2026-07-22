@@ -18,6 +18,7 @@
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
+const { filtersToWhereClause, validateFilter } = require("./filters-to-where.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -171,7 +172,7 @@ app.get("/api/data/:table", async (req, res) => {
   function translateAccessFilter(filter) {
     if (!filter || typeof filter !== "string") return filter;
     let sql = filter;
-    // Strip JSON backslash-escaped quotes: " → "
+    // Strip JSON backslash-escaped quotes: \" → "
     sql = sql.replace(/\\"/g, '"');
     // Strip Access form references: [FormName].[Field] → field (lowercased)
     sql = sql.replace(/\[[^\]]*\]\.\[([^\]]*)\]/g, (_, field) => field.trim().replace(/\s+/g, "_").toLowerCase());
@@ -192,15 +193,59 @@ app.get("/api/data/:table", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 1;
-    const rawFilter = req.query.filter || null;
-    const filter = rawFilter ? translateAccessFilter(rawFilter) : null;
     const orderBy = req.query.orderBy || null;
     const companyId = req.query.company_id || 1;
     const offset = (page - 1) * limit;
 
-    let where = `WHERE company_id = ${companyId}`;
-    if (filter) where += ` AND (${filter})`;
+    // ─── Build WHERE clause ──────────────────────────────
+    // Two modes:
+    //   1. `filters` query param — structured JSON array (preferred)
+    //   2. `filter` query param — raw SQL string (backward compat)
 
+    let whereClause = "";
+    const queryParams = [];
+
+    // Check for structured filters first
+    const rawFilters = req.query.filters;
+    if (rawFilters && typeof rawFilters === "string") {
+      try {
+        const parsed = JSON.parse(rawFilters);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Validate each filter
+          const valid = parsed.filter((f) => {
+            const err = validateFilter(f);
+            if (err) {
+              console.warn(`Skipping invalid filter: ${err}`, JSON.stringify(f));
+            }
+            return !err;
+          });
+          if (valid.length > 0) {
+            const result = filtersToWhereClause(valid);
+            if (result.whereClause) {
+              whereClause = result.whereClause;
+              queryParams.push(...result.params);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to parse structured filters JSON:", e.message);
+      }
+    }
+
+    // Fall back to raw filter string if no structured filters were provided
+    if (!whereClause) {
+      const rawFilter = req.query.filter || null;
+      const filter = rawFilter ? translateAccessFilter(rawFilter) : null;
+      if (filter) {
+        whereClause = `(${filter})`;
+      }
+    }
+
+    // Build the final WHERE clause
+    let where = `WHERE company_id = ${companyId}`;
+    if (whereClause) where += ` AND ${whereClause}`;
+
+    // ─── Order clause ─────────────────────────────────
     let order = "";
     if (orderBy) {
       // Split into column and direction (e.g., "orderdate DESC")
@@ -210,14 +255,30 @@ app.get("/api/data/:table", async (req, res) => {
       order = `ORDER BY "${column}" ${["ASC", "DESC"].includes(direction) ? direction : "ASC"}`;
     }
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM db_fcc_erp."${table}" ${where}`
-    );
-    const total = parseInt(countResult.rows[0].count);
+    // ─── Execute queries ──────────────────────────────
+    let countResult, rows;
 
-    const { rows } = await pool.query(
-      `SELECT * FROM db_fcc_erp."${table}" ${where} ${order} LIMIT ${limit} OFFSET ${offset}`
-    );
+    if (queryParams.length > 0) {
+      // Parameterized query for structured filters
+      countResult = await pool.query(
+        `SELECT COUNT(*) FROM db_fcc_erp."${table}" ${where}`,
+        queryParams
+      );
+      rows = (await pool.query(
+        `SELECT * FROM db_fcc_erp."${table}" ${where} ${order} LIMIT ${limit} OFFSET ${offset}`,
+        queryParams
+      )).rows;
+    } else {
+      // Non-parameterized query (backward compat)
+      countResult = await pool.query(
+        `SELECT COUNT(*) FROM db_fcc_erp."${table}" ${where}`
+      );
+      rows = (await pool.query(
+        `SELECT * FROM db_fcc_erp."${table}" ${where} ${order} LIMIT ${limit} OFFSET ${offset}`
+      )).rows;
+    }
+
+    const total = parseInt(countResult.rows[0].count);
 
     res.json({ rows, total, page });
   } catch (err) {
