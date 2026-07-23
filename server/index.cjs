@@ -19,6 +19,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const { filtersToWhereClause, validateFilter } = require("./filters-to-where.cjs");
+const { permissionGuard, parseTableNamesFromSql } = require("./permission-middleware.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -89,7 +90,7 @@ app.get("/api/nav", async (_req, res) => {
 
 // ─── Forms ────────────────────────────────────────────
 
-app.get("/api/forms", async (_req, res) => {
+app.get("/api/forms", permissionGuard(() => "shared.objects"), async (_req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT DISTINCT ON (name) name, 
@@ -160,7 +161,7 @@ async function getPkColumn(table) {
 }
 
 // GET /api/data/:table — paginated records
-app.get("/api/data/:table", async (req, res) => {
+app.get("/api/data/:table", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table } = req.params;
   if (!validateTable(table, res)) return;
 
@@ -287,7 +288,7 @@ app.get("/api/data/:table", async (req, res) => {
 });
 
 // GET /api/data/:table/:id — single record
-app.get("/api/data/:table/:id", async (req, res) => {
+app.get("/api/data/:table/:id", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table, id } = req.params;
   if (!validateTable(table, res)) return;
 
@@ -305,7 +306,7 @@ app.get("/api/data/:table/:id", async (req, res) => {
 });
 
 // POST /api/data/:table
-app.post("/api/data/:table", async (req, res) => {
+app.post("/api/data/:table", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table } = req.params;
   if (!validateTable(table, res)) return;
 
@@ -328,7 +329,7 @@ app.post("/api/data/:table", async (req, res) => {
 });
 
 // PUT /api/data/:table/:id
-app.put("/api/data/:table/:id", async (req, res) => {
+app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table, id } = req.params;
   if (!validateTable(table, res)) return;
 
@@ -354,7 +355,7 @@ app.put("/api/data/:table/:id", async (req, res) => {
 });
 
 // DELETE /api/data/:table/:id
-app.delete("/api/data/:table/:id", async (req, res) => {
+app.delete("/api/data/:table/:id", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table, id } = req.params;
   if (!validateTable(table, res)) return;
 
@@ -372,7 +373,11 @@ app.delete("/api/data/:table/:id", async (req, res) => {
 
 // ─── Lookups (combo-box row sources) ──────────────────
 
-app.post("/api/lookup", async (req, res) => {
+app.post("/api/lookup", permissionGuard((req) => {
+  const sql = req.body?.sql;
+  if (!sql) return [];
+  return parseTableNamesFromSql(sql);
+}, { POST: "select" }), async (req, res) => {
   try {
     const { sql } = req.body;
     if (!sql || typeof sql !== "string") {
@@ -395,7 +400,7 @@ app.post("/api/lookup", async (req, res) => {
 
 // ─── Table Schema ─────────────────────────────────────
 
-app.get("/api/schema/:table", async (req, res) => {
+app.get("/api/schema/:table", permissionGuard((req) => req.params.table), async (req, res) => {
   const { table } = req.params;
   if (!validateTable(table, res)) return;
 
