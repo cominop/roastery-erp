@@ -1,18 +1,23 @@
 // NumberRangeFilterControl — min/max number range filter
 // Renders two number inputs and produces: field >= min AND field <= max
-import { useState, useCallback } from "react";
+// Supports smart default ranges and suggestion chips based on field name patterns.
+import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Minus } from "lucide-react";
 import type { FilterControlProps } from "./types";
+import { getFieldDefaults } from "./fieldPatterns";
+import type { NumberRangeValue } from "./fieldPatterns";
+import SuggestionChips from "./SuggestionChips";
 
 export default function NumberRangeFilterControl({
   column,
   onApply,
   onCancel,
 }: FilterControlProps) {
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
+  const defaults = useMemo(() => getFieldDefaults(column), [column]);
+  const [min, setMin] = useState(defaults.numberInitial?.min ?? "");
+  const [max, setMax] = useState(defaults.numberInitial?.max ?? "");
 
   const handleApply = useCallback(() => {
     const parts: string[] = [];
@@ -39,11 +44,25 @@ export default function NumberRangeFilterControl({
     onApply(name, parts.join(" AND "));
   }, [min, max, column, onApply]);
 
+  const handleSuggestion = useCallback((val: NumberRangeValue) => {
+    setMin(val.min);
+    setMax(val.max);
+  }, []);
+
   return (
     <div className="space-y-2" data-testid="number-filter-control">
       <p className="text-[11px] text-muted-foreground">
         Filter <span className="font-medium text-foreground">{column.label}</span> by range
       </p>
+
+      {defaults.numberSuggestions && defaults.numberSuggestions.length > 0 && (
+        <SuggestionChips
+          label="Suggestions"
+          suggestions={defaults.numberSuggestions}
+          onSelect={handleSuggestion}
+        />
+      )}
+
       <div className="flex items-center gap-1.5">
         <Input
           data-testid="number-filter-min"

@@ -1,6 +1,7 @@
 // BooleanFilterControl — true/false/any dropdown filter
 // Renders a three-option dropdown and produces: field = value (or no filter for Any)
-import { useState, useCallback } from "react";
+// Smart defaults: pre-selects Yes (true) for most common use cases.
+import { useState, useCallback, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import type { FilterControlProps } from "./types";
+import { getFieldDefaults } from "./fieldPatterns";
 
 type BoolOption = "" | "true" | "false";
 
@@ -18,7 +20,10 @@ export default function BooleanFilterControl({
   onApply,
   onCancel,
 }: FilterControlProps) {
-  const [value, setValue] = useState<BoolOption>("");
+  const defaults = useMemo(() => getFieldDefaults(column), [column]);
+  const [value, setValue] = useState<BoolOption>(
+    (defaults.booleanDefault as BoolOption) ?? ""
+  );
 
   const handleApply = useCallback(() => {
     if (!value) return;

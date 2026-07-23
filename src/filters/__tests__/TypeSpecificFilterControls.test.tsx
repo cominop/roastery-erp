@@ -249,7 +249,7 @@ describe("NumberRangeFilterControl", () => {
     expect(screen.getByTestId("number-filter-max")).toBeInTheDocument();
   });
 
-  it("is disabled when both inputs are empty", () => {
+  it("is enabled by default when a smart default is pre-filled", () => {
     render(
       <NumberRangeFilterControl
         column={numberColumn}
@@ -257,6 +257,25 @@ describe("NumberRangeFilterControl", () => {
         onCancel={onCancel}
       />
     );
+    // "order_total" matches the money pattern → min is pre-filled as 0.01
+    expect(screen.getByTestId("number-filter-apply")).toBeEnabled();
+  });
+
+  it("is disabled when both inputs are cleared", () => {
+    render(
+      <NumberRangeFilterControl
+        column={numberColumn}
+        onApply={onApply}
+        onCancel={onCancel}
+      />
+    );
+    // Clear the smart default
+    fireEvent.change(screen.getByTestId("number-filter-min"), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByTestId("number-filter-max"), {
+      target: { value: "" },
+    });
     expect(screen.getByTestId("number-filter-apply")).toBeDisabled();
   });
 
@@ -268,8 +287,12 @@ describe("NumberRangeFilterControl", () => {
         onCancel={onCancel}
       />
     );
+    // Clear the smart default, then set a custom min
     fireEvent.change(screen.getByTestId("number-filter-min"), {
       target: { value: "100" },
+    });
+    fireEvent.change(screen.getByTestId("number-filter-max"), {
+      target: { value: "" },
     });
     fireEvent.click(screen.getByTestId("number-filter-apply"));
 
@@ -279,7 +302,7 @@ describe("NumberRangeFilterControl", () => {
     );
   });
 
-  it("applies with max only", () => {
+  it("applies with max only (clearing the smart default min)", () => {
     render(
       <NumberRangeFilterControl
         column={numberColumn}
@@ -287,6 +310,10 @@ describe("NumberRangeFilterControl", () => {
         onCancel={onCancel}
       />
     );
+    // Clear the smart default min, then set a max
+    fireEvent.change(screen.getByTestId("number-filter-min"), {
+      target: { value: "" },
+    });
     fireEvent.change(screen.getByTestId("number-filter-max"), {
       target: { value: "500" },
     });
@@ -433,7 +460,7 @@ describe("BooleanFilterControl", () => {
     expect(screen.getByTestId("boolean-filter-control")).toBeInTheDocument();
   });
 
-  it("is disabled when no value is selected", () => {
+  it("is enabled by default with Yes pre-selected for boolean fields", () => {
     render(
       <BooleanFilterControl
         column={booleanColumn}
@@ -441,10 +468,11 @@ describe("BooleanFilterControl", () => {
         onCancel={onCancel}
       />
     );
-    expect(screen.getByTestId("boolean-filter-apply")).toBeDisabled();
+    // "is_active" matches the is_* pattern → true is pre-selected
+    expect(screen.getByTestId("boolean-filter-apply")).toBeEnabled();
   });
 
-  it("applies with true value", () => {
+  it("applies with true value by default", () => {
     render(
       <BooleanFilterControl
         column={booleanColumn}
@@ -452,11 +480,7 @@ describe("BooleanFilterControl", () => {
         onCancel={onCancel}
       />
     );
-    // Simulate selecting "Yes" from the dropdown
-    const select = screen.getByTestId("boolean-filter-select");
-    fireEvent.click(select);
-    fireEvent.click(screen.getByTestId("boolean-option-true"));
-
+    // Yes (true) is pre-selected by smart defaults — just click apply
     fireEvent.click(screen.getByTestId("boolean-filter-apply"));
 
     expect(onApply).toHaveBeenCalledWith(
@@ -465,7 +489,7 @@ describe("BooleanFilterControl", () => {
     );
   });
 
-  it("applies with false value", async () => {
+  it("applies with false value when user selects No", async () => {
     const user = userEvent.setup();
     render(
       <BooleanFilterControl

@@ -1,16 +1,21 @@
 // DateRangeFilterControl — from/to date range filter
 // Renders two native date inputs and produces: field >= 'YYYY-MM-DD' AND field <= 'YYYY-MM-DD'
-import { useState, useCallback } from "react";
+// Supports quick-range shortcut chips (Today, This Week, This Month, etc.).
+import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Minus } from "lucide-react";
 import type { FilterControlProps } from "./types";
+import { getFieldDefaults } from "./fieldPatterns";
+import type { DateRangeValue } from "./fieldPatterns";
+import SuggestionChips from "./SuggestionChips";
 
 export default function DateRangeFilterControl({
   column,
   onApply,
   onCancel,
 }: FilterControlProps) {
+  const defaults = useMemo(() => getFieldDefaults(column), [column]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
@@ -37,11 +42,25 @@ export default function DateRangeFilterControl({
     onApply(name, parts.join(" AND "));
   }, [from, to, column, onApply]);
 
+  const handleSuggestion = useCallback((val: DateRangeValue) => {
+    setFrom(val.from);
+    setTo(val.to);
+  }, []);
+
   return (
     <div className="space-y-2" data-testid="date-filter-control">
       <p className="text-[11px] text-muted-foreground">
         Filter <span className="font-medium text-foreground">{column.label}</span> by date range
       </p>
+
+      {defaults.dateSuggestions && defaults.dateSuggestions.length > 0 && (
+        <SuggestionChips
+          label="Quick Range"
+          suggestions={defaults.dateSuggestions}
+          onSelect={handleSuggestion}
+        />
+      )}
+
       <div className="flex items-center gap-1.5">
         <Input
           data-testid="date-filter-from"

@@ -1,10 +1,13 @@
 // TextFilterControl — ILIKE / contains text filter
 // Renders a text input and produces: field ILIKE '%value%'
+// Supports smart suggestion chips based on field name patterns.
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import type { FilterControlProps } from "./types";
+import { getFieldDefaults } from "./fieldPatterns";
+import SuggestionChips from "./SuggestionChips";
 
 export default function TextFilterControl({
   column,
@@ -12,6 +15,9 @@ export default function TextFilterControl({
   onCancel,
 }: FilterControlProps) {
   const [value, setValue] = useState("");
+
+  const defaults = getFieldDefaults(column);
+  const suggestions = defaults.textSuggestions;
 
   const handleApply = useCallback(() => {
     const trimmed = value.trim();
@@ -23,11 +29,24 @@ export default function TextFilterControl({
     );
   }, [value, column, onApply]);
 
+  const handleSuggestion = useCallback((suggestion: string) => {
+    setValue(suggestion);
+  }, []);
+
   return (
     <div className="space-y-2" data-testid="text-filter-control">
       <p className="text-[11px] text-muted-foreground">
         Filter <span className="font-medium text-foreground">{column.label}</span> by text
       </p>
+
+      {suggestions && suggestions.length > 0 && (
+        <SuggestionChips
+          label="Suggestions"
+          suggestions={suggestions}
+          onSelect={handleSuggestion}
+        />
+      )}
+
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
