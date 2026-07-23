@@ -500,6 +500,72 @@ app.put("/api/settings/form-size/:name", async (req, res) => {
   }
 });
 
+// ─── Permissions API ────────────────────────────────────
+
+/**
+ * GET /api/permissions/user — return current user identity and roles.
+ * Reads X-User-Id / X-Company-Id headers, defaults to 1.
+ */
+app.get("/api/permissions/user", async (req, res) => {
+  try {
+    const { userId, companyId } = require("./permission-middleware.cjs").extractUser(req);
+    const { roleIds, roleNames, isAdmin } = await require("./permission-middleware.cjs").getUserRoleIds(userId, companyId);
+    res.json({ userId, companyId, roleIds, roleNames, isAdmin });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/permissions/check — check a table permission.
+ * Body: { table: string, action?: 'select'|'insert'|'update'|'delete' }
+ * If action is provided, returns { permitted: boolean }.
+ * If no action, returns { canSelect, canInsert, canUpdate, canDelete }.
+ */
+app.post("/api/permissions/check", async (req, res) => {
+  try {
+    const { table, action } = req.body;
+    if (!table || typeof table !== "string") {
+      return res.status(400).json({ error: "table is required" });
+    }
+
+    const { extractUser, getUserRoleIds, checkPermission } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { roleIds, isAdmin } = await getUserRoleIds(userId, companyId);
+
+    // Admin bypass — all permissions granted
+    if (isAdmin) {
+      if (action) {
+        return res.json({ permitted: true });
+      }
+      return res.json({ canSelect: true, canInsert: true, canUpdate: true, canDelete: true });
+    }
+
+    if (roleIds.length === 0) {
+      if (action) {
+        return res.json({ permitted: false });
+      }
+      return res.json({ canSelect: false, canInsert: false, canUpdate: false, canDelete: false });
+    }
+
+    if (action) {
+      const permitted = await checkPermission(table, action, roleIds, companyId);
+      return res.json({ permitted });
+    }
+
+    // Return all four actions
+    const [canSelect, canInsert, canUpdate, canDelete] = await Promise.all([
+      checkPermission(table, "select", roleIds, companyId),
+      checkPermission(table, "insert", roleIds, companyId),
+      checkPermission(table, "update", roleIds, companyId),
+      checkPermission(table, "delete", roleIds, companyId),
+    ]);
+    res.json({ canSelect, canInsert, canUpdate, canDelete });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Handlers ─────────────────────────────────────
 
 // GET /api/events — list event handlers (optional ?scope= filter)

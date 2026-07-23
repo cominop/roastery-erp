@@ -1,0 +1,271 @@
+Implement Step 35: usePermissions hook + PermissionGate component (conditional render)
+
+## Context
+
+You're working on the Roastery ERP project. The codebase is at /home/fcc-student/Desktop/_DEV/roastery-ui/
+
+The full spec is at: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Permissions.md
+
+### What's already done (Steps 33-34)
+- Step 33: DB tables created (shared.roles, shared.user_roles, shared.table_permissions, shared.field_permissions, shared.row_filters)
+- Step 34: Backend middleware created at server/permission-middleware.cjs — exports checkPermission(), applyRowFilter(), permissionGuard(), extractUser(), getUserRoleIds()
+- The backend uses placeholder auth: reads X-User-Id / X-Company-Id headers (defaults 1). Admin role (name='admin') bypasses all checks.
+
+### Codebase patterns to follow
+
+**API client** — src/lib/api.ts uses fetch with /api prefix:
+```typescript
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json", ...options.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+```
+
+**React context provider** — src/events/EventProvider.tsx uses createContext + useContext pattern:
+- Creates EventContext with createContext<EventContextValue | null>(null)
+- EventProvider wraps children with <EventContext.Provider value={...}>
+- useEvent() hook calls useContext(EventContext) and throws if not in provider
+- The app entry is at src/App.tsx (no existing provider wrapping needed for now — the PermissionProvider can be added later)
+
+**Hook pattern** — src/hooks/useFilters.ts shows the hook style:
+- Custom hooks in src/hooks/
+- Uses useState, useCallback, useMemo
+- Defined types for options and return value
+
+## Task
+
+Create the frontend permission system: React context, hook, and conditional render components.
+
+### 1. Create src/permissions/schema/permissionSchema.ts
+
+TypeScript types for the permissions system:
+
+```typescript
+export type FieldAccess = 'hidden' | 'readonly' | 'readwrite';
+
+export interface TablePermission {
+  canRead: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface FieldPermission {
+  fieldName: string;
+  access: FieldAccess;
+}
+
+export interface UserPermissions {
+  roleIds: number[];
+  roleNames: string[];
+  isAdmin: boolean;
+  tablePerms: Record<string, TablePermission>;
+  fieldPerms: Record<string, Record<string, FieldAccess>>; // tableName -> { fieldName -> access }
+  rowFilters: Record<string, string>;
+}
+
+export type PermissionAction = 'read' | 'create' | 'edit' | 'delete';
+```
+
+### 2. Create src/permissions/api/permissionsApi.ts
+
+API functions for fetching permissions:
+
+- `fetchUserPermissions(userId?: number, companyId?: number): Promise<UserPermissions>` 
+  - Calls GET /api/permissions/current (or a dedicated endpoint)
+  - Returns the user's permissions for all tables
+  - Since the backend middleware exists but no dedicated /api/permissions/current endpoint exists yet, make the API client work but handle 404 gracefully by returning minimal admin permissions
+
+- `fetchTablePermissions(tableName: string): Promise<TablePermission>`
+  - Calls GET /api/permissions/table/:tableName
+  
+- `fetchFieldPermissions(tableName: string): Promise<FieldPermission[]>`
+  - Calls GET /api/permissions/fields/:tableName
+
+### 2b. Add the backend endpoint for permissions query
+
+Since the frontend needs to fetch the current user's permissions, add an endpoint at the end of server/index.cjs or in a new file:
+
+**GET /api/permissions/current** — returns the current user's permissions:
+- Use extractUser(req) and getUserRoleIds(userId, companyId) from the middleware
+- If isAdmin, return { roleIds, roleNames, isAdmin: true, tablePerms: {}, fieldPerms: {}, rowFilters: {} }
+  (admins implicitly have full access)
+- Otherwise, query shared.table_permissions and shared.field_permissions and shared.row_filters for all of the user's roles
+- Return the UserPermissions structure
+
+**GET /api/permissions/table/:tableName** — returns aggregated table permissions for current user's roles
+
+**GET /api/permissions/fields/:tableName** — returns field-level permissions for current user's roles
+
+### 3. Create src/permissions/usePermissions.ts
+
+A hook that provides permission checks for a given table:
+
+```typescript
+interface UsePermissionsReturn {
+  /** Is the user an admin? (bypasses all checks) */
+  isAdmin: boolean;
+  /** Can the user read this table? */
+  canRead: boolean;
+  /** Can the user create records in this table? */
+  canCreate: boolean;
+  /** Can the user edit records in this table? */
+  canEdit: boolean;
+  /** Can the user delete records from this table? */
+  canDelete: boolean;
+  /** Get field-level access for a specific field */
+  getFieldAccess: (fieldName: string) => FieldAccess;
+  /** Check if a specific action is allowed */
+  can: (action: PermissionAction) => boolean;
+  /** Loading state */
+  loading: boolean;
+  /** Error state */
+  error: string | null;
+  /** Refetch permissions */
+  refresh: () => Promise<void>;
+}
+```
+
+The hook should:
+- Accept `tableName: string` as argument
+- Use usePermissionsContext() to get the current user's permissions
+- Look up the table in the permissions map
+- For getFieldAccess: check field_permissions for the specific table+field, return 'readwrite' if no specific permission exists
+- If isAdmin, return true for all actions and 'readwrite' for all fields
+- Use React cache/SWR-like pattern: fetch permissions once on mount, cache in React context
+
+### 4. Create src/permissions/PermissionGate.tsx
+
+A component that conditionally renders children based on permission checks:
+
+```typescript
+interface PermissionGateProps {
+  /** Table to check permissions for */
+  table: string;
+  /** Required action (default: 'read') */
+  action?: PermissionAction;
+  /** Field name to check (optional — checks field-level access) */
+  field?: string;
+  /** Required field access level (default: 'readwrite' — only applies if field is set) */
+  fieldAccess?: FieldAccess;
+  /** Fallback content when not permitted (default: null) */
+  fallback?: React.ReactNode;
+  /** Children to render when permitted */
+  children: React.ReactNode;
+}
+```
+
+Behavior:
+- Renders children if the user has the required permission
+- Renders `fallback` (or null) if the user doesn't have the permission
+- If `field` is provided, checks field-level access instead of table-level action
+- The fallback for field='hidden' should render nothing by default
+- If loading, renders nothing (or a spinner if loadingFallback is provided)
+- Add an optional `loadingFallback?: React.ReactNode` prop
+
+### 5. Create src/permissions/FieldPermissionGate.tsx
+
+A simpler component focused on field-level rendering in forms:
+
+```typescript
+interface FieldPermissionGateProps {
+  table: string;
+  field: string;
+  /** What to render when the field is hidden (default: <></>) */
+  hiddenFallback?: React.ReactNode;
+  /** Children to render when access is 'readwrite' or 'readonly' */
+  children: (props: { readOnly: boolean; hidden: boolean }) => React.ReactNode;
+}
+```
+
+This is a render-prop style component that passes readOnly and hidden flags to its children, allowing form renderers to adjust field rendering without knowing about permissions.
+
+### 6. Create src/permissions/PermissionProvider.tsx
+
+A React context provider that fetches and caches the current user's permissions:
+
+- Wraps children in PermissionContext
+- On mount, fetches /api/permissions/current
+- Caches the result in state
+- Exposes permissions via usePermissionsContext() hook
+- Includes a refresh() function to reload permissions
+- Include a PermissionCache component that pre-fetches permissions for commonly used tables
+
+```typescript
+interface PermissionContextValue {
+  permissions: UserPermissions | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+}
+```
+
+### 7. Create src/permissions/index.ts
+
+Barrel export file:
+```typescript
+export { PermissionProvider, usePermissionsContext } from './PermissionProvider';
+export { usePermissions } from './usePermissions';
+export { PermissionGate } from './PermissionGate';
+export { FieldPermissionGate } from './FieldPermissionGate';
+export * from './schema/permissionSchema';
+```
+
+### 8. Write tests
+
+Create comprehensive tests at src/permissions/__tests__/:
+
+- `usePermissions.test.tsx` — Test the hook with a mock context
+  - Test that isAdmin returns true for admin users
+  - Test that canRead/canCreate/canEdit/canDelete return correct values
+  - Test that getFieldAccess returns correct field-level access
+  - Test that loading state works correctly
+  - Test that error state is handled
+
+- `PermissionGate.test.tsx` — Test the PermissionGate component
+  - Test that children render when permitted
+  - Test that fallback renders when not permitted
+  - Test field-level permission checking
+  - Test admin bypass
+  - Test loading state fallback
+
+- `FieldPermissionGate.test.tsx` — Test the FieldPermissionGate component
+  - Test render-prop pattern with readOnly/hidden
+  - Test hidden fields render children with hidden=true
+
+## Files to read for context
+- src/lib/api.ts — the API client pattern
+- src/events/EventProvider.tsx — React context provider pattern
+- src/hooks/useFilters.ts — hook pattern
+- server/permission-middleware.cjs — the backend middleware (for API endpoint)
+- server/index.cjs — the main server file (for adding permission endpoints)
+- src/App.tsx — the app entry point
+
+## Deliverables
+1. src/permissions/schema/permissionSchema.ts
+2. src/permissions/api/permissionsApi.ts
+3. src/permissions/usePermissions.ts
+4. src/permissions/PermissionGate.tsx
+5. src/permissions/FieldPermissionGate.tsx
+6. src/permissions/PermissionProvider.tsx
+7. src/permissions/index.ts
+8. Add GET /api/permissions/current, GET /api/permissions/table/:tableName, GET /api/permissions/fields/:tableName to server/index.cjs
+9. src/permissions/__tests__/usePermissions.test.tsx
+10. src/permissions/__tests__/PermissionGate.test.tsx
+11. src/permissions/__tests__/FieldPermissionGate.test.tsx
+12. All tests pass with `npx vitest run`
+
+## Style notes
+- Use TypeScript throughout
+- Use the existing project's import alias pattern (@/lib/api, @/types, etc.)
+- Follow the existing React patterns (useCallback, useMemo for performance)
+- Handle loading and error states gracefully
+- Admin bypass: if isAdmin is true, all permissions are granted
+- For the API endpoint, use the existing extractUser/getUserRoleIds from the middleware

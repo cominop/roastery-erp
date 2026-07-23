@@ -224,3 +224,7 @@ export {
   readLogicFromUrl,
   writeLogicToUrl,
 } from "./useFilterUrlSync";
+
+// ─── Permissions ───────────────────────────────────────
+export { usePermissions } from "./usePermissions";
+export type { PermissionAction, UserInfo, TablePermissions, UsePermissionsOptions, UsePermissionsReturn } from "./usePermissions";
