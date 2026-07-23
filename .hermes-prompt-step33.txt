@@ -1,0 +1,106 @@
+Implement Step 33 of the Roastery ERP project: Create DB tables for the Permissions system.
+
+## What to Build
+
+Create the following 5 PostgreSQL tables in a SQL migration file at `server/sql/step-33-permissions-tables.sql`:
+
+### 1. roles
+```sql
+CREATE TABLE shared.roles (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT UNIQUE NOT NULL,
+  caption     TEXT NOT NULL,
+  is_system   BOOLEAN DEFAULT false,
+  created_at  TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 2. user_roles
+```sql
+CREATE TABLE shared.user_roles (
+  user_id     UUID NOT NULL REFERENCES public.users(id),
+  role_id     UUID NOT NULL REFERENCES shared.roles(id),
+  PRIMARY KEY (user_id, role_id)
+);
+```
+
+### 3. table_permissions
+```sql
+CREATE TABLE shared.table_permissions (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role_id     UUID NOT NULL REFERENCES shared.roles(id),
+  table_name  TEXT NOT NULL,
+  can_read    BOOLEAN DEFAULT true,
+  can_create  BOOLEAN DEFAULT false,
+  can_edit    BOOLEAN DEFAULT false,
+  can_delete  BOOLEAN DEFAULT false,
+  UNIQUE (role_id, table_name)
+);
+```
+
+### 4. field_permissions
+```sql
+CREATE TABLE shared.field_permissions (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role_id     UUID NOT NULL REFERENCES shared.roles(id),
+  table_name  TEXT NOT NULL,
+  field_name  TEXT NOT NULL,
+  access      TEXT NOT NULL CHECK (access IN ('hidden', 'readonly', 'readwrite')),
+  UNIQUE (role_id, table_name, field_name)
+);
+```
+
+### 5. row_filters
+```sql
+CREATE TABLE shared.row_filters (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role_id     UUID NOT NULL REFERENCES shared.roles(id),
+  table_name  TEXT NOT NULL,
+  filter_expr TEXT NOT NULL,
+  UNIQUE (role_id, table_name)
+);
+```
+
+## Existing Pattern
+
+Follow the existing migration pattern in `server/sql/step-09-default-handlers.sql`:
+- Wrap in BEGIN / COMMIT
+- Use `shared.` schema for the tables (not `public` or `db_fcc_erp`)
+- Add descriptive comments
+
+## Seed the 7 built-in roles
+
+After creating the tables, INSERT the 7 built-in roles from the spec:
+
+| Role | Caption | Description |
+|------|---------|-------------|
+| admin | Administrator | System admin — full access |
+| manager | Operations Manager | All data, no system config |
+| roaster | Roastery Staff | Production, inventory, products |
+| sales | Sales Team | Customers, orders, invoices |
+| warehouse | Warehouse Staff | Products, inventory, purchase orders |
+| accounting | Finance | Orders, invoices, payments, reports |
+| viewer | Read-Only User | Reports only, no edits |
+
+All built-in roles should have `is_system = true`.
+
+## Apply the Migration
+
+Run the SQL file against the database:
+```bash
+psql polyaccess -f server/sql/step-33-permissions-tables.sql
+```
+
+## Verify
+
+After running the migration:
+1. Check the tables exist: `\dt shared.*`
+2. Check the roles were seeded: `SELECT name, is_system FROM shared.roles;`
+3. Check table structure: `\d shared.roles`, `\d shared.table_permissions`, etc.
+
+## Context
+
+- Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui
+- DB: polyaccess (PostgreSQL)
+- This is Track D — Multi-User & Security, Step 1 of 9
+- Full spec at: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Permissions.md
