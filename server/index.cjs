@@ -500,6 +500,63 @@ app.put("/api/settings/form-size/:name", async (req, res) => {
   }
 });
 
+// ─── Field permissions ────────────────────────────────────
+
+/**
+ * GET /api/permissions/fields/:table — return field-level permissions
+ * (hidden/readonly) for the current user's roles on the given table.
+ *
+ * Returns a map: { fieldName: { hidden: boolean, readonly: boolean } }
+ *   - hidden   = true when no role grants can_read on the field
+ *   - readonly = true when can_read is granted but can_write is not
+ *   - Admin bypass: always returns empty object (all fields visible/writable)
+ *   - Fields with no explicit permission entries are NOT returned (implicitly
+ *     visible and writable from the caller's perspective).
+ */
+app.get("/api/permissions/fields/:table", async (req, res) => {
+  try {
+    const { table } = req.params;
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { roleIds, isAdmin } = await getUserRoleIds(userId, companyId);
+
+    // Admin bypass — no field restrictions
+    if (isAdmin) {
+      return res.json({});
+    }
+
+    if (!roleIds || roleIds.length === 0) {
+      return res.json({});
+    }
+
+    const { rows } = await pool.query(
+      `SELECT field_name,
+              bool_or(can_read)  AS can_read,
+              bool_or(can_write) AS can_write
+       FROM shared.field_permissions
+       WHERE role_id = ANY($1::int[])
+         AND table_name = $2
+         AND company_id = $3
+       GROUP BY field_name`,
+      [roleIds, table, companyId]
+    );
+
+    const result: Record<string, { hidden: boolean; readonly: boolean }> = {};
+    for (const row of rows) {
+      const canRead = !!row.can_read;
+      const canWrite = !!row.can_write;
+      result[row.field_name] = {
+        hidden: !canRead,
+        readonly: canRead && !canWrite,
+      };
+    }
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Permissions API ────────────────────────────────────
 
 /**
@@ -561,6 +618,325 @@ app.post("/api/permissions/check", async (req, res) => {
       checkPermission(table, "delete", roleIds, companyId),
     ]);
     res.json({ canSelect, canInsert, canUpdate, canDelete });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Role Management API ─────────────────────────────────
+
+/**
+ * GET /api/roles — list all roles for company_id=1
+ * Returns: [{id, name, caption, is_system, created_at, user_count}]
+ */
+app.get("/api/roles", async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT r.id, r.name, COALESCE(r.description, r.name) AS caption,
+              r.is_system, r.created_at,
+              COUNT(ur.id)::int AS user_count
+       FROM shared.roles r
+       LEFT JOIN shared.user_roles ur ON ur.role_id = r.id AND ur.company_id = 1
+       WHERE r.company_id = 1
+       GROUP BY r.id
+       ORDER BY r.name`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/roles — create a new role
+ * Body: {name, caption?, copy_from_role_id?}
+ */
+app.post("/api/roles", async (req, res) => {
+  try {
+    const { name, caption, copy_from_role_id } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "name is required" });
+    }
+
+    // Check uniqueness
+    const existing = await pool.query(
+      `SELECT id FROM shared.roles WHERE company_id = 1 AND name = $1`,
+      [name.trim()]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: `Role '${name}' already exists` });
+    }
+
+    const description = caption || null;
+    const { rows } = await pool.query(
+      `INSERT INTO shared.roles (name, description, company_id)
+       VALUES ($1, $2, 1)
+       RETURNING id, name, COALESCE(description, name) AS caption, is_system, created_at`,
+      [name.trim(), description]
+    );
+
+    const newRole = rows[0];
+
+    // Clone permissions from another role if requested
+    if (copy_from_role_id) {
+      const srcId = parseInt(copy_from_role_id, 10);
+      if (!isNaN(srcId)) {
+        // Clone table_permissions
+        await pool.query(
+          `INSERT INTO shared.table_permissions (role_id, table_name, company_id, can_select, can_insert, can_update, can_delete)
+           SELECT $1, table_name, company_id, can_select, can_insert, can_update, can_delete
+           FROM shared.table_permissions
+           WHERE role_id = $2 AND company_id = 1`,
+          [newRole.id, srcId]
+        );
+        // Clone field_permissions
+        await pool.query(
+          `INSERT INTO shared.field_permissions (role_id, table_name, field_name, company_id, can_read, can_write)
+           SELECT $1, table_name, field_name, company_id, can_read, can_write
+           FROM shared.field_permissions
+           WHERE role_id = $2 AND company_id = 1`,
+          [newRole.id, srcId]
+        );
+        // Clone row_filters
+        await pool.query(
+          `INSERT INTO shared.row_filters (role_id, table_name, company_id, filter_condition, filter_sql, description, enabled)
+           SELECT $1, table_name, company_id, filter_condition, filter_sql, description, enabled
+           FROM shared.row_filters
+           WHERE role_id = $2 AND company_id = 1`,
+          [newRole.id, srcId]
+        );
+      }
+    }
+
+    // Re-fetch with user_count for consistency
+    const { rows: full } = await pool.query(
+      `SELECT r.id, r.name, COALESCE(r.description, r.name) AS caption,
+              r.is_system, r.created_at,
+              COUNT(ur.id)::int AS user_count
+       FROM shared.roles r
+       LEFT JOIN shared.user_roles ur ON ur.role_id = r.id AND ur.company_id = 1
+       WHERE r.id = $1
+       GROUP BY r.id`,
+      [newRole.id]
+    );
+
+    res.status(201).json(full[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/roles/:id — update role caption/name
+ * Body: {name?, caption?}
+ * is_system roles: only caption can be changed, not name
+ */
+app.put("/api/roles/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, caption } = req.body;
+
+    // Check if role exists and is_system status
+    const { rows: existing } = await pool.query(
+      `SELECT id, name, is_system FROM shared.roles WHERE id = $1 AND company_id = 1`,
+      [id]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: "Role not found" });
+    }
+
+    const role = existing.rows[0];
+
+    // is_system roles: can't change name
+    if (role.is_system && name && name !== role.name) {
+      return res.status(403).json({ error: "Cannot rename system roles" });
+    }
+
+    // Check name uniqueness if name is being changed
+    if (name && name !== role.name) {
+      const dup = await pool.query(
+        `SELECT id FROM shared.roles WHERE company_id = 1 AND name = $1 AND id != $2`,
+        [name, id]
+      );
+      if (dup.rows.length > 0) {
+        return res.status(409).json({ error: `Role '${name}' already exists` });
+      }
+    }
+
+    const updates = [];
+    const params = [];
+    let idx = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      params.push(name);
+    }
+    if (caption !== undefined) {
+      updates.push(`description = $${idx++}`);
+      params.push(caption);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    params.push(id);
+
+    const { rows } = await pool.query(
+      `UPDATE shared.roles SET ${updates.join(", ")} WHERE id = $${idx}
+       RETURNING id, name, COALESCE(description, name) AS caption, is_system, created_at`,
+      params
+    );
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/roles/:id — delete a role (cascade)
+ * Rejects is_system roles with 403
+ */
+app.delete("/api/roles/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT id, is_system FROM shared.roles WHERE id = $1 AND company_id = 1`,
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Role not found" });
+    }
+
+    if (rows[0].is_system) {
+      return res.status(403).json({ error: "Cannot delete system roles" });
+    }
+
+    await pool.query(`DELETE FROM shared.roles WHERE id = $1`, [id]);
+    res.json({ deleted: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/roles/:id/users — list users assigned to a role
+ * Returns: [{user_id, employee_name, email, assigned_at}]
+ */
+app.get("/api/roles/:id/users", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT ur.user_id,
+              COALESCE(e.firstname || ' ' || e.lastname, 'Unknown') AS employee_name,
+              COALESCE(e.emailname, '') AS email,
+              ur.created_at AS assigned_at
+       FROM shared.user_roles ur
+       LEFT JOIN db_fcc_erp.employees e ON e.employeeid = ur.user_id
+       WHERE ur.role_id = $1 AND ur.company_id = 1
+       ORDER BY e.firstname, e.lastname`,
+      [id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/roles/:id/users — assign users to a role (upsert)
+ * Body: {user_ids: [uuid, ...]}
+ * Adds new assignments, removes any not in the list
+ */
+app.post("/api/roles/:id/users", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_ids } = req.body;
+
+    if (!Array.isArray(user_ids)) {
+      return res.status(400).json({ error: "user_ids array required" });
+    }
+
+    // Verify role exists
+    const { rows: roleRows } = await pool.query(
+      `SELECT id FROM shared.roles WHERE id = $1 AND company_id = 1`,
+      [id]
+    );
+    if (roleRows.rows.length === 0) {
+      return res.status(404).json({ error: "Role not found" });
+    }
+
+    // Get current assignments
+    const { rows: current } = await pool.query(
+      `SELECT user_id FROM shared.user_roles WHERE role_id = $1 AND company_id = 1`,
+      [id]
+    );
+    const currentIds = new Set(current.map((r) => r.user_id));
+    const newIds = new Set(user_ids.map((uid) => parseInt(uid, 10)).filter((n) => !isNaN(n)));
+
+    // Remove assignments not in new set
+    const toRemove = [...currentIds].filter((uid) => !newIds.has(uid));
+    for (const uid of toRemove) {
+      await pool.query(
+        `DELETE FROM shared.user_roles WHERE role_id = $1 AND user_id = $2 AND company_id = 1`,
+        [id, uid]
+      );
+    }
+
+    // Add new assignments
+    const toAdd = [...newIds].filter((uid) => !currentIds.has(uid));
+    for (const uid of toAdd) {
+      await pool.query(
+        `INSERT INTO shared.user_roles (user_id, role_id, company_id) VALUES ($1, $2, 1)
+         ON CONFLICT (user_id, role_id, company_id) DO NOTHING`,
+        [uid, id]
+      );
+    }
+
+    // Return updated list
+    const { rows: updated } = await pool.query(
+      `SELECT ur.user_id,
+              COALESCE(e.firstname || ' ' || e.lastname, 'Unknown') AS employee_name,
+              COALESCE(e.emailname, '') AS email,
+              ur.created_at AS assigned_at
+       FROM shared.user_roles ur
+       LEFT JOIN db_fcc_erp.employees e ON e.employeeid = ur.user_id
+       WHERE ur.role_id = $1 AND ur.company_id = 1
+       ORDER BY e.firstname, e.lastname`,
+      [id]
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/employees — list employees for user picker
+ * Supports ?search= query param for filtering by name or email
+ */
+app.get("/api/employees", async (req, res) => {
+  try {
+    const search = req.query.search;
+    let query = `SELECT employeeid AS id, firstname, lastname, emailname AS email
+                 FROM db_fcc_erp.employees`;
+    const params = [];
+
+    if (search && typeof search === "string" && search.trim()) {
+      query += ` WHERE firstname ILIKE $1 OR lastname ILIKE $1 OR emailname ILIKE $1`;
+      params.push(`%${search.trim()}%`);
+    }
+
+    query += ` ORDER BY lastname, firstname LIMIT 100`;
+
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

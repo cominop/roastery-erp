@@ -6,6 +6,7 @@ import { useFormDefinition, useRecordSource } from "@/hooks";
 import { normalizeKeys, controlStyle, controlAppearance, resolveControlField, isExpression, cn } from "@/lib/utils";
 import { evaluateExpression } from "@/lib/expressions";
 import type { Control, FormDefinition, ExprContext } from "@/types";
+import { useFieldPermissions } from "@/hooks";
 
 import TabControl from "@/controls/TabControl";
 import TextBoxControl from "@/controls/TextBoxControl";
@@ -97,6 +98,10 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
   const recordSource = useRecordSource(table, combinedFilter);
   const allowEdits = (definition?.["allow-edits"] ?? 1) !== 0;
   const showNavButtons = (definition?.["navigation-buttons"] ?? 1) !== 0;
+
+  // ─── Field-level permissions ──────────────────────────
+  const { isFieldHidden, isFieldReadonly } = useFieldPermissions(table);
+
   const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [footerHeight, setFooterHeight] = useState<number | null>(null);
   const [detailHeight, setDetailHeight] = useState<number | null>(null);
@@ -233,6 +238,14 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
 
   const renderControl = useCallback(
       (ctrl: Control, idx: number) => {
+        // ── Apply field-level permissions ─────────────
+        const field = resolveControlField(ctrl);
+        if (field && isFieldHidden(field)) {
+          return null; // Hidden field — skip rendering
+        }
+        const isReadonly = field ? isFieldReadonly(field) : false;
+        const effectiveAllowEdits = allowEdits && !isReadonly;
+
         // Subform special case — must come before the CONTROL_MAP fallback
         if (ctrl.type === "subform") {
           const subformDefinition = resolveSubformDefinition(
@@ -266,7 +279,6 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
           );
         }
 
-        const field = resolveControlField(ctrl);
         const value = field ? recordSource.current?.[field] : undefined;
 
         if (ctrl.type === "tab") {
@@ -281,7 +293,7 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
                 allControls={allSectionControls}
                 currentRecord={recordSource.current ?? {}}
                 onChange={handleFieldChange}
-                allowEdits={allowEdits}
+                allowEdits={effectiveAllowEdits}
                 renderControl={(c, i) => renderControlRef.current?.(c, i) ?? null}
               />
             </div>
@@ -299,13 +311,13 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
               field={field}
               value={value}
               onChange={handleFieldChange}
-              allowEdits={allowEdits}
+              allowEdits={effectiveAllowEdits}
               tabIdx={ctrl["tab-index"]}
             />
           </div>
         );
       },
-      [recordSource.current, allowEdits, handleFieldChange, allSectionControls]
+      [recordSource.current, allowEdits, handleFieldChange, allSectionControls, isFieldHidden, isFieldReadonly]
     );
 
   renderControlRef.current = renderControl;

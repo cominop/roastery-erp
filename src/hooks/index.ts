@@ -228,3 +228,5 @@ export {
 // ─── Permissions ───────────────────────────────────────
 export { usePermissions } from "./usePermissions";
 export type { PermissionAction, UserInfo, TablePermissions, UsePermissionsOptions, UsePermissionsReturn } from "./usePermissions";
+export { useFieldPermissions } from "./useFieldPermissions";
+export type { FieldPermission, FieldPermissionsMap, UseFieldPermissionsReturn } from "./useFieldPermissions";

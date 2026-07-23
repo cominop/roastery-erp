@@ -1,0 +1,104 @@
+IMPLEMENT STEP 37: Role Manager UI (CRUD roles + assign users)
+
+This is Permissions Step 5 of 9. Steps 33-36 are complete:
+- DB tables: roles, user_roles, table_permissions, field_permissions, row_filters (shared schema)
+- Backend middleware: permissionGuard on all API routes
+- usePermissions hook + useFieldPermissions hook
+- Field-level hiding/readonly in FormRenderer
+- API endpoints at /api/permissions/user, /api/permissions/check, /api/permissions/fields/:table
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui
+
+## What to Build
+
+Create a Role Manager UI that allows admins to CRUD roles and assign users to roles.
+
+### 1. API Endpoints (server/index.cjs)
+
+Add these endpoints:
+
+**GET /api/roles** — list all roles
+- Returns: [{id, name, caption, is_system, created_at}]
+- Ordered by name
+
+**POST /api/roles** — create a new role
+- Body: {name, caption, copy_from_role_id?}
+- If copy_from_role_id is provided, clone all table_permissions, field_permissions, and row_filters from that role
+- Validate name is unique
+
+**PUT /api/roles/:id** — update role caption/name
+- Body: {name?, caption?}
+- is_system roles: only caption can be changed, not name
+
+**DELETE /api/roles/:id** — delete a role (cascade)
+- Reject deletion of is_system roles with 403
+- Respond with {deleted: true}
+
+**GET /api/roles/:id/users** — list users assigned to a role
+- Returns: [{user_id, employee_name, email, assigned_at}]
+- Join shared.user_roles with db_fcc_erp.employees
+
+**POST /api/roles/:id/users** — assign users to a role
+- Body: {user_ids: [uuid, ...]}
+- Upsert: add new assignments, remove any not in the list
+
+### 2. Frontend — RoleManager.tsx
+
+Create `src/permissions/admin/RoleManager.tsx`:
+
+A standalone admin page/panel with:
+
+**Role List Section:**
+- Table of all roles showing: name, caption, is_system badge, user count
+- Click a row to select/edit that role
+- "New Role" button opens create dialog
+- Delete button (hidden for is_system) with confirmation dialog
+- Search/filter roles by name or caption
+
+**Create/Edit Role Dialog:**
+- Name field (disabled for is_system roles)
+- Caption field
+- "Copy permissions from" dropdown (list of existing roles, optional)
+- Save/Cancel buttons
+
+**User Assignment Section (when a role is selected):**
+- Shows current users assigned to this role in a table
+- "Assign Users" button opens a user picker
+- Search/select from list of employees (from db_fcc_erp.employees via API)
+- Can select multiple users
+- Remove individual user from role (with confirmation)
+
+### 3. API — GET /api/employees
+
+Add a simple endpoint to serve employees for the user picker:
+**GET /api/employees** — returns [{id, first_name, last_name, email}] from db_fcc_erp.employees
+- Limit to basic fields for the picker
+- Support ?search= query param for filtering by name/email
+
+### 4. Style & Integration
+
+- Use the same shadcn/ui components as the rest of the app (Button, Dialog, Input, Table, Select, Badge, SearchInput)
+- Match existing styling patterns
+- The panel should render when navigated to via a "Permissions" or "Roles" nav item
+- Export from `src/permissions/index.ts`
+
+### 5. Tests
+
+Create `src/permissions/admin/__tests__/RoleManager.test.tsx` with tests for:
+- Renders role list
+- Create role dialog opens
+- Delete confirmation dialog
+- User assignment section shows when role selected
+- Search filters role list
+
+## Reference
+- Permissions SPEC: `/home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Permissions.md`
+- Section 8: Admin UI (Permission Matrix Editor pattern)
+- Existing hooks: `src/hooks/usePermissions.ts`, `src/hooks/useFieldPermissions.ts`
+- Server pattern: `server/index.cjs` for existing endpoint patterns
+
+## Rules
+- Do NOT break existing API endpoints or frontend code
+- Run `npm test -- --run` to verify nothing broken
+- is_system roles (admin, manager, data-entry, read-only, reports) cannot be deleted
+- Do NOT commit — the cron will handle testing and committing

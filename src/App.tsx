@@ -19,6 +19,7 @@ import {
   Square,
   PanelTop,
   Code,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
@@ -31,6 +32,7 @@ import EventHandlerEditorPage from "@/components/EventHandlerEditorPage";
 import { useFilters, useFilterUrlSync } from "@/hooks";
 import { FilterPanel, QuickFilterBar } from "@/filters";
 import type { QuickFilterPreset } from "@/filters";
+import { RoleManager } from "@/permissions";
 
 interface NavItem {
   name: string;
@@ -48,6 +50,7 @@ type ActiveView =
   | { type: "form"; name: string }
   | { type: "report"; name: string }
   | { type: "events" }
+  | { type: "permissions" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -157,7 +160,7 @@ function NavSection({
         <div className="pb-0.5">
           {items.map((item) => {
             const isActive =
-              active != null && active.type !== "events"
+              active != null && active.type !== "events" && active.type !== "permissions"
                 ? active.name === item.name &&
                   active.type === title.toLowerCase().slice(0, -1)
                 : false;
@@ -580,6 +583,18 @@ export default function App() {
           <span>Event Handlers</span>
         </button>
         <button
+          onClick={() => setActive({ type: "permissions" })}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+            active?.type === "permissions"
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <Shield className="h-4 w-4" />
+          <span>Permissions</span>
+        </button>
+        <button
           onClick={openSettings}
           className={cn(
             "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
@@ -787,6 +802,9 @@ export default function App() {
         )}
         {active?.type === "events" && (
           <EventHandlerEditorPage onBack={() => setActive(null)} />
+        )}
+        {active?.type === "permissions" && (
+          <RoleManager />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
