@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { UseFiltersReturn } from "@/hooks/useFilters";
-import type { FilterColumn } from "./types";
+import type { FilterLogic, FilterColumn } from "./types";
 import FilterControlFactory from "./FilterControlFactory";
 import FilterSummary from "./FilterSummary";
 import FilterPresetManager from "./FilterPresetManager";
@@ -43,6 +43,10 @@ type FilterPanelProps = Omit<UseFiltersReturn, "activeFilters" | "combinedFilter
   updateFilter: UseFiltersReturn["updateFilter"];
   /** Replace all filters (bulk set) */
   setFilters: UseFiltersReturn["setFilters"];
+  /** Current filter logic (AND/OR) */
+  filterLogic: FilterLogic;
+  /** Change the filter combination logic */
+  setFilterLogic: (logic: FilterLogic) => void;
   /** Optional column definitions for type-specific filter controls.
    *  When provided, the "Add Filter" section shows a column picker
    *  followed by the appropriate control (text ILIKE, number range,
@@ -55,6 +59,8 @@ export default function FilterPanel({
   filters,
   activeFilters,
   hasActiveFilters,
+  filterLogic,
+  setFilterLogic,
   addFilter,
   removeFilter,
   toggleFilter,
@@ -172,12 +178,21 @@ export default function FilterPanel({
 
         {/* Active filter count badge */}
         {hasActiveFilters && (
-          <span
-            data-testid="filter-count-badge"
-            className="inline-flex items-center justify-center rounded-full bg-primary/15 text-primary min-w-5 h-5 px-1.5 text-[10px] font-semibold"
-          >
-            {activeFilters.length}
-          </span>
+          <>
+            <span
+              data-testid="filter-count-badge"
+              className="inline-flex items-center justify-center rounded-full bg-primary/15 text-primary min-w-5 h-5 px-1.5 text-[10px] font-semibold"
+            >
+              {activeFilters.length}
+            </span>
+            {/* Logic indicator */}
+            <span
+              data-testid="filter-logic-indicator"
+              className="inline-flex items-center rounded border border-border px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground"
+            >
+              {filterLogic}
+            </span>
+          </>
         )}
 
         {/* Summary chips (collapsed only) */}
@@ -297,6 +312,35 @@ export default function FilterPanel({
               No filters match your search.
             </p>
           )}
+
+          {/* Logic toggle */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-medium">Logic:</span>
+            <Select
+              value={filterLogic}
+              onValueChange={(v) => setFilterLogic(v as FilterLogic)}
+            >
+              <SelectTrigger
+                data-testid="filter-logic-toggle"
+                className="h-6 w-20 text-[11px]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AND" data-testid="filter-logic-option-and">
+                  AND
+                </SelectItem>
+                <SelectItem value="OR" data-testid="filter-logic-option-or">
+                  OR
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-[10px]">
+              {filterLogic === "AND"
+                ? "all filters must match"
+                : "any filter can match"}
+            </span>
+          </div>
 
           {/* Add Filter section */}
           <div

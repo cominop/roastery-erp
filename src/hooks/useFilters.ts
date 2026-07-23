@@ -8,6 +8,8 @@ function generateId(): string {
   return `filter_${nextId++}`;
 }
 
+export type FilterLogic = "AND" | "OR";
+
 export interface FilterItem {
   id: string;
   name: string;
@@ -18,6 +20,8 @@ export interface FilterItem {
 export interface UseFiltersOptions {
   /** Base filter string from the form definition (always applied, not toggleable) */
   baseFilter?: string;
+  /** Initial filter logic (default: 'AND') */
+  filterLogic?: FilterLogic;
 }
 
 export interface UseFiltersReturn {
@@ -25,10 +29,14 @@ export interface UseFiltersReturn {
   filters: FilterItem[];
   /** Only the active (enabled) filters */
   activeFilters: FilterItem[];
-  /** Combined SQL WHERE clause from all active filters + baseFilter (AND'd together), or undefined if none */
+  /** Combined SQL WHERE clause from all active filters + baseFilter, or undefined if none */
   combinedFilter: string | undefined;
   /** Whether any user-defined filter is active (excludes baseFilter) */
   hasActiveFilters: boolean;
+  /** Current filter combination logic: AND or OR */
+  filterLogic: FilterLogic;
+  /** Change the filter combination logic */
+  setFilterLogic: (logic: FilterLogic) => void;
   /** Add a new named filter. Returns the generated id. */
   addFilter: (name: string, expression: string) => string;
   /** Remove a filter by id */
@@ -53,6 +61,9 @@ export interface UseFiltersReturn {
  */
 export function useFilters(options?: UseFiltersOptions): UseFiltersReturn {
   const [filters, setFiltersState] = useState<FilterItem[]>([]);
+  const [filterLogic, setFilterLogic] = useState<FilterLogic>(
+    options?.filterLogic ?? "AND"
+  );
 
   const addFilter = useCallback((name: string, expression: string): string => {
     const id = generateId();
@@ -111,21 +122,35 @@ export function useFilters(options?: UseFiltersOptions): UseFiltersReturn {
       parts.push(options.baseFilter);
     }
 
-    // Add all active user-defined filter expressions
+    // Collect active user-defined filter expressions
+    const userParts: string[] = [];
     for (const f of activeFilters) {
       if (f.expression) {
-        parts.push(f.expression);
+        userParts.push(f.expression);
       }
     }
 
-    return parts.length > 0 ? parts.join(" AND ") : undefined;
-  }, [options?.baseFilter, activeFilters]);
+    if (userParts.length === 0) {
+      return parts.length > 0 ? parts.join(" AND ") : undefined;
+    }
+
+    // If filterLogic is OR and there are multiple user filters, wrap in parens
+    const userClause =
+      filterLogic === "OR" && userParts.length > 1
+        ? `(${userParts.join(" OR ")})`
+        : userParts.join(` ${filterLogic} `);
+
+    if (parts.length === 0) return userClause;
+    return `${parts.join(" AND ")} AND ${userClause}`;
+  }, [options?.baseFilter, activeFilters, filterLogic]);
 
   return {
     filters,
     activeFilters,
     combinedFilter,
     hasActiveFilters,
+    filterLogic,
+    setFilterLogic,
     addFilter,
     removeFilter,
     toggleFilter,

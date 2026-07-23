@@ -8,8 +8,10 @@ import {
   deserializeFilters,
   readFiltersFromUrl,
   writeFiltersToUrl,
+  readLogicFromUrl,
+  writeLogicToUrl,
 } from "../useFilterUrlSync";
-import type { FilterItem } from "../useFilters";
+import type { FilterItem, FilterLogic } from "../useFilters";
 
 // ── Pure function tests ───────────────────────────────
 
@@ -148,12 +150,54 @@ describe("readFiltersFromUrl / writeFiltersToUrl", () => {
   });
 });
 
+describe("readLogicFromUrl / writeLogicToUrl", () => {
+  beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("readLogicFromUrl returns AND when no filterLogic param", () => {
+    expect(readLogicFromUrl()).toBe("AND");
+  });
+
+  it("writeLogicToUrl writes OR and readLogicFromUrl reads it back", () => {
+    writeLogicToUrl("OR");
+    expect(window.location.search).toContain("filterLogic=OR");
+    expect(readLogicFromUrl()).toBe("OR");
+  });
+
+  it("writeLogicToUrl removes the param when logic is AND", () => {
+    writeLogicToUrl("OR");
+    expect(window.location.search).toContain("filterLogic");
+    writeLogicToUrl("AND");
+    expect(window.location.search).not.toContain("filterLogic");
+  });
+
+  it("readLogicFromUrl returns OR from pre-set URL", () => {
+    window.history.replaceState({}, "", "/?filterLogic=OR");
+    expect(readLogicFromUrl()).toBe("OR");
+  });
+
+  it("readLogicFromUrl returns AND for invalid values", () => {
+    window.history.replaceState({}, "", "/?filterLogic=INVALID");
+    expect(readLogicFromUrl()).toBe("AND");
+  });
+});
+
 // ── Hook tests ────────────────────────────────────────
 
 describe("useFilterUrlSync", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
   });
+
+  function renderSyncHook(initialFilters?: FilterItem[], initialLogic?: FilterLogic) {
+    return renderHook(() => {
+      const [filters, setFilters] = useState<FilterItem[]>(initialFilters ?? []);
+      const [filterLogic, setFilterLogic] = useState<FilterLogic>(initialLogic ?? "AND");
+      useFilterUrlSync(filters, setFilters, filterLogic, setFilterLogic);
+      return { filters, setFilters, filterLogic, setFilterLogic };
+    });
+  }
 
   it("restores filters from URL on mount", () => {
     // Pre-set URL with filters
@@ -163,11 +207,7 @@ describe("useFilterUrlSync", () => {
       "/?filters=%5B%7B%22n%22%3A%22Active%22%2C%22e%22%3A%22status%20%3D%20'Active'%22%2C%22a%22%3Atrue%7D%5D"
     );
 
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     // The hook should have restored the filter from the URL
     expect(result.current.filters).toHaveLength(1);
@@ -183,11 +223,7 @@ describe("useFilterUrlSync", () => {
       "/?filters=%5B%7B%22n%22%3A%22A%22%2C%22e%22%3A%22a%20%3D%201%22%2C%22a%22%3Atrue%7D%2C%7B%22n%22%3A%22B%22%2C%22e%22%3A%22b%20%3D%202%22%2C%22a%22%3Afalse%7D%5D"
     );
 
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     expect(result.current.filters).toHaveLength(2);
     expect(result.current.filters[0].name).toBe("A");
@@ -197,22 +233,14 @@ describe("useFilterUrlSync", () => {
   });
 
   it("does nothing on mount when no filters in URL", () => {
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     expect(result.current.filters).toEqual([]);
     expect(window.location.search).not.toContain("filters");
   });
 
   it("writes filters to URL when state changes", () => {
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     // Initially no filters in URL
     expect(window.location.search).not.toContain("filters");
@@ -239,11 +267,7 @@ describe("useFilterUrlSync", () => {
       "/?filters=%5B%7B%22n%22%3A%22A%22%2C%22e%22%3A%22a%20%3D%201%22%2C%22a%22%3Atrue%7D%5D"
     );
 
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     // Filter was restored
     expect(result.current.filters).toHaveLength(1);
@@ -260,7 +284,8 @@ describe("useFilterUrlSync", () => {
   it("does not write to URL when enabled is false", () => {
     const { result } = renderHook(() => {
       const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters, { enabled: false });
+      const [filterLogic, setFilterLogic] = useState<FilterLogic>("AND");
+      useFilterUrlSync(filters, setFilters, filterLogic, setFilterLogic, { enabled: false });
       return { filters, setFilters };
     });
 
@@ -284,7 +309,8 @@ describe("useFilterUrlSync", () => {
 
     const { result } = renderHook(() => {
       const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters, { enabled: false });
+      const [filterLogic, setFilterLogic] = useState<FilterLogic>("AND");
+      useFilterUrlSync(filters, setFilters, filterLogic, setFilterLogic, { enabled: false });
       return { filters, setFilters };
     });
 
@@ -295,11 +321,7 @@ describe("useFilterUrlSync", () => {
   it("avoids feedback loop when setFilters is called with already-synced state", () => {
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-    const { result } = renderHook(() => {
-      const [filters, setFilters] = useState<FilterItem[]>([]);
-      useFilterUrlSync(filters, setFilters);
-      return { filters, setFilters };
-    });
+    const { result } = renderSyncHook();
 
     // Clear the initial replaceState call count
     replaceStateSpy.mockClear();
@@ -313,5 +335,40 @@ describe("useFilterUrlSync", () => {
     expect(replaceStateSpy).not.toHaveBeenCalled();
 
     replaceStateSpy.mockRestore();
+  });
+
+  it("restores filterLogic from URL on mount", () => {
+    window.history.replaceState({}, "", "/?filterLogic=OR");
+
+    const { result } = renderSyncHook();
+
+    expect(result.current.filterLogic).toBe("OR");
+  });
+
+  it("writes filterLogic to URL when logic changes", () => {
+    const { result } = renderSyncHook();
+
+    act(() => {
+      result.current.setFilterLogic("OR");
+    });
+
+    expect(window.location.search).toContain("filterLogic=OR");
+  });
+
+  it("removes filterLogic param from URL when logic returns to AND", () => {
+    window.history.replaceState({}, "", "/?filterLogic=OR");
+
+    const { result } = renderSyncHook();
+
+    // Logic was restored as OR
+    expect(result.current.filterLogic).toBe("OR");
+
+    // Change back to AND
+    act(() => {
+      result.current.setFilterLogic("AND");
+    });
+
+    // Logic param should be removed
+    expect(window.location.search).not.toContain("filterLogic");
   });
 });

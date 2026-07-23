@@ -328,6 +328,8 @@ function TableBrowser({ table }: { table: string }) {
     filters,
     activeFilters,
     hasActiveFilters,
+    filterLogic,
+    setFilterLogic,
     addFilter,
     removeFilter,
     toggleFilter,
@@ -339,7 +341,7 @@ function TableBrowser({ table }: { table: string }) {
   } = useFilters();
 
   // Sync filter state to/from URL
-  useFilterUrlSync(filters, setFilters);
+  useFilterUrlSync(filters, setFilters, filterLogic, setFilterLogic);
 
   const presets = useMemo(() => getTablePresets(table), [table]);
 
@@ -379,6 +381,8 @@ function TableBrowser({ table }: { table: string }) {
         filters={filters}
         activeFilters={activeFilters}
         hasActiveFilters={hasActiveFilters}
+        filterLogic={filterLogic}
+        setFilterLogic={setFilterLogic}
         addFilter={addFilter}
         removeFilter={removeFilter}
         toggleFilter={toggleFilter}

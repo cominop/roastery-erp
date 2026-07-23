@@ -1,7 +1,9 @@
 // FilterPanel unit tests
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import FilterPanel from "../FilterPanel";
+import type { FilterLogic } from "../types";
 import type { FilterItem } from "@/hooks/useFilters";
 
 // Helper to build the props object the FilterPanel expects
@@ -17,11 +19,14 @@ function defaultProps() {
   const clearFilters = vi.fn();
   const updateFilter = vi.fn();
   const setFilters = vi.fn();
+  const setFilterLogic = vi.fn();
 
   return {
     filters: [] as FilterItem[],
     activeFilters: [] as FilterItem[],
     hasActiveFilters: false,
+    filterLogic: "AND" as FilterLogic,
+    setFilterLogic,
     addFilter,
     removeFilter,
     toggleFilter,
@@ -301,5 +306,114 @@ describe("FilterPanel", () => {
     fireEvent.keyDown(exprInput, { key: "Enter" });
 
     expect(addFilter).toHaveBeenCalledWith("Test", "x = 1");
+  });
+});
+
+describe("FilterPanel - logic toggle", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("shows the logic toggle when expanded with active filters", () => {
+    const filters = [makeFilter({ id: "f1" })];
+    const activeFilters = filters;
+    render(
+      <FilterPanel
+        {...buildProps({
+          filters,
+          activeFilters,
+          hasActiveFilters: true,
+        })}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-panel-toggle"));
+    expect(screen.getByTestId("filter-logic-toggle")).toBeInTheDocument();
+  });
+
+  it("shows 'all filters must match' when logic is AND", () => {
+    const filters = [makeFilter({ id: "f1" })];
+    const activeFilters = filters;
+    render(
+      <FilterPanel
+        {...buildProps({
+          filters,
+          activeFilters,
+          hasActiveFilters: true,
+          filterLogic: "AND",
+        })}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-panel-toggle"));
+    expect(screen.getByText("all filters must match")).toBeInTheDocument();
+  });
+
+  it("shows 'any filter can match' when logic is OR", () => {
+    const filters = [makeFilter({ id: "f1" })];
+    const activeFilters = filters;
+    render(
+      <FilterPanel
+        {...buildProps({
+          filters,
+          activeFilters,
+          hasActiveFilters: true,
+          filterLogic: "OR",
+        })}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-panel-toggle"));
+    expect(screen.getByText("any filter can match")).toBeInTheDocument();
+  });
+
+  it("calls setFilterLogic when OR is selected", async () => {
+    const setFilterLogic = vi.fn();
+    const filters = [makeFilter({ id: "f1" })];
+    const activeFilters = filters;
+    const user = userEvent.setup();
+    render(
+      <FilterPanel
+        {...buildProps({
+          filters,
+          activeFilters,
+          hasActiveFilters: true,
+          filterLogic: "AND",
+          setFilterLogic,
+        })}
+      />
+    );
+    fireEvent.click(screen.getByTestId("filter-panel-toggle"));
+
+    // Open the Select dropdown using userEvent
+    await user.click(screen.getByTestId("filter-logic-toggle"));
+    // Click the OR option (rendered in a portal)
+    const orOption = await screen.findByTestId("filter-logic-option-or");
+    await user.click(orOption);
+
+    expect(setFilterLogic).toHaveBeenCalledWith("OR");
+  });
+
+  it("shows logic indicator in collapsed bar when filters are active", () => {
+    const filters = [makeFilter({ id: "f1" })];
+    const activeFilters = filters;
+    render(
+      <FilterPanel
+        {...buildProps({
+          filters,
+          activeFilters,
+          hasActiveFilters: true,
+          filterLogic: "OR",
+        })}
+      />
+    );
+    // Collapsed state should show the logic indicator
+    const indicator = screen.getByTestId("filter-logic-indicator");
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveTextContent("OR");
+  });
+
+  it("does not show logic indicator when no filters are active", () => {
+    render(<FilterPanel {...buildProps()} />);
+    expect(
+      screen.queryByTestId("filter-logic-indicator")
+    ).not.toBeInTheDocument();
   });
 });

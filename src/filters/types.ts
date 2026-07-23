@@ -2,6 +2,8 @@
 // Each column has a field name, display label, and data type that determines
 // which type-specific filter control to render.
 
+export type FilterLogic = "AND" | "OR";
+
 export type FilterColumnType =
   | "text"
   | "number"

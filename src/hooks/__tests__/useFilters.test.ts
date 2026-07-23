@@ -394,3 +394,73 @@ describe("useFilters - clearFilters preserves baseFilter", () => {
     expect(result.current.combinedFilter).toBe("tenant = 5");
   });
 });
+
+describe("useFilters - filterLogic", () => {
+  it("defaults to AND logic", () => {
+    const { result } = renderHook(() => useFilters());
+    expect(result.current.filterLogic).toBe("AND");
+  });
+
+  it("setFilterLogic changes the logic", () => {
+    const { result } = renderHook(() => useFilters());
+    act(() => { result.current.setFilterLogic("OR"); });
+    expect(result.current.filterLogic).toBe("OR");
+  });
+
+  it("uses OR logic when set to OR", () => {
+    const { result } = renderHook(() => useFilters());
+    act(() => {
+      result.current.addFilter("A", "a = 1");
+      result.current.addFilter("B", "b = 2");
+    });
+    act(() => { result.current.setFilterLogic("OR"); });
+    expect(result.current.combinedFilter).toBe("(a = 1 OR b = 2)");
+  });
+
+  it("combines baseFilter with OR user filters: baseFilter AND (userFilter1 OR userFilter2)", () => {
+    const { result } = renderHook(() => useFilters({ baseFilter: "deleted = false" }));
+    act(() => {
+      result.current.addFilter("A", "status = 'Active'");
+      result.current.addFilter("B", "amount > 0");
+    });
+    act(() => { result.current.setFilterLogic("OR"); });
+    expect(result.current.combinedFilter).toBe(
+      "deleted = false AND (status = 'Active' OR amount > 0)"
+    );
+  });
+
+  it("single active filter with OR logic does not wrap in parens", () => {
+    const { result } = renderHook(() => useFilters());
+    act(() => { result.current.addFilter("A", "a = 1"); });
+    act(() => { result.current.setFilterLogic("OR"); });
+    expect(result.current.combinedFilter).toBe("a = 1");
+  });
+
+  it("wraps multiple OR filters in parentheses even without baseFilter", () => {
+    const { result } = renderHook(() => useFilters());
+    act(() => {
+      result.current.addFilter("A", "a = 1");
+      result.current.addFilter("B", "b = 2");
+      result.current.addFilter("C", "c = 3");
+    });
+    act(() => { result.current.setFilterLogic("OR"); });
+    expect(result.current.combinedFilter).toBe("(a = 1 OR b = 2 OR c = 3)");
+  });
+
+  it("accepts initial filterLogic from options", () => {
+    const { result } = renderHook(() => useFilters({ filterLogic: "OR" }));
+    expect(result.current.filterLogic).toBe("OR");
+  });
+
+  it("AND logic with baseFilter and user filters", () => {
+    const { result } = renderHook(() => useFilters({ baseFilter: "deleted = false" }));
+    act(() => {
+      result.current.addFilter("A", "status = 'Active'");
+      result.current.addFilter("B", "amount > 0");
+    });
+    // Default is AND
+    expect(result.current.combinedFilter).toBe(
+      "deleted = false AND status = 'Active' AND amount > 0"
+    );
+  });
+});
