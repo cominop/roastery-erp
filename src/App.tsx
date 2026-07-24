@@ -1,6 +1,7 @@
 // App shell — sidebar with Settings panel
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,7 @@ import EventHandlerEditorPage from "@/components/EventHandlerEditorPage";
 import { useFilters, useFilterUrlSync } from "@/hooks";
 import { FilterPanel, QuickFilterBar } from "@/filters";
 import type { QuickFilterPreset } from "@/filters";
-import { RoleManager } from "@/permissions";
+import { RoleManager, PermissionMatrix } from "@/permissions";
 
 interface NavItem {
   name: string;
@@ -804,7 +805,20 @@ export default function App() {
           <EventHandlerEditorPage onBack={() => setActive(null)} />
         )}
         {active?.type === "permissions" && (
-          <RoleManager />
+          <Tabs defaultValue="roles" className="h-full flex flex-col">
+            <div className="px-4 py-2 border-b shrink-0">
+              <TabsList variant="line">
+                <TabsTrigger value="roles">Roles & Users</TabsTrigger>
+                <TabsTrigger value="matrix">Field Permissions</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="roles" className="flex-1 overflow-hidden m-0">
+              <RoleManager />
+            </TabsContent>
+            <TabsContent value="matrix" className="flex-1 overflow-hidden m-0">
+              <PermissionMatrix />
+            </TabsContent>
+          </Tabs>
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">

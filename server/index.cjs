@@ -917,6 +917,108 @@ app.post("/api/roles/:id/users", async (req, res) => {
   }
 });
 
+// ─── Permission Matrix ────────────────────────────────
+
+/**
+ * GET /api/permissions/matrix — return the full permission matrix.
+ * Returns:
+ *   {
+ *     roles:    [{id, name, caption, is_system}],
+ *     tables:   [{name, label, fields: [{name, type}]}],
+ *     permissions: [{role_id, table_name, field_name, can_read, can_write}]
+ *   }
+ */
+app.get("/api/permissions/matrix", async (_req, res) => {
+  try {
+    // 1. Roles (company_id=1, active)
+    const { rows: roles } = await pool.query(
+      `SELECT id, name, COALESCE(description, name) AS caption, is_system
+       FROM shared.roles
+       WHERE company_id = 1 AND is_active = true
+       ORDER BY name`
+    );
+
+    // 2. Tables + columns from information_schema
+    const { rows: tablesRaw } = await pool.query(
+      `SELECT t.tablename AS name,
+              t.tablename AS label
+       FROM pg_tables t
+       WHERE t.schemaname = 'db_fcc_erp'
+         AND LEFT(t.tablename, 1) != '_'
+       ORDER BY t.tablename`
+    );
+
+    const tables = [];
+    for (const t of tablesRaw) {
+      const { rows: fields } = await pool.query(
+        `SELECT column_name AS name, data_type AS type
+         FROM information_schema.columns
+         WHERE table_schema = 'db_fcc_erp' AND table_name = $1
+         ORDER BY ordinal_position`,
+        [t.name]
+      );
+      tables.push({ name: t.name, label: t.label, fields });
+    }
+
+    // 3. All field_permissions for company_id=1
+    const { rows: permissions } = await pool.query(
+      `SELECT role_id, table_name, field_name, can_read, can_write
+       FROM shared.field_permissions
+       WHERE company_id = 1
+       ORDER BY role_id, table_name, field_name`
+    );
+
+    res.json({ roles, tables, permissions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/permissions/matrix — batch upsert field permissions.
+ * Body: { entries: [{role_id, table_name, field_name, can_read, can_write}] }
+ * Uses ON CONFLICT upsert.
+ */
+app.post("/api/permissions/matrix", async (req, res) => {
+  try {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return res.status(400).json({ error: "entries array is required" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      for (const entry of entries) {
+        const { role_id, table_name, field_name, can_read, can_write } = entry;
+        if (!role_id || !table_name || !field_name) {
+          continue; // Skip invalid entries
+        }
+        await client.query(
+          `INSERT INTO shared.field_permissions (role_id, table_name, field_name, company_id, can_read, can_write)
+           VALUES ($1, $2, $3, 1, $4, $5)
+           ON CONFLICT (role_id, table_name, field_name, company_id)
+           DO UPDATE SET can_read = EXCLUDED.can_read,
+                         can_write = EXCLUDED.can_write,
+                         updated_at = NOW()`,
+          [role_id, table_name, field_name, !!can_read, !!can_write]
+        );
+      }
+
+      await client.query("COMMIT");
+      res.json({ ok: true, count: entries.length });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /**
  * GET /api/employees — list employees for user picker
  * Supports ?search= query param for filtering by name or email
