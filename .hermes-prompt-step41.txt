@@ -1,0 +1,111 @@
+Implement Step 41 — Seed default permissions for all 7 built-in roles
+
+## Context
+
+We've built a full RBAC permission system across Steps 33-40. All the DB tables exist (roles, user_roles, table_permissions, field_permissions, row_filters), the middleware is in place, and the permission cache with 5-min TTL is working.
+
+The current DB only has 5 roles seeded (admin, manager, data-entry, read-only, reports). The Permissions spec (Section 3.1) defines 7 built-in roles:
+
+| Role | Typical user | Access scope |
+|------|-------------|--------------|
+| admin | Peter, system admin | Everything |
+| manager | Operations manager | All data, no system config |
+| roaster | Roastery staff | Production, inventory, products |
+| sales | Sales team | Customers, orders, invoices |
+| warehouse | Warehouse staff | Products, inventory, purchase orders |
+| accounting | Finance | Orders, invoices, payments, reports |
+| viewer | Read-only user | Reports only, no edits |
+
+## What to do
+
+### 1. Create missing roles
+Add the 4 roles that don't exist yet: roaster, sales, warehouse, accounting, viewer.
+Keep existing roles (admin, manager). The old "data-entry", "read-only", "reports" roles should be kept but the new roles cover the spec's requirement.
+
+Actually, re-read the spec: the spec says 7 built-in roles. The current DB has 5: admin, manager, data-entry, read-only, reports. The spec's 7 are: admin, manager, roaster, sales, warehouse, accounting, viewer.
+
+So we need to ADD: roaster, sales, warehouse, accounting, viewer (5 new roles)
+And KEEP: admin, manager, data-entry, read-only, reports (5 existing roles)
+
+Total: 10 roles. But the spec says "7 built-in roles" — the data-entry, read-only, and reports roles were created for the initial test users and are still valid. The task is to seed permissions for the 7 roles from the spec. So seed permissions for: admin, manager, roaster, sales, warehouse, accounting, viewer.
+
+### 2. Seed table-level permissions for all 7 roles
+
+Create a SQL seed file at `server/sql/step-41-seed-default-permissions.sql` that follows the Default Permission Matrix from the spec (Section 6.1):
+
+| Table | Admin | Manager | Roaster | Sales | Warehouse | Accounting | Viewer |
+|-------|-------|---------|---------|-------|-----------|------------|--------|
+| Products | CRUD | CRUD | CRUD | R | R | R | R |
+| Customers | CRUD | CRUD | - | CRUD | - | R | R |
+| Orders | CRUD | CRUD | R | CRUD | R | R | R |
+| Order Details | CRUD | CRUD | R | CRUD | R | R | R |
+| Work Orders | CRUD | CRUD | CRUD | - | R | - | R |
+| Inventory | CRUD | CRUD | R | - | CRUD | - | R |
+| Employees | CRUD | CRUD | - | - | - | - | R |
+| Suppliers | CRUD | CRUD | R | - | R | R | R |
+| Invoices | CRUD | CRUD | - | - | - | CRUD | R |
+| Financials | CRUD | R | - | - | - | CRUD | R |
+
+(CRUD = can_select + can_insert + can_update + can_delete, R = can_select only)
+
+Use the existing `shared.upsert_table_permission` helper function from step-34-seed-permissions.sql (it was DROPped at the end, so recreate it).
+
+### 3. Seed field-level permissions
+
+From the spec Section 6.2, seed field-level permissions for the Products table:
+
+| Field | Admin | Manager | Roaster | Sales | Warehouse | Viewer |
+|-------|-------|---------|---------|-------|-----------|-------|
+| cost_price | RW | RW | RW | HIDDEN | HIDDEN | R |
+| sell_price | RW | RW | RW | R | R | R |
+| stock_qty | RW | RW | RW | HIDDEN | RW | R |
+| reorder_level | RW | RW | RW | HIDDEN | RW | R |
+| supplier_id | RW | RW | RW | HIDDEN | R | R |
+| margin | RW | RW | RW | HIDDEN | HIDDEN | R |
+
+Use the existing `shared.upsert_field_permission` helper function.
+
+HIDDEN = can_read=false, can_write=false
+R = can_read=true, can_write=false
+RW = no explicit entry needed (defaults to readwrite)
+
+### 4. Create a seed runner
+
+Add a script `server/seed-default-permissions.js` or update `server/index.cjs` to run the seed on startup if the permissions haven't been seeded yet. Or better, create a standalone script:
+
+`server/scripts/seed-default-permissions.cjs` that:
+- Connects to the database
+- Runs the SQL file
+- Logs results
+- Exits with 0 on success
+
+### 5. Integration test
+
+Create `server/__tests__/seed-permissions.test.cjs` that:
+- Verifies all 7 roles exist
+- Verifies table permissions are seeded for each role
+- Verifies field-level permissions are correct
+- Verifies admin has CRUD on everything
+- Verifies viewer has R on everything
+- Verifies sales cannot see cost_price, stock_qty, reorder_level, supplier_id, margin
+
+### 6. Run the seed
+
+After creating the SQL and scripts, run the seed against the development database.
+
+### Important notes
+- Use the existing `shared.upsert_table_permission` and `shared.upsert_field_permission` helper patterns from step-34 and step-36
+- The helpers need to be recreated since they were DROPped at the end of those files
+- Admin role bypasses all checks in middleware logic, so explicit admin entries are nice-to-have but not strictly required
+- viewer role = read-only on everything
+- The accounting role should be able to read financials and CRUD invoices
+- The roaster role focuses on production: products, work orders, inventory
+- The sales role focuses on customers and orders
+- The warehouse role focuses on products, inventory, purchase orders
+
+### Files to create/modify
+- `server/sql/step-41-seed-default-permissions.sql` — NEW
+- `server/scripts/seed-default-permissions.cjs` — NEW (standalone runner)
+- `server/__tests__/seed-permissions.test.cjs` — NEW
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui
