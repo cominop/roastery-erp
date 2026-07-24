@@ -1,0 +1,80 @@
+Implement Step 40 — Permission cache (Redis or in-memory, 5-min TTL)
+
+## Context
+
+We've built a full RBAC permission system across Steps 33-39. Every API call goes through `permission-middleware.cjs` which queries PostgreSQL on every request. On the client side, `usePermissions.ts` has an in-memory `Map` cache (`cacheRef`) but it has NO TTL — once a permission is cached, it's stale forever.
+
+The spec section 9 (Cache Strategy) requires:
+- Permission cache (in-memory, 5-minute TTL)
+- Cache stores: tablePerms, fieldPerms, rowFilter
+- Invalidate on permission change (admin edits matrix)
+
+## What to do
+
+### 1. Server-side cache: `server/permission-middleware.cjs`
+Add an in-memory cache with 5-minute TTL for permission lookups.
+
+Create a new module `server/permission-cache.cjs` that exports:
+- `getCached(tableName, action, roleIds, companyId)` — returns cached boolean or null
+- `setCached(tableName, action, roleIds, companyId, value)` — stores with TTL
+- `getCachedFilter(tableName, roleIds, companyId)` — returns cached filter SQL or null
+- `setCachedFilter(tableName, roleIds, companyId, filterSql)` — stores with TTL
+- `invalidateCache()` — clears ALL cached entries (called when permissions change)
+- `invalidateCacheForTable(tableName)` — clears entries for a specific table
+
+The cache key should be a string like `${tableName}:${action}:${roleIds.sort().join(',')}:${companyId}`.
+
+Use a simple `Map<string, { value, expiresAt }>` — no external dependencies. TTL = 5 minutes (300,000 ms).
+
+Then in `permission-middleware.cjs`:
+- Import the cache module
+- In `checkPermission()`: check cache first, if miss → query DB → store in cache
+- In `applyRowFilter()`: check cache first, if miss → query DB → store in cache
+
+### 2. Server-side cache invalidation: `server/index.cjs`
+Add cache invalidation calls:
+- In `POST /api/permissions/matrix`: call `invalidateCache()` after successful update
+- In `POST /api/permissions/row-filters`: call `invalidateCacheForTable(tableName)` after successful update
+- In `DELETE /api/permissions/row-filters/:id`: call `invalidateCache()` after successful delete
+- In the roles routes: call `invalidateCache()` after role creation/deletion
+- In `permissionGuard` middleware's row-filter route: invalidate after updates
+
+### 3. Client-side cache: `src/hooks/usePermissions.ts`
+Add TTL to the existing `cacheRef`:
+- Change `cacheRef` from `Map<string, boolean>` to `Map<string, { value: boolean; expiresAt: number }>`
+- When checking cache (`const cached = cacheRef.current.get(key)`), check if `cached.expiresAt > Date.now()`
+- If expired, delete from cache and continue to API call
+- When setting cache, store `{ value, expiresAt: Date.now() + 300000 }` (5 minutes)
+- Add a `clearCache()` function that empties the Map (exposed for tests)
+
+### 4. Test the server cache
+Add tests in `server/__tests__/permission-cache.test.cjs`:
+- Test basic get/set
+- Test TTL expiry (mock Date.now or use short TTL)
+- Test invalidation clears all entries
+- Test invalidation per table only clears that table's entries
+- Test that checkPermission uses the cache (don't query DB if cached)
+
+### 5. Test the client cache
+Update `src/hooks/__tests__/usePermissions.test.ts`:
+- Test that cached permissions expire after TTL
+- Test that expired cache entries trigger a new API call
+- Test admin bypass still works with TTL cache
+- Test that checkPermission returns false on API failure even after cache miss
+
+### Important notes
+- Keep the tests focused and meaningful, not excessive
+- For the server cache test, you'll need to stub `Date.now()` or use an approach that doesn't depend on real time
+- The spec says "Redis or in-memory" — we'll start with in-memory as it's simpler and matches the 0.5-session effort estimate
+- Make sure cache keys properly serialize roleIds (sort them for consistency)
+- The 5-min TTL means stale permissions could be served for up to 5 min — that's acceptable per spec
+
+### Files to modify
+- `server/permission-cache.cjs` — NEW
+- `server/permission-middleware.cjs` — add cache integration
+- `server/index.cjs` — add invalidation calls
+- `server/__tests__/permission-cache.test.cjs` — NEW
+- `src/hooks/usePermissions.ts` — add TTL to client cache
+- `src/hooks/__tests__/usePermissions.test.ts` — add TTL tests
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui

@@ -4,6 +4,15 @@
 // readonly fields should be displayed but not editable.
 import { useState, useEffect, useRef } from "react";
 
+// ─── Cache TTL ─────────────────────────────────────────
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  value: FieldPermissionsMap;
+  expiresAt: number;
+}
+
 // ─── Types ──────────────────────────────────────────────
 
 export interface FieldPermission {
@@ -47,7 +56,7 @@ export function useFieldPermissions(table: string | undefined): UseFieldPermissi
   const [fieldPermissions, setFieldPermissions] = useState<FieldPermissionsMap | null>(null);
   const [fieldLoading, setFieldLoading] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const cacheRef = useRef<Map<string, FieldPermissionsMap>>(new Map());
+  const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
 
   useEffect(() => {
     if (!table) {
@@ -57,14 +66,15 @@ export function useFieldPermissions(table: string | undefined): UseFieldPermissi
       return;
     }
 
-    // Check cache first
+    // Check cache first (with TTL)
     const cached = cacheRef.current.get(table);
-    if (cached !== undefined) {
-      setFieldPermissions(cached);
+    if (cached !== undefined && Date.now() < cached.expiresAt) {
+      setFieldPermissions(cached.value);
       setFieldLoading(false);
       setFieldError(null);
       return;
     }
+    if (cached !== undefined) cacheRef.current.delete(table); // expired
 
     let cancelled = false;
     setFieldLoading(true);
@@ -77,7 +87,7 @@ export function useFieldPermissions(table: string | undefined): UseFieldPermissi
       })
       .then((data) => {
         if (!cancelled) {
-          cacheRef.current.set(table, data);
+          cacheRef.current.set(table, { value: data, expiresAt: Date.now() + CACHE_TTL_MS });
           setFieldPermissions(data);
           setFieldLoading(false);
         }

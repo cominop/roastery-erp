@@ -14,8 +14,13 @@
  */
 
 const { Pool } = require("pg");
+const { PermissionCache } = require("./permission-cache.cjs");
 
 const pool = new Pool({ database: "polyaccess" });
+
+// ─── Permission cache (shared singleton) ──────────────────
+// Exported so server/index.cjs can invalidate on writes.
+const permCache = new PermissionCache();
 
 // ─── Permission check —────────────────────────────────────
 
@@ -30,6 +35,11 @@ const pool = new Pool({ database: "polyaccess" });
 async function checkPermission(tableName, action, userRoleIds, companyId) {
   if (!userRoleIds || userRoleIds.length === 0) return false;
 
+  // Check cache first
+  const cacheKey = permCache.permKey(tableName, action, userRoleIds, companyId);
+  const cached = permCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   const { rows } = await pool.query(
     `SELECT bool_or(can_select) AS can_select,
             bool_or(can_insert) AS can_insert,
@@ -42,8 +52,13 @@ async function checkPermission(tableName, action, userRoleIds, companyId) {
     [userRoleIds, tableName, companyId]
   );
 
-  if (rows.length === 0) return false;
-  return !!rows[0][`can_${action}`];
+  if (rows.length === 0) {
+    permCache.set(cacheKey, false);
+    return false;
+  }
+  const result = !!rows[0][`can_${action}`];
+  permCache.set(cacheKey, result);
+  return result;
 }
 
 // ─── Row-level filter —────────────────────────────────────
@@ -59,6 +74,11 @@ async function checkPermission(tableName, action, userRoleIds, companyId) {
 async function applyRowFilter(tableName, userRoleIds, companyId) {
   if (!userRoleIds || userRoleIds.length === 0) return null;
 
+  // Check cache first
+  const cacheKey = permCache.filterKey(tableName, userRoleIds, companyId);
+  const cached = permCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   const { rows } = await pool.query(
     `SELECT filter_sql FROM shared.row_filters
      WHERE role_id = ANY($1::int[])
@@ -70,8 +90,13 @@ async function applyRowFilter(tableName, userRoleIds, companyId) {
   );
 
   const fragments = rows.filter((r) => r.filter_sql).map((r) => r.filter_sql);
-  if (fragments.length === 0) return null;
-  return fragments.join(" AND ");
+  if (fragments.length === 0) {
+    permCache.set(cacheKey, null);
+    return null;
+  }
+  const result = fragments.join(" AND ");
+  permCache.set(cacheKey, result);
+  return result;
 }
 
 // ─── Placeholder auth —────────────────────────────────────
@@ -235,4 +260,5 @@ module.exports = {
   extractUser,
   getUserRoleIds,
   parseTableNamesFromSql,
+  permCache,
 };

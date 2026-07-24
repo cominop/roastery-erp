@@ -3,6 +3,15 @@
 // boolean flags (canSelect, canInsert, canUpdate, canDelete).
 import { useState, useEffect, useCallback, useRef } from "react";
 
+// ─── Cache TTL ─────────────────────────────────────────
+
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  value: boolean;
+  expiresAt: number;
+}
+
 // ─── Types ──────────────────────────────────────────────
 
 export type PermissionAction = "select" | "insert" | "update" | "delete";
@@ -77,8 +86,8 @@ export function usePermissions(options?: UsePermissionsOptions): UsePermissionsR
   const [error, setError] = useState<string | null>(null);
   const [tablePerms, setTablePerms] = useState<TablePermissions | undefined>(undefined);
 
-  // In-memory cache for checkPermission results
-  const cacheRef = useRef<Map<string, boolean>>(new Map());
+  // In-memory cache for checkPermission results (5-min TTL)
+  const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
 
   // ── Fetch user info on mount ──────────────────────────
   useEffect(() => {
@@ -131,10 +140,11 @@ export function usePermissions(options?: UsePermissionsOptions): UsePermissionsR
         if (!cancelled) {
           setTablePerms(perms);
           // Also populate the cache so checkPermission calls are instant
-          cacheRef.current.set(cacheKey(options.table!, "select"), perms.canSelect);
-          cacheRef.current.set(cacheKey(options.table!, "insert"), perms.canInsert);
-          cacheRef.current.set(cacheKey(options.table!, "update"), perms.canUpdate);
-          cacheRef.current.set(cacheKey(options.table!, "delete"), perms.canDelete);
+          const expiresAt = Date.now() + CACHE_TTL_MS;
+          cacheRef.current.set(cacheKey(options.table!, "select"), { value: perms.canSelect, expiresAt });
+          cacheRef.current.set(cacheKey(options.table!, "insert"), { value: perms.canInsert, expiresAt });
+          cacheRef.current.set(cacheKey(options.table!, "update"), { value: perms.canUpdate, expiresAt });
+          cacheRef.current.set(cacheKey(options.table!, "delete"), { value: perms.canDelete, expiresAt });
         }
       })
       .catch(() => {
@@ -155,17 +165,18 @@ export function usePermissions(options?: UsePermissionsOptions): UsePermissionsR
 
       // Check in-memory cache first
       const cached = cacheRef.current.get(key);
-      if (cached !== undefined) return cached;
+      if (cached !== undefined && Date.now() < cached.expiresAt) return cached.value;
+      if (cached !== undefined) cacheRef.current.delete(key); // expired
 
       // Admin bypass
       if (userInfo?.isAdmin) {
-        cacheRef.current.set(key, true);
+        cacheRef.current.set(key, { value: true, expiresAt: Date.now() + CACHE_TTL_MS });
         return true;
       }
 
       // No roles = no access
       if (!userInfo?.roleIds || userInfo.roleIds.length === 0) {
-        cacheRef.current.set(key, false);
+        cacheRef.current.set(key, { value: false, expiresAt: Date.now() + CACHE_TTL_MS });
         return false;
       }
 
@@ -177,7 +188,7 @@ export function usePermissions(options?: UsePermissionsOptions): UsePermissionsR
         });
         if (!res.ok) return false;
         const data = (await res.json()) as { permitted: boolean };
-        cacheRef.current.set(key, data.permitted);
+        cacheRef.current.set(key, { value: data.permitted, expiresAt: Date.now() + CACHE_TTL_MS });
         return data.permitted;
       } catch {
         return false;

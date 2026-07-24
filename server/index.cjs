@@ -19,7 +19,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const { filtersToWhereClause, validateFilter } = require("./filters-to-where.cjs");
-const { permissionGuard, parseTableNamesFromSql } = require("./permission-middleware.cjs");
+const { permissionGuard, parseTableNamesFromSql, permCache } = require("./permission-middleware.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -560,7 +560,7 @@ app.get("/api/permissions/fields/:table", async (req, res) => {
       [roleIds, table, companyId]
     );
 
-    const result: Record<string, { hidden: boolean; readonly: boolean }> = {};
+    const result = {};
     for (const row of rows) {
       const canRead = !!row.can_read;
       const canWrite = !!row.can_write;
@@ -739,6 +739,8 @@ app.post("/api/roles", async (req, res) => {
       [newRole.id]
     );
 
+    // Invalidate cache — role creation affects all permission lookups
+    permCache.invalidateAll();
     res.status(201).json(full[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -809,6 +811,8 @@ app.put("/api/roles/:id", async (req, res) => {
     );
 
     res.json(rows[0]);
+    // Invalidate cache — role metadata changed (name/caption affects display)
+    permCache.invalidateAll();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -835,6 +839,8 @@ app.delete("/api/roles/:id", async (req, res) => {
     }
 
     await pool.query(`DELETE FROM shared.roles WHERE id = $1`, [id]);
+    // Invalidate cache — role deletion affects all permission lookups
+    permCache.invalidateAll();
     res.json({ deleted: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -929,6 +935,9 @@ app.post("/api/roles/:id/users", async (req, res) => {
        ORDER BY e.firstname, e.lastname`,
       [id]
     );
+
+    // Invalidate cache — user-role assignments changed
+    permCache.invalidateAll();
 
     res.json(updated);
   } catch (err) {
@@ -1026,6 +1035,8 @@ app.post("/api/permissions/matrix", async (req, res) => {
       }
 
       await client.query("COMMIT");
+      // Invalidate permission cache — field-level permissions changed
+      permCache.invalidateAll();
       res.json({ ok: true, count: entries.length });
     } catch (err) {
       await client.query("ROLLBACK");
@@ -1102,6 +1113,8 @@ app.post("/api/permissions/row-filters", async (req, res) => {
         [JSON.stringify(filter_condition), finalFilterSql, description || null, enabled !== undefined ? enabled : true, id]
       );
       if (rows.length === 0) return res.status(404).json({ error: "Row filter not found" });
+      // Invalidate row-filter cache for this table
+      permCache.invalidateTable(table_name);
       res.json(rows[0]);
     } else {
       // Create new
@@ -1111,6 +1124,8 @@ app.post("/api/permissions/row-filters", async (req, res) => {
          RETURNING *`,
         [role_id, table_name, JSON.stringify(filter_condition), finalFilterSql, description || null, enabled !== undefined ? enabled : true]
       );
+      // Invalidate row-filter cache for this table
+      permCache.invalidateTable(table_name);
       res.status(201).json(rows[0]);
     }
   } catch (err) {
@@ -1124,11 +1139,19 @@ app.post("/api/permissions/row-filters", async (req, res) => {
 app.delete("/api/permissions/row-filters/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    // Fetch table_name before deleting so we can invalidate the right cache entries
+    const { rows: before } = await pool.query(
+      `SELECT table_name FROM shared.row_filters WHERE id = $1 AND company_id = 1`,
+      [id]
+    );
     const { rowCount } = await pool.query(
       `DELETE FROM shared.row_filters WHERE id = $1 AND company_id = 1`,
       [id]
     );
     if (rowCount === 0) return res.status(404).json({ error: "Row filter not found" });
+    if (before.length > 0) {
+      permCache.invalidateTable(before[0].table_name);
+    }
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
