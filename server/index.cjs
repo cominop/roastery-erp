@@ -179,9 +179,9 @@ app.get("/api/data/:table", permissionGuard((req) => req.params.table), async (r
     sql = sql.replace(/\[[^\]]*\]\.\[([^\]]*)\]/g, (_, field) => field.trim().replace(/\s+/g, "_").toLowerCase());
     sql = sql.replace(/\[([^\]]*)\]/g, (_, field) => field.trim().replace(/\s+/g, "_").toLowerCase());
     // Convert Access LIKE "*x*" → ILIKE '%x%'
-    sql = sql.replace(/Like\s+"?\*(.+?)\*\*?"?/gi, "ILIKE '%$1%'");
-    sql = sql.replace(/Like\s+"?\*(.+?)"\*/gi, "ILIKE '%$1%'");
-    sql = sql.replace(/Like\s+"?(.+?)"?\*/gi, "ILIKE '$1%'");
+    sql = sql.replace(/Like\s+\"?\*(.+?)\*\*?\"/gi, "ILIKE '%$1%'");
+    sql = sql.replace(/Like\s+\"?\*(.+?)\"\*/gi, "ILIKE '%$1%'");
+    sql = sql.replace(/Like\s+\"?(.+?)\"?\*/gi, "ILIKE '$1%'");
     // Convert = True / = False (Access)
     sql = sql.replace(/=\s*True/gi, "= true");
     sql = sql.replace(/=\s*False/gi, "= false");
@@ -246,6 +246,15 @@ app.get("/api/data/:table", permissionGuard((req) => req.params.table), async (r
     let where = `WHERE company_id = ${companyId}`;
     if (whereClause) where += ` AND ${whereClause}`;
 
+    // ─── Row-level filter ────────────────────────────────
+    // Apply per-role row filters for non-admin users
+    if (req.user && !req.user.isAdmin && req.user.roleIds && req.user.roleIds.length > 0) {
+      const rowFilterSql = await applyRowFilter(table, req.user.roleIds, req.user.companyId);
+      if (rowFilterSql) {
+        where += ` AND (${rowFilterSql})`;
+      }
+    }
+
     // ─── Order clause ─────────────────────────────────
     let order = "";
     if (orderBy) {
@@ -294,8 +303,18 @@ app.get("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
 
   try {
     const pk = await getPkColumn(table);
+    let whereCondition = `"${pk}" = $1 AND company_id = 1`;
+
+    // Apply row-level filter for non-admin users
+    if (req.user && !req.user.isAdmin && req.user.roleIds && req.user.roleIds.length > 0) {
+      const rowFilterSql = await applyRowFilter(table, req.user.roleIds, req.user.companyId);
+      if (rowFilterSql) {
+        whereCondition += ` AND (${rowFilterSql})`;
+      }
+    }
+
     const { rows } = await pool.query(
-      `SELECT * FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
+      `SELECT * FROM db_fcc_erp."${table}" WHERE ${whereCondition}`,
       [id]
     );
     if (rows.length === 0) return res.status(404).json({ error: "Not found" });
@@ -1014,6 +1033,103 @@ app.post("/api/permissions/matrix", async (req, res) => {
     } finally {
       client.release();
     }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Row Filter CRUD API ─────────────────────────────────
+
+/**
+ * GET /api/permissions/row-filters/:table — list row filters for a table.
+ * Returns an array of row filter objects.
+ */
+app.get("/api/permissions/row-filters/:table", async (req, res) => {
+  try {
+    const { table } = req.params;
+    const { rows } = await pool.query(
+      `SELECT rf.id, rf.role_id, rf.table_name, rf.filter_condition,
+              rf.filter_sql, rf.description, rf.enabled, rf.created_at, rf.updated_at,
+              COALESCE(r.description, r.name) AS role_name
+       FROM shared.row_filters rf
+       LEFT JOIN shared.roles r ON r.id = rf.role_id
+       WHERE rf.table_name = $1 AND rf.company_id = 1
+       ORDER BY rf.role_id, rf.id`,
+      [table]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/permissions/row-filters — create or update a row filter.
+ * Body: { role_id, table_name, filter_condition, filter_sql?, description?, enabled? }
+ * If an id is provided, updates the existing filter.
+ * filter_condition is JSONB (structured filter expression).
+ * filter_sql is optional; if omitted, it is auto-generated from filter_condition.
+ */
+app.post("/api/permissions/row-filters", async (req, res) => {
+  try {
+    const { id, role_id, table_name, filter_condition, filter_sql, description, enabled } = req.body;
+
+    if (!role_id || !table_name || !filter_condition) {
+      return res.status(400).json({ error: "role_id, table_name, and filter_condition are required" });
+    }
+
+    // Auto-generate filter_sql from filter_condition if not provided
+    let finalFilterSql = filter_sql || null;
+    if (!finalFilterSql && filter_condition) {
+      const { filtersToWhereClause } = require("./filters-to-where.cjs");
+      // Accept both single filter object and array
+      const conditions = Array.isArray(filter_condition) ? filter_condition : [filter_condition];
+      const result = filtersToWhereClause(conditions);
+      finalFilterSql = result.whereClause || null;
+    }
+
+    if (id) {
+      // Update existing
+      const { rows } = await pool.query(
+        `UPDATE shared.row_filters
+         SET filter_condition = $1,
+             filter_sql = $2,
+             description = COALESCE($3, description),
+             enabled = COALESCE($4, enabled),
+             updated_at = NOW()
+         WHERE id = $5 AND company_id = 1
+         RETURNING *`,
+        [JSON.stringify(filter_condition), finalFilterSql, description || null, enabled !== undefined ? enabled : true, id]
+      );
+      if (rows.length === 0) return res.status(404).json({ error: "Row filter not found" });
+      res.json(rows[0]);
+    } else {
+      // Create new
+      const { rows } = await pool.query(
+        `INSERT INTO shared.row_filters (role_id, table_name, company_id, filter_condition, filter_sql, description, enabled)
+         VALUES ($1, $2, 1, $3, $4, $5, $6)
+         RETURNING *`,
+        [role_id, table_name, JSON.stringify(filter_condition), finalFilterSql, description || null, enabled !== undefined ? enabled : true]
+      );
+      res.status(201).json(rows[0]);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/permissions/row-filters/:id — delete a row filter.
+ */
+app.delete("/api/permissions/row-filters/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rowCount } = await pool.query(
+      `DELETE FROM shared.row_filters WHERE id = $1 AND company_id = 1`,
+      [id]
+    );
+    if (rowCount === 0) return res.status(404).json({ error: "Row filter not found" });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

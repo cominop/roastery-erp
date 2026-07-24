@@ -33,7 +33,7 @@ import EventHandlerEditorPage from "@/components/EventHandlerEditorPage";
 import { useFilters, useFilterUrlSync } from "@/hooks";
 import { FilterPanel, QuickFilterBar } from "@/filters";
 import type { QuickFilterPreset } from "@/filters";
-import { RoleManager, PermissionMatrix } from "@/permissions";
+import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 
 interface NavItem {
   name: string;
@@ -810,6 +810,7 @@ export default function App() {
               <TabsList variant="line">
                 <TabsTrigger value="roles">Roles & Users</TabsTrigger>
                 <TabsTrigger value="matrix">Field Permissions</TabsTrigger>
+                <TabsTrigger value="row-filters">Row Filters</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="roles" className="flex-1 overflow-hidden m-0">
@@ -817,6 +818,9 @@ export default function App() {
             </TabsContent>
             <TabsContent value="matrix" className="flex-1 overflow-hidden m-0">
               <PermissionMatrix />
+            </TabsContent>
+            <TabsContent value="row-filters" className="flex-1 overflow-hidden m-0">
+              <RowFilterEditor />
             </TabsContent>
           </Tabs>
         )}
