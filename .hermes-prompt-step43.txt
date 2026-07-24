@@ -1,0 +1,269 @@
+Implement Step 43 — Expression evaluator (AST to result with context)
+
+## Context
+
+We're on Track E — Calculated Fields, Step 2 of 10. Step 42 (expression parser) is complete and committed at `650ca42`.
+
+The Python parser in `server/calculated_fields/expression_parser.py` produces AST nodes from:
+- `server/calculated_fields/ast_types.py` — AST node types (FieldRef, LiteralNode, BinaryOp, UnaryOp, FunctionCall, Comparison)
+- `server/calculated_fields/token_types.py` — Token types
+- `server/calculated_fields/parse_error.py` — ParseError exception
+
+There is ALREADY a working TypeScript evaluator at `src/lib/expressions.ts` that you can use as reference for the evaluation logic (functions, type coercion, Access-style semantics, aggregate handling). The TypeScript file has 600+ lines covering the full evaluator with 30+ built-in functions, string concat, comparison, logical operators, aggregates, and FORMAT/date handling.
+
+## What to build
+
+### 1. Expression Evaluator (`server/calculated_fields/expression_evaluator.py`)
+
+Create a Python module that evaluates an AST (from `parse_expression()`) against a context dictionary (record data with field values) and returns the computed result.
+
+**Core interface:**
+```python
+def evaluate(ast: Expression, context: EvalContext) -> Any: ...
+def evaluate_expression(expression: str, context: EvalContext) -> Any: ...
+```
+
+Where `EvalContext` is:
+```python
+@dataclass
+class EvalContext:
+    record: dict[str, Any] = field(default_factory=dict)       # Current record field values
+    all_records: list[dict[str, Any]] | None = None             # All records (for aggregates)
+    group_records: list[dict[str, Any]] | None = None           # Group records (for aggregates)
+    user_context: dict[str, Any] = field(default_factory=dict)  # User info, company, etc.
+```
+
+**AST evaluation logic:**
+
+1. **FieldRef** — Look up the field name in `context.record` (case-insensitive). Return `None` if not found.
+   - Also support table-qualified refs: `{table.field}` → lookup in context if available
+
+2. **LiteralNode** — Return the literal value as-is
+
+3. **BinaryOp** — Evaluate left and right, then apply operator:
+   - `+`: numeric addition (coerce both to number)
+   - `-`: numeric subtraction
+   - `*`: numeric multiplication
+   - `/`: numeric division (return None for division by zero)
+   - `&`: string concatenation (Access-style `&` operator, convert to string, null → "")
+
+4. **Comparison** — Evaluate left and right, then compare:
+   - `=`: equal (Access-style: return -1 for True, 0 for False)
+   - `!=` / `<>`: not equal
+   - `>`, `<`, `>=`, `<=`: numeric comparisons
+   - All comparisons return -1 (True) or 0 (False) per Access convention
+
+5. **UnaryOp** — Evaluate operand, then apply:
+   - `-`: numeric negation
+   - `NOT`: logical NOT (truthy check → 0 or -1)
+
+6. **Logical operations** (these are represented as BinaryOp with "AND" / "OR" operators and UnaryOp with "NOT"):
+   - AND: truthy check both sides → -1 or 0
+   - OR: truthy check either side → -1 or 0
+   - NOT: negate truthiness → -1 or 0
+
+7. **FunctionCall** — Look up function name (case-insensitive) and call it with evaluated args
+
+**Access-style truthiness:**
+- `None` / null → False
+- Number 0 → False
+- Empty string "" → False
+- Everything else → True
+
+**Access-style number coercion (toNumber):**
+- Already a number → return as-is
+- String → parseFloat (0 if NaN)
+- Boolean → -1 for True, 0 for False
+- None/null → 0
+
+**Built-in functions to support (all case-insensitive):**
+
+Conditional:
+- `IIF(condition, true_part, false_part)` — if truthy(condition) return true_part else false_part
+- `NZ(value, [alt])` — return value if not null, else alt (default 0)
+- `ISNULL(value)` — return -1 if null/empty, else 0
+
+Date/time:
+- `NOW()` — return current datetime
+- `DATE()` — return current date
+- `DATEADD(interval, count, date)` — add interval to date (d=day, m=month, yyyy=year)
+- `DATEDIFF(interval, date1, date2)` — difference between dates
+- `YEAR(date)` — extract year
+- `MONTH(date)` — extract month
+- `DAY(date)` — extract day
+
+String:
+- `LEFT(str, count)` — leftmost N chars
+- `RIGHT(str, count)` — rightmost N chars
+- `MID(str, start, count)` — substring (1-indexed start)
+- `LEN(str)` — string length
+- `TRIM(str)` — trim whitespace
+- `UCASE(str)` — uppercase
+- `LCASE(str)` — lowercase
+- `INSTR(str, substr, [start])` — find substring position (1-indexed, 0 if not found)
+- `REPLACE(str, old, new)` — replace all occurrences
+- `CONCAT(str1, str2, ...)` — concatenate strings
+
+Math:
+- `INT(num)` — floor
+- `ABS(num)` — absolute value
+- `VAL(str)` — convert string to number (0 if invalid)
+- `ROUND(num, [precision])` — round to decimal places
+- `MIN(num1, num2, ...)` — minimum
+- `MAX(num1, num2, ...)` — maximum
+
+Aggregate (operate on context.group_records or context.all_records):
+- `SUM(field_expr)` — sum of field across records
+- `COUNT(expr)` — count (COUNT(*) counts all rows)
+- `AVG(field_expr)` — average
+- `MIN(field_expr)` — minimum across records
+- `MAX(field_expr)` — maximum across records
+
+Format:
+- `FORMAT(value, format_str)` — basic formatting:
+  - "Currency" → "$1,234.50"
+  - "Percent" → "25.00%"
+  - "Fixed" → "3.14"
+  - "Short Date" → "6/15/2024"
+
+### 2. Error Handling
+
+Create `server/calculated_fields/eval_error.py`:
+```python
+class EvalError(Exception):
+    """Error raised during expression evaluation."""
+    def __init__(self, message: str, detail: str = ""):
+        self.message = message
+        self.detail = detail
+        super().__init__(f"#Error: {message}" + (f" ({detail})" if detail else ""))
+```
+
+For any evaluation error (division by zero, missing function, type error, etc.), the evaluator should catch the exception and return the string `"#Error"`.
+
+### 3. Tests (`server/__tests__/test_expression_evaluator.py`)
+
+Create comprehensive Python tests matching the TypeScript test suite at `src/lib/__tests__/expressions.test.ts`:
+
+**Literals & Identity:**
+- Numeric literals: 42, 3.14, 0, -5
+- String literals: "hello", 'world', escaped quotes
+- Leading =: "=42" → 42
+- Boolean: true, false
+- Null: null
+
+**Field References:**
+- {field_name} → look up in context record
+- Plain identifier as field ref
+- Case-insensitive field lookup
+- Missing field → None
+
+**Arithmetic:**
+- Addition, subtraction, multiplication, division
+- Division by zero → None
+- Operator precedence: 2 + 3 * 4 → 14
+- Parentheses: (2 + 3) * 4 → 20
+- Unary minus: -5, -(10 + 5), 3 + -2
+- Chained operations
+
+**String Concat:**
+- "Hello" & " World" → "Hello World"
+- "Order #" & 42 → "Order #42"
+- Null in concat → ""
+
+**Comparisons:**
+- Equal = → -1 for true, 0 for false
+- Not equal != / <> → -1 or 0
+- <, >, <=, >= → -1 or 0
+- Field comparisons
+
+**Logical:**
+- AND, OR, NOT → -1 or 0
+- Compound logic with precedence
+
+**Built-in Functions:**
+- IIF, NZ, ISNULL
+- NOW, DATE
+- LEFT, RIGHT, MID, LEN, TRIM, UCASE, LCASE, INSTR, REPLACE
+- INT, ABS, VAL, ROUND
+- DATEADD
+- FORMAT (Currency, Percent, Fixed, Short Date)
+
+**Aggregates:**
+- COUNT(*), SUM, AVG, MIN, MAX
+- Empty set handling
+
+**Complex Expressions:**
+- Combined arithmetic and comparisons
+- IIF with field references
+- Nested function calls
+- Field values through chain of operations
+
+**Error handling:**
+- Empty expression → "#Error"
+- Invalid syntax → "#Error"
+
+### 4. Update `__init__.py`
+
+Update `server/calculated_fields/__init__.py` to export `evaluate_expression`:
+```python
+"""Calculated fields: expression parser, tokeniser, AST, and evaluator (Track E)."""
+from .expression_evaluator import evaluate_expression
+from .expression_parser import parse_expression, tokenise_expression
+from .ast_types import FieldRef, LiteralNode, BinaryOp, UnaryOp, FunctionCall, Comparison
+from .parse_error import ParseError
+```
+
+## Existing reference code
+
+The TypeScript evaluator at `src/lib/expressions.ts` has the complete evaluation logic (600+ lines) covering:
+- `evaluate(node, ctx)` — AST evaluator with all node types
+- `callFunction(fn, args, ctx)` — 30+ built-in functions
+- `callAggregate(fn, arg, ctx)` — SUM, COUNT, AVG, MIN, MAX
+- `fieldLookup(name, ctx)` — case-insensitive field resolution
+- `toNumber`, `toString`, `truthy` — Access-style type coercion
+- FORMAT with Currency, Percent, Fixed, Short Date patterns
+
+Use this as reference — the Python evaluator should support the same semantics.
+
+## How to run tests
+
+```bash
+cd /home/fcc-student/Desktop/_DEV/roastery-ui
+python3 -m pytest server/__tests__/test_expression_evaluator.py -v 2>&1
+```
+
+And verify existing parser tests still pass:
+```bash
+python3 -m pytest server/__tests__/test_expression_parser.py -v 2>&1
+```
+
+## Important notes
+
+- No eval(), exec(), compile() — the evaluator walks the AST tree directly
+- Follow Access-style conventions: comparisons return -1/0, truthiness is Access-style
+- Use Python 3.11+ features (dataclasses, type hints)
+- Field lookup must be case-insensitive (Access convention)
+- Division by zero should return None (not raise)
+- Functions are case-insensitive
+- The evaluator should catch any unexpected errors and return "#Error" string
+- Read `src/lib/expressions.ts` for reference on how each function and operator behaves
+- The `&` operator is string concatenation (not bitwise AND)
+- Aggregate functions use `context.group_records` (fall back to `context.all_records`)
+
+## File tree
+
+```
+server/calculated_fields/
+├── __init__.py                      # Updated to export evaluator
+├── token_types.py                   # Existing (no change)
+├── ast_types.py                     # Existing (no change)
+├── expression_parser.py             # Existing (no change)
+├── parse_error.py                   # Existing (no change)
+├── eval_error.py                    # NEW: EvalError exception
+├── expression_evaluator.py          # NEW: AST evaluator
+server/__tests__/
+├── test_expression_parser.py        # Existing (no change)
+├── test_expression_evaluator.py     # NEW: Evaluator tests
+```
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui

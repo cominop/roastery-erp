@@ -394,6 +394,11 @@ class Parser:
             # Bare identifier acts as a field reference
             return FieldRef(field=name)
 
+        if token.type == TOKEN_STAR:
+            self.consume()
+            # Bare * used in COUNT(*), SUM(*), etc.
+            return LiteralNode(value="*", literal_type="string")
+
         if token.type == TOKEN_LPAREN:
             self.consume()  # (
             expr = self.parse()
