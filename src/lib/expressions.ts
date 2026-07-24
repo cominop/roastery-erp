@@ -310,8 +310,10 @@ class Parser {
         }
         this.expect("paren-close");
 
-        // Heuristic: uppercase = aggregate function
-        if (name === name.toUpperCase() && name.length >= 3) {
+        // Whitelist-based aggregate detection (not heuristic — uppercase
+        // functions like IIF, LEFT, NZ are regular calls)
+        const AGGREGATE_FNS = new Set(["SUM", "COUNT", "AVG", "MIN", "MAX"]);
+        if (AGGREGATE_FNS.has(name)) {
           return { type: "aggregate", fn: name, arg: args[0] ?? { type: "literal", value: null } };
         }
         return { type: "call", fn: name, args };
@@ -325,6 +327,12 @@ class Parser {
       const node = this.parse();
       this.expect("paren-close");
       return node;
+    }
+
+    // Wildcard star — used in COUNT(*), SUM(*), etc.
+    if (t.type === "operator" && t.value === "*") {
+      this.consume();
+      return { type: "literal", value: "*" };
     }
 
     throw new Error(`Unexpected token: ${t.type} "${t.value}"`);
@@ -479,6 +487,7 @@ function callFunction(fn: string, args: AstNode[], ctx: ExprContext): unknown {
           break;
         case "y":
         case "year":
+        case "yyyy":
           d.setFullYear(d.getFullYear() + c);
           break;
         default:
@@ -500,7 +509,7 @@ function callFunction(fn: string, args: AstNode[], ctx: ExprContext): unknown {
 }
 
 function callAggregate(fn: string, arg: AstNode, ctx: ExprContext): unknown {
-  const records = ctx.groupRecords ?? ctx.allRecords ?? [];
+  const records = (ctx.groupRecords?.length ? ctx.groupRecords : ctx.allRecords) ?? [];
   if (records.length === 0) return fn === "COUNT" ? 0 : null;
 
   switch (fn) {

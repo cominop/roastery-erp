@@ -4,7 +4,7 @@
  * Run: node server/permission-cache.test.cjs
  */
 
-const { PermissionCache } = require("./permission-cache.cjs");
+const { PermissionCache } = require("../permission-cache.cjs");
 
 let passed = 0;
 let failed = 0;
