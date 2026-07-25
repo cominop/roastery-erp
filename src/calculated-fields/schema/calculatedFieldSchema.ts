@@ -1,3 +1,9 @@
+/** Result of dependency detection on an expression. */
+export interface DependencyResult {
+  dependsOn: string[];
+  dependsOnTables: string[];
+}
+
 /**
  * Calculated field definition — maps to shared.calculated_fields table.
  *

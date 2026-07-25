@@ -11,6 +11,7 @@ import {
   createCalculatedField,
   updateCalculatedField,
   deleteCalculatedField,
+  detectDependencies,
 } from '../calculated-fields/api/calculatedFieldsApi';
 
 // ─── Mock helpers ──────────────────────────────────────
@@ -217,5 +218,53 @@ describe('deleteCalculatedField', () => {
     expect(result).toEqual({ ok: true });
     expect(mockCalls[0].method).toBe('DELETE');
     expect(mockCalls[0].url).toBe(`/api/calculated-fields/${mockField.id}`);
+  });
+});
+
+describe('detectDependencies', () => {
+  it('sends expression and returns field refs', async () => {
+    const mockResult = {
+      depends_on: ['quantity', 'unit_price'],
+      depends_on_tables: [],
+    };
+    mockResponses = [{ ok: true, data: mockResult }];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(makeMockFetch());
+
+    const result = await detectDependencies('{quantity} * {unit_price}');
+
+    expect(result).toEqual(mockResult);
+    expect(mockCalls[0].method).toBe('POST');
+    expect(mockCalls[0].url).toBe('/api/calculated-fields/detect-dependencies');
+    expect((mockCalls[0].body as Record<string, unknown>).expression).toBe(
+      '{quantity} * {unit_price}',
+    );
+  });
+
+  it('handles parse errors from the API', async () => {
+    mockResponses = [
+      { ok: false, data: { error: 'Unclosed field reference' } },
+    ];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(makeMockFetch());
+
+    await expect(detectDependencies('{unclosed')).rejects.toThrow(
+      'Unclosed field reference',
+    );
+  });
+
+  it('sends expression with table-qualified refs', async () => {
+    const mockResult = {
+      depends_on: ['amount'],
+      depends_on_tables: ['order_details'],
+    };
+    mockResponses = [{ ok: true, data: mockResult }];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(makeMockFetch());
+
+    const result = await detectDependencies('SUM({order_details.amount})');
+
+    expect(result).toEqual(mockResult);
+    expect(mockCalls[0].method).toBe('POST');
+    expect((mockCalls[0].body as Record<string, unknown>).expression).toBe(
+      'SUM({order_details.amount})',
+    );
   });
 });

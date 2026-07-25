@@ -5,7 +5,7 @@
  * by the shared.calculated_fields table.
  */
 
-import type { CalculatedField } from '../schema/calculatedFieldSchema';
+import type { CalculatedField, DependencyResult } from '../schema/calculatedFieldSchema';
 
 const API_BASE = '/api';
 
@@ -106,5 +106,20 @@ export function updateCalculatedField(
 export function deleteCalculatedField(id: string): Promise<void> {
   return request<void>(`/calculated-fields/${id}`, {
     method: 'DELETE',
+  });
+}
+
+/**
+ * Detect dependencies in an expression by parsing it server-side.
+ *
+ * Sends the raw expression to the parser and returns the list of field
+ * references and table qualifiers found in the AST.
+ */
+export function detectDependencies(
+  expression: string,
+): Promise<DependencyResult> {
+  return request<DependencyResult>('/calculated-fields/detect-dependencies', {
+    method: 'POST',
+    body: JSON.stringify({ expression }),
   });
 }

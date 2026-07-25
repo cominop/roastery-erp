@@ -1437,6 +1437,86 @@ app.delete("/api/calculated-fields/:id", async (req, res) => {
   }
 });
 
+// ─── Dependency Detection ────────────────────────────
+
+const { execFile } = require("child_process");
+const path = require("path");
+
+// Path to the CLI wrapper that calls the Python dependency detector
+const DEPS_CLI = path.resolve(
+  __dirname,
+  "calculated_fields",
+  "detect_deps_cli.py",
+);
+
+/**
+ * POST /api/calculated-fields/detect-dependencies
+ * Body: { expression: string }
+ *
+ * Parses the given expression and returns the field references and table
+ * qualifiers that the expression depends on. Uses the Python expression
+ * parser to build an AST, then walks it to extract FieldRef nodes.
+ *
+ * Returns: { depends_on: string[], depends_on_tables: string[] }
+ */
+app.post("/api/calculated-fields/detect-dependencies", async (req, res) => {
+  try {
+    const { expression } = req.body;
+    if (typeof expression !== "string") {
+      return res.status(400).json({ error: "expression is required" });
+    }
+
+    // Find Python — same logic as sandbox.cjs
+    const candidates = ["python3", "python"];
+    let pythonCmd = "python3";
+    for (const cmd of candidates) {
+      try {
+        require("child_process").execSync(`${cmd} --version`, {
+          stdio: "ignore",
+        });
+        pythonCmd = cmd;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const child = execFile(
+        pythonCmd,
+        [DEPS_CLI, "--expression", expression],
+        {
+          cwd: path.dirname(DEPS_CLI),
+          timeout: 5000,
+          maxBuffer: 1024 * 64,
+          env: {
+            PATH: process.env.PATH || "",
+            PYTHONIOENCODING: "utf-8",
+            PYTHONUNBUFFERED: "1",
+          },
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            // Try to parse any JSON from stderr/stdout
+            const msg = stderr.trim() || stdout.trim() || error.message;
+            reject(new Error(msg));
+            return;
+          }
+          try {
+            resolve(JSON.parse(stdout.trim()));
+          } catch {
+            reject(new Error(`Invalid JSON from detector: ${stdout.trim()}`));
+          }
+        },
+      );
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");
