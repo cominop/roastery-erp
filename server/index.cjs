@@ -1276,6 +1276,167 @@ app.delete("/api/events/:id", async (req, res) => {
   }
 });
 
+// ─── Calculated Fields CRUD ─────────────────────────────
+
+/**
+ * GET /api/calculated-fields — list all calculated field definitions.
+ * Supports optional ?table_name= filter to scope to a specific table.
+ */
+app.get("/api/calculated-fields", async (req, res) => {
+  try {
+    let query = "SELECT * FROM shared.calculated_fields";
+    const params = [];
+    if (req.query.table_name) {
+      query += " WHERE table_name = $1";
+      params.push(req.query.table_name);
+    }
+    query += " ORDER BY table_name, name";
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/calculated-fields/:id — get a single calculated field definition.
+ */
+app.get("/api/calculated-fields/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      "SELECT * FROM shared.calculated_fields WHERE id = $1",
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Calculated field not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/calculated-fields — create a new calculated field definition.
+ * Body: { name, caption, table_name, calc_type, expression, data_type, ... }
+ */
+app.post("/api/calculated-fields", async (req, res) => {
+  try {
+    const {
+      name, caption, table_name, calc_type, expression, data_type,
+      depends_on, depends_on_tables, read_only, refresh_on, null_when_empty,
+      format, decimals, prefix, suffix,
+      visible, sortable, filterable,
+    } = req.body;
+
+    if (!name || !caption || !table_name || !calc_type || !expression || !data_type) {
+      return res.status(400).json({
+        error: "name, caption, table_name, calc_type, expression, and data_type are required",
+      });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO shared.calculated_fields
+       (name, caption, table_name, calc_type, expression, data_type,
+        depends_on, depends_on_tables, read_only, refresh_on, null_when_empty,
+        format, decimals, prefix, suffix, visible, sortable, filterable)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+       RETURNING *`,
+      [
+        name, caption, table_name, calc_type, expression, data_type,
+        depends_on || [], depends_on_tables || [],
+        read_only !== undefined ? read_only : true,
+        refresh_on || "read",
+        null_when_empty || false,
+        format || null, decimals || null, prefix || null, suffix || null,
+        visible !== undefined ? visible : true,
+        sortable !== undefined ? sortable : true,
+        filterable || false,
+      ]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/calculated-fields/:id — update a calculated field definition.
+ * Body: partial fields to update.
+ */
+app.put("/api/calculated-fields/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name, caption, table_name, calc_type, expression, data_type,
+      depends_on, depends_on_tables, read_only, refresh_on, null_when_empty,
+      format, decimals, prefix, suffix, visible, sortable, filterable,
+    } = req.body;
+
+    const sets = [];
+    const params = [];
+    let idx = 1;
+
+    if (name !== undefined) { sets.push(`name = $${idx++}`); params.push(name); }
+    if (caption !== undefined) { sets.push(`caption = $${idx++}`); params.push(caption); }
+    if (table_name !== undefined) { sets.push(`table_name = $${idx++}`); params.push(table_name); }
+    if (calc_type !== undefined) { sets.push(`calc_type = $${idx++}`); params.push(calc_type); }
+    if (expression !== undefined) { sets.push(`expression = $${idx++}`); params.push(expression); }
+    if (data_type !== undefined) { sets.push(`data_type = $${idx++}`); params.push(data_type); }
+    if (depends_on !== undefined) { sets.push(`depends_on = $${idx++}`); params.push(depends_on); }
+    if (depends_on_tables !== undefined) { sets.push(`depends_on_tables = $${idx++}`); params.push(depends_on_tables); }
+    if (read_only !== undefined) { sets.push(`read_only = $${idx++}`); params.push(read_only); }
+    if (refresh_on !== undefined) { sets.push(`refresh_on = $${idx++}`); params.push(refresh_on); }
+    if (null_when_empty !== undefined) { sets.push(`null_when_empty = $${idx++}`); params.push(null_when_empty); }
+    if (format !== undefined) { sets.push(`format = $${idx++}`); params.push(format); }
+    if (decimals !== undefined) { sets.push(`decimals = $${idx++}`); params.push(decimals); }
+    if (prefix !== undefined) { sets.push(`prefix = $${idx++}`); params.push(prefix); }
+    if (suffix !== undefined) { sets.push(`suffix = $${idx++}`); params.push(suffix); }
+    if (visible !== undefined) { sets.push(`visible = $${idx++}`); params.push(visible); }
+    if (sortable !== undefined) { sets.push(`sortable = $${idx++}`); params.push(sortable); }
+    if (filterable !== undefined) { sets.push(`filterable = $${idx++}`); params.push(filterable); }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    sets.push(`updated_at = NOW()`);
+    params.push(id);
+
+    const { rows } = await pool.query(
+      `UPDATE shared.calculated_fields SET ${sets.join(", ")} WHERE id = $${idx}
+       RETURNING *`,
+      params
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Calculated field not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/calculated-fields/:id — delete a calculated field definition.
+ */
+app.delete("/api/calculated-fields/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rowCount } = await pool.query(
+      "DELETE FROM shared.calculated_fields WHERE id = $1",
+      [id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ error: "Calculated field not found" });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");
