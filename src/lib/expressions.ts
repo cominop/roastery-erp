@@ -429,6 +429,8 @@ function callFunction(fn: string, args: AstNode[], ctx: ExprContext): unknown {
   switch (fn.toLowerCase()) {
     case "iif":
       return truthy(evaled[0]) ? evaled[1] : (evaled[2] ?? null);
+    case "if":
+      return truthy(evaled[0]) ? evaled[1] : (evaled[2] ?? null);
     case "nz":
       return evaled[0] != null && evaled[0] !== "" ? evaled[0] : (evaled[1] ?? 0);
     case "isnull":
@@ -502,6 +504,78 @@ function callFunction(fn: string, args: AstNode[], ctx: ExprContext): unknown {
       const fmt = toString(evaled[1]).toLowerCase();
       return formatValue(val, fmt);
     }
+
+    // Step 44: New function library entries
+    case "lookup": {
+      // LOOKUP(tableAndField, key)
+      const tableAndField = toString(evaled[0]);
+      const keyValue = evaled[1];
+      const dotIdx = tableAndField.indexOf(".");
+      if (dotIdx === -1) return null;
+      const tableName = tableAndField.slice(0, dotIdx);
+      const fieldName = tableAndField.slice(dotIdx + 1);
+      if (ctx.databaseLookup) {
+        return ctx.databaseLookup(tableName, fieldName, keyValue);
+      }
+      return null;
+    }
+
+    case "datediff": {
+      const unit = toString(evaled[0]).toLowerCase().trim();
+      const d1 = evaled[1] instanceof Date ? evaled[1] : new Date(toString(evaled[1]));
+      const d2 = evaled[2] instanceof Date ? evaled[2] : new Date(toString(evaled[2]));
+      const diffMs = d2.getTime() - d1.getTime();
+      switch (unit) {
+        case "d":
+        case "day":
+        case "days":
+          return Math.round(diffMs / 86400000);
+        case "h":
+        case "hour":
+        case "hours":
+          return Math.round(diffMs / 3600000);
+        case "n":
+        case "minute":
+        case "minutes":
+          return Math.round(diffMs / 60000);
+        case "s":
+        case "second":
+        case "seconds":
+          return Math.round(diffMs / 1000);
+        case "m":
+        case "month":
+        case "months": {
+          let months = (d2.getFullYear() - d1.getFullYear()) * 12;
+          months += d2.getMonth() - d1.getMonth();
+          return months;
+        }
+        case "y":
+        case "yyyy":
+        case "year":
+        case "years":
+          return d2.getFullYear() - d1.getFullYear();
+        default:
+          return null;
+      }
+    }
+
+    case "today":
+      return new Date();
+
+    case "concat":
+      return evaled.map((v) => toString(v)).join("");
+
+    case "coalesce":
+      for (const v of evaled) {
+        if (v != null && v !== "") return v;
+      }
+      return null;
+
+    case "upper":
+      return toString(evaled[0]).toUpperCase();
+
+    case "lower":
+      return toString(evaled[0]).toLowerCase();
 
     default:
       return null;

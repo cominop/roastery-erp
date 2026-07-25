@@ -596,3 +596,93 @@ class TestEvaluateRawAST:
             ctx,
         )
         assert result == -1
+
+
+# ─── Step 44: New Function Library ───────────────────────────
+
+
+class TestNewFunctionLibrary:
+    """Test Step 44 functions: IF, LOOKUP, DATEDIFF, TODAY, CONCAT, COALESCE, UPPER, LOWER."""
+
+    def test_if_true_part(self) -> None:
+        assert eval_with('IF(5 > 3, "yes", "no")') == "yes"
+
+    def test_if_false_part(self) -> None:
+        assert eval_with('IF(0, "yes", "no")') == "no"
+
+    def test_if_omitted_false_returns_null(self) -> None:
+        assert eval_with("IF(0, 42)") is None
+
+    def test_lookup_with_context(self) -> None:
+        ctx = EvalContext(
+            record={"customer_id": 5},
+            database_lookup=lambda table, field, key: (
+                "Acme Corp" if table == "customers" and field == "name" and key == 5 else None
+            ),
+        )
+        assert evaluate_expression('LOOKUP("customers.name", {customer_id})', ctx) == "Acme Corp"
+
+    def test_lookup_no_callback(self) -> None:
+        assert eval_with('LOOKUP("customers.name", 5)') is None
+
+    def test_lookup_missing_dot(self) -> None:
+        assert eval_with('LOOKUP("customersname", 5)') is None
+
+    def test_datediff_days(self) -> None:
+        assert eval_with('DATEDIFF("day", "2024-01-01", "2024-01-11")') == 10
+
+    def test_datediff_months(self) -> None:
+        assert eval_with('DATEDIFF("month", "2024-01-01", "2024-03-01")') == 2
+
+    def test_datediff_years(self) -> None:
+        assert eval_with('DATEDIFF("yyyy", "2024-01-01", "2026-01-01")') == 2
+
+    def test_datediff_hours(self) -> None:
+        result = eval_with('DATEDIFF("h", "2024-01-01T00:00:00", "2024-01-01T05:30:00")')
+        assert result == 6  # rounds
+
+    def test_datediff_minutes(self) -> None:
+        result = eval_with('DATEDIFF("n", "2024-01-01T00:00:00", "2024-01-01T01:05:00")')
+        assert result == 65
+
+    def test_datediff_seconds(self) -> None:
+        result = eval_with('DATEDIFF("s", "2024-01-01T00:00:00", "2024-01-01T00:01:30")')
+        assert result == 90
+
+    def test_today_returns_date(self) -> None:
+        d = eval_with("TODAY()")
+        assert isinstance(d, (date, datetime))
+
+    def test_concat_variadic(self) -> None:
+        record = {"first": "John", "last": "Doe"}
+        assert eval_with('CONCAT({first}, " ", {last})', record) == "John Doe"
+
+    def test_concat_single_arg(self) -> None:
+        assert eval_with('CONCAT("hello")') == "hello"
+
+    def test_concat_no_args(self) -> None:
+        assert eval_with("CONCAT()") == ""
+
+    def test_coalesce_first_non_null(self) -> None:
+        assert eval_with('COALESCE(Null, "fallback")') == "fallback"
+
+    def test_coalesce_all_null(self) -> None:
+        assert eval_with("COALESCE(Null, Null)") is None
+
+    def test_coalesce_first_value(self) -> None:
+        assert eval_with('COALESCE("first", "second")') == "first"
+
+    def test_coalesce_skips_empty_string(self) -> None:
+        assert eval_with('COALESCE("", "fallback")') == "fallback"
+
+    def test_upper(self) -> None:
+        assert eval_with('UPPER("hello")') == "HELLO"
+
+    def test_lower(self) -> None:
+        assert eval_with('LOWER("HELLO")') == "hello"
+
+    def test_upper_alias_ucase(self) -> None:
+        assert eval_with('UCASE("hello")') == "HELLO"
+
+    def test_lower_alias_lcase(self) -> None:
+        assert eval_with('LCASE("HELLO")') == "hello"

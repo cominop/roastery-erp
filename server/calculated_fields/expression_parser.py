@@ -186,7 +186,7 @@ def tokenise(expression: str) -> list[Token]:
         # Identifiers, keywords, and boolean/null literals
         if ch.isalpha() or ch == "_":
             start = i
-            while i < length and (expression[i].isalnum() or expression[i] == "_"):
+            while i < length and (expression[i].isalnum() or expression[i] == "_" or expression[i] == "."):
                 i += 1
             word = expression[start:i]
             upper = word.upper()

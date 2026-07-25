@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass
@@ -25,6 +25,7 @@ class EvalContext:
     all_records: list[dict[str, Any]] | None = None
     page: int = 0
     pages: int = 0
+    database_lookup: Callable[[str, str, Any], Any] | None = None
 
     def __post_init__(self) -> None:
         if self.record is None:

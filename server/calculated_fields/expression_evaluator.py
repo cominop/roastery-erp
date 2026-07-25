@@ -288,6 +288,72 @@ def _fn_dateadd(args: list[Any]) -> datetime | None:
     return None
 
 
+def _fn_datediff(args: list[Any]) -> int | None:
+    """DATEDIFF(unit, date1, date2) — difference between two dates.
+
+    Supports units: 'day'/'d', 'month'/'m', 'year'/'yyyy',
+    'hour'/'h', 'minute'/'n', 'second'/'s'
+    Returns integer count.
+    """
+    unit = to_string(args[0]).strip().lower()
+    d1_val = args[1]
+    d2_val = args[2]
+
+    # Parse date1
+    if isinstance(d1_val, datetime):
+        d1 = d1_val
+    elif isinstance(d1_val, date):
+        d1 = datetime.combine(d1_val, datetime.min.time())
+    else:
+        try:
+            d1 = datetime.fromisoformat(to_string(d1_val))
+        except (ValueError, TypeError):
+            for fmt in ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%d-%b-%Y"):
+                try:
+                    d1 = datetime.strptime(to_string(d1_val), fmt)
+                    break
+                except (ValueError, TypeError):
+                    continue
+            else:
+                d1 = datetime.now()
+
+    # Parse date2
+    if isinstance(d2_val, datetime):
+        d2 = d2_val
+    elif isinstance(d2_val, date):
+        d2 = datetime.combine(d2_val, datetime.min.time())
+    else:
+        try:
+            d2 = datetime.fromisoformat(to_string(d2_val))
+        except (ValueError, TypeError):
+            for fmt in ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%d-%b-%Y"):
+                try:
+                    d2 = datetime.strptime(to_string(d2_val), fmt)
+                    break
+                except (ValueError, TypeError):
+                    continue
+            else:
+                d2 = datetime.now()
+
+    diff_ms = (d2 - d1).total_seconds() * 1000
+
+    if unit in ("d", "day", "days"):
+        return round(diff_ms / 86400000)
+    if unit in ("h", "hour", "hours"):
+        return round(diff_ms / 3600000)
+    if unit in ("n", "minute", "minutes"):
+        return round(diff_ms / 60000)
+    if unit in ("s", "second", "seconds"):
+        return round(diff_ms / 1000)
+    if unit in ("m", "month", "months"):
+        months = (d2.year - d1.year) * 12
+        months += d2.month - d1.month
+        return months
+    if unit in ("y", "yyyy", "year", "years"):
+        return d2.year - d1.year
+    return None
+
+
 def _fn_format(args: list[Any]) -> str:
     """FORMAT(value, format_string) — format a value.
 
@@ -298,6 +364,37 @@ def _fn_format(args: list[Any]) -> str:
     val = args[0]
     fmt = to_string(args[1]).strip().lower() if len(args) > 1 else "general number"
     return _format_value(val, fmt)
+
+
+# ─── Step 44: New Function Library ─────────────────────────
+
+
+def _fn_today(args: list[Any]) -> date:
+    """TODAY() — alias for DATE(), returns current date."""
+    return datetime.now().date()
+
+
+def _fn_concat(args: list[Any]) -> str:
+    """CONCAT(...values) — variadic string concatenation."""
+    return "".join(to_string(v) for v in args)
+
+
+def _fn_coalesce(args: list[Any]) -> Any:
+    """COALESCE(...values) — return first non-null non-empty value."""
+    for v in args:
+        if v is not None and v != "":
+            return v
+    return None
+
+
+def _fn_upper(args: list[Any]) -> str:
+    """UPPER(str) — alias for UCASE, uppercase."""
+    return to_string(args[0]).upper()
+
+
+def _fn_lower(args: list[Any]) -> str:
+    """LOWER(str) — alias for LCASE, lowercase."""
+    return to_string(args[0]).lower()
 
 
 # ─── Format Value ──────────────────────────────────────────
@@ -369,17 +466,21 @@ def _looks_like_date(s: str) -> bool:
 
 BUILTIN_FUNCTIONS: dict[str, Callable[[list[Any]], Any]] = {
     "iif": _fn_iif,
+    "if": _fn_iif,
     "nz": _fn_nz,
     "isnull": _fn_isnull,
     "now": _fn_now,
     "date": _fn_date,
+    "today": _fn_today,
     "left": _fn_left,
     "right": _fn_right,
     "mid": _fn_mid,
     "len": _fn_len,
     "trim": _fn_trim,
     "ucase": _fn_ucase,
+    "upper": _fn_upper,
     "lcase": _fn_lcase,
+    "lower": _fn_lower,
     "instr": _fn_instr,
     "replace": _fn_replace,
     "int": _fn_int,
@@ -387,6 +488,9 @@ BUILTIN_FUNCTIONS: dict[str, Callable[[list[Any]], Any]] = {
     "val": _fn_val,
     "round": _fn_round,
     "dateadd": _fn_dateadd,
+    "datediff": _fn_datediff,
+    "concat": _fn_concat,
+    "coalesce": _fn_coalesce,
     "format": _fn_format,
 }
 
@@ -481,6 +585,9 @@ def evaluate(node: Expression, context: EvalContext) -> Any:
         name = node.name.lower()
         if name in AGGREGATE_FUNCTIONS:
             return _call_aggregate(name, node.args, context)
+        # LOOKUP requires context for databaseLookup
+        if name == "lookup":
+            return _call_lookup(node.args, context)
         # Evaluate all arguments first
         evaled_args = [evaluate(arg, context) for arg in node.args]
         fn = BUILTIN_FUNCTIONS.get(name)
@@ -565,6 +672,31 @@ def _child_context(record: dict[str, Any], parent: EvalContext) -> EvalContext:
         page=parent.page,
         pages=parent.pages,
     )
+
+
+# ─── LOOKUP ────────────────────────────────────────────────
+
+
+def _call_lookup(args: list[Expression], context: EvalContext) -> Any:
+    """LOOKUP(tableAndField, keyValue) — lookup a value from related table.
+
+    Syntax: LOOKUP(customers.name, {customer_id})
+    Parses 'customers.name' into table='customers', field='name'
+    and calls context.database_lookup(table, field, keyValue).
+    """
+    if len(args) < 2:
+        return None
+    table_and_field = evaluate(args[0], context)
+    key_value = evaluate(args[1], context)
+    tf_str = to_string(table_and_field)
+    dot_idx = tf_str.find(".")
+    if dot_idx == -1:
+        return None
+    table_name = tf_str[:dot_idx]
+    field_name = tf_str[dot_idx + 1 :]
+    if context.database_lookup is not None:
+        return context.database_lookup(table_name, field_name, key_value)
+    return None
 
 
 # ─── Parse Cache ────────────────────────────────────────────

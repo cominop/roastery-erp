@@ -517,3 +517,109 @@ describe("row filter patterns", () => {
     expect(evalWith('[shipped_date] <> ""', record)).toBe(-1);
   });
 });
+
+// ─── Step 44: New Function Library ──────────────────────
+
+describe("IF (alias for IIF)", () => {
+  it("returns true-part when condition is truthy", () => {
+    expect(evalWith('IF(5 > 3, "yes", "no")')).toBe("yes");
+  });
+  it("returns false-part when condition is falsy", () => {
+    expect(evalWith('IF(0, "yes", "no")')).toBe("no");
+  });
+  it("returns null when false-part is omitted", () => {
+    expect(evalWith("IF(0, 42)")).toBeNull();
+  });
+});
+
+describe("LOOKUP", () => {
+  it("returns looked-up value from context", () => {
+    const ctx: ExprContext = {
+      record: { customer_id: 5 },
+      databaseLookup: (table, field, key) => {
+        if (table === "customers" && field === "name" && key === 5) return "Acme Corp";
+        return null;
+      },
+    };
+    expect(evaluateExpression('LOOKUP("customers.name", {customer_id})', ctx)).toBe("Acme Corp");
+  });
+
+  it("returns null when databaseLookup is not provided", () => {
+    expect(evalWith('LOOKUP("customers.name", 5)')).toBeNull();
+  });
+
+  it("returns null when table.field has no dot", () => {
+    expect(evalWith('LOOKUP("customersname", 5)')).toBeNull();
+  });
+});
+
+describe("DATEDIFF", () => {
+  it("calculates day difference", () => {
+    expect(evalWith('DATEDIFF("day", #01/01/2024#, #01/11/2024#)')).toBe(10);
+  });
+  it("calculates month difference", () => {
+    expect(evalWith('DATEDIFF("month", #01/01/2024#, #03/01/2024#)')).toBe(2);
+  });
+  it("calculates year difference", () => {
+    expect(evalWith('DATEDIFF("yyyy", #01/01/2024#, #01/01/2026#)')).toBe(2);
+  });
+  it("calculates hour difference", () => {
+    expect(evalWith('DATEDIFF("h", #01/01/2024 00:00#, #01/01/2024 05:30#)')).toBe(6);
+  });
+  it("calculates minute difference", () => {
+    expect(evalWith('DATEDIFF("n", #01/01/2024 00:00#, #01/01/2024 01:05#)')).toBe(65);
+  });
+  it("calculates second difference", () => {
+    expect(evalWith('DATEDIFF("s", #01/01/2024 00:00#, #01/01/2024 00:01:30#)')).toBe(90);
+  });
+});
+
+describe("TODAY", () => {
+  it("returns a Date", () => {
+    const d = evalWith("TODAY()") as Date;
+    expect(d).toBeInstanceOf(Date);
+  });
+});
+
+describe("CONCAT", () => {
+  it("concatenates multiple values", () => {
+    const record = { first: "John", last: "Doe" };
+    expect(evalWith('CONCAT([first], " ", [last])', record)).toBe("John Doe");
+  });
+  it("handles single argument", () => {
+    expect(evalWith('CONCAT("hello")')).toBe("hello");
+  });
+  it("handles no arguments", () => {
+    expect(evalWith("CONCAT()")).toBe("");
+  });
+});
+
+describe("COALESCE", () => {
+  it("returns first non-null value", () => {
+    expect(evalWith('COALESCE(Null, "fallback")')).toBe("fallback");
+  });
+  it("returns null when all are null", () => {
+    expect(evalWith("COALESCE(Null, Null)")).toBeNull();
+  });
+  it("returns first value when all are non-null", () => {
+    expect(evalWith('COALESCE("first", "second")')).toBe("first");
+  });
+  it("skips empty strings", () => {
+    expect(evalWith('COALESCE("", "fallback")')).toBe("fallback");
+  });
+});
+
+describe("UPPER / LOWER", () => {
+  it("UPPER converts to uppercase", () => {
+    expect(evalWith('UPPER("hello")')).toBe("HELLO");
+  });
+  it("LOWER converts to lowercase", () => {
+    expect(evalWith('LOWER("HELLO")')).toBe("hello");
+  });
+  it("UCASE still works as alias", () => {
+    expect(evalWith('UCASE("hello")')).toBe("HELLO");
+  });
+  it("LCASE still works as alias", () => {
+    expect(evalWith('LCASE("HELLO")')).toBe("hello");
+  });
+});

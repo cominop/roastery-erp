@@ -93,6 +93,7 @@ export interface ExprContext {
   allRecords?: Record<string, unknown>[];
   page?: number;
   pages?: number;
+  databaseLookup?: (tableName: string, fieldName: string, keyValue: unknown) => unknown;
 }
 
 export interface HotkeySegment {
