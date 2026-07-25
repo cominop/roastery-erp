@@ -21,6 +21,7 @@ import {
   PanelTop,
   Code,
   Shield,
+  FunctionSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
@@ -34,6 +35,7 @@ import { useFilters, useFilterUrlSync } from "@/hooks";
 import { FilterPanel, QuickFilterBar } from "@/filters";
 import type { QuickFilterPreset } from "@/filters";
 import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
+import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 
 interface NavItem {
   name: string;
@@ -52,6 +54,7 @@ type ActiveView =
   | { type: "report"; name: string }
   | { type: "events" }
   | { type: "permissions" }
+  | { type: "calculated-fields" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -161,7 +164,7 @@ function NavSection({
         <div className="pb-0.5">
           {items.map((item) => {
             const isActive =
-              active != null && active.type !== "events" && active.type !== "permissions"
+              active != null && active.type !== "events" && active.type !== "permissions" && active.type !== "calculated-fields"
                 ? active.name === item.name &&
                   active.type === title.toLowerCase().slice(0, -1)
                 : false;
@@ -596,6 +599,18 @@ export default function App() {
           <span>Permissions</span>
         </button>
         <button
+          onClick={() => setActive({ type: "calculated-fields" })}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+            active?.type === "calculated-fields"
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <FunctionSquare className="h-4 w-4" />
+          <span>Calculated Fields</span>
+        </button>
+        <button
           onClick={openSettings}
           className={cn(
             "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
@@ -823,6 +838,9 @@ export default function App() {
               <RowFilterEditor />
             </TabsContent>
           </Tabs>
+        )}
+        {active?.type === "calculated-fields" && (
+          <CalculatedFieldsAdmin tables={nav.tables.map(t => t.name)} />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
