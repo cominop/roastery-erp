@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Save, Trash2, Loader2, AlertCircle, Variable, Tally1, Tally2, Tally3 } from "lucide-react";
+import { Plus, Save, Trash2, Loader2, AlertCircle, Variable, Tally1, Tally2, Tally3, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
 import ExpressionInput from "./ExpressionInput";
 import FieldPicker from "./FieldPicker";
 import FunctionReference from "./FunctionReference";
+import TestPanel from "./TestPanel";
 
 // ─── Default new field ────────────────────────────────
 
@@ -67,6 +68,9 @@ export default function CalculatedFieldsAdmin({ tables }: CalculatedFieldsAdminP
   // Expression builder panel state
   const [builderPanel, setBuilderPanel] = useState<BuilderPanel>("fields");
   const [selectedTable, setSelectedTable] = useState("");
+
+  // Test panel state
+  const [testPanelOpen, setTestPanelOpen] = useState(false);
 
   // ── Derived ──────────────────────────────────────────
   const selectedField = fields.find((f) => f.id === selectedId) ?? null;
@@ -340,6 +344,16 @@ export default function CalculatedFieldsAdmin({ tables }: CalculatedFieldsAdminP
                     Delete
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setTestPanelOpen(true)}
+                  disabled={!form.expression.trim()}
+                >
+                  <FlaskConical className="h-3.5 w-3.5 mr-1" />
+                  Test
+                </Button>
                 <Button
                   size="sm"
                   className="h-7 text-xs"
@@ -660,6 +674,14 @@ export default function CalculatedFieldsAdmin({ tables }: CalculatedFieldsAdminP
           </>
         )}
       </div>
+
+      {/* Test Expression Panel */}
+      <TestPanel
+        open={testPanelOpen}
+        onClose={() => setTestPanelOpen(false)}
+        expression={form.expression}
+        dependsOn={form.dependsOn}
+      />
     </div>
   );
 }

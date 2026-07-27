@@ -123,3 +123,24 @@ export function detectDependencies(
     body: JSON.stringify({ expression }),
   });
 }
+
+/** Result of testing an expression with sample values. */
+export interface TestExpressionResult {
+  result: any;
+}
+
+/**
+ * Test an expression with sample values.
+ *
+ * Sends the expression and a map of field name → sample value to the
+ * server-side evaluator and returns the computed result.
+ */
+export function testExpression(
+  expression: string,
+  values: Record<string, any>,
+): Promise<TestExpressionResult> {
+  return request<TestExpressionResult>('/calculated-fields/test-expression', {
+    method: 'POST',
+    body: JSON.stringify({ expression, values }),
+  });
+}

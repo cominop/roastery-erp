@@ -1517,6 +1517,86 @@ app.post("/api/calculated-fields/detect-dependencies", async (req, res) => {
   }
 });
 
+// ─── Expression Testing ─────────────────────────────
+
+const EVAL_CLI = path.resolve(
+  __dirname,
+  "calculated_fields",
+  "evaluate_cli.py",
+);
+
+/**
+ * POST /api/calculated-fields/test-expression
+ * Body: { expression: string, values: Record<string, any> }
+ *
+ * Evaluates an expression with the given sample field values and returns
+ * the computed result. Uses the Python expression evaluator.
+ *
+ * Returns: { result: any } or { error: string }
+ */
+app.post("/api/calculated-fields/test-expression", async (req, res) => {
+  try {
+    const { expression, values } = req.body;
+    if (typeof expression !== "string") {
+      return res.status(400).json({ error: "expression is required" });
+    }
+
+    // Find Python — same logic as detect-dependencies
+    const candidates = ["python3", "python"];
+    let pythonCmd = "python3";
+    for (const cmd of candidates) {
+      try {
+        require("child_process").execSync(`${cmd} --version`, {
+          stdio: "ignore",
+        });
+        pythonCmd = cmd;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    // Build args: --expression and optional --values
+    const cliArgs = [EVAL_CLI, "--expression", expression];
+    if (values !== undefined && values !== null) {
+      cliArgs.push("--values", JSON.stringify(values));
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const child = execFile(
+        pythonCmd,
+        cliArgs,
+        {
+          cwd: path.dirname(EVAL_CLI),
+          timeout: 10000,
+          maxBuffer: 1024 * 64,
+          env: {
+            PATH: process.env.PATH || "",
+            PYTHONIOENCODING: "utf-8",
+            PYTHONUNBUFFERED: "1",
+          },
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            const msg = stderr.trim() || stdout.trim() || error.message;
+            reject(new Error(msg));
+            return;
+          }
+          try {
+            resolve(JSON.parse(stdout.trim()));
+          } catch {
+            reject(new Error(`Invalid JSON from evaluator: ${stdout.trim()}`));
+          }
+        },
+      );
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");
