@@ -7,6 +7,7 @@ import { normalizeKeys, controlStyle, controlAppearance, resolveControlField, is
 import { evaluateExpression } from "@/lib/expressions";
 import type { Control, FormDefinition, ExprContext } from "@/types";
 import { useFieldPermissions } from "@/hooks";
+import { useCalculatedFields } from "@/calculated-fields/hooks";
 
 import TabControl from "@/controls/TabControl";
 import TextBoxControl from "@/controls/TextBoxControl";
@@ -101,6 +102,16 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
 
   // ─── Field-level permissions ──────────────────────────
   const { isFieldHidden, isFieldReadonly } = useFieldPermissions(table);
+
+  // ─── Calculated fields ────────────────────────────────
+  const { computedValues, definitions } = useCalculatedFields(
+    table,
+    recordSource.current,
+  );
+  const calcFieldNames = useMemo(
+    () => new Set(definitions.map((f) => f.name)),
+    [definitions],
+  );
 
   const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [footerHeight, setFooterHeight] = useState<number | null>(null);
@@ -244,7 +255,8 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
           return null; // Hidden field — skip rendering
         }
         const isReadonly = field ? isFieldReadonly(field) : false;
-        const effectiveAllowEdits = allowEdits && !isReadonly;
+        const isCalcField = field ? calcFieldNames.has(field) : false;
+        const effectiveAllowEdits = allowEdits && !isReadonly && !isCalcField;
 
         // Subform special case — must come before the CONTROL_MAP fallback
         if (ctrl.type === "subform") {
@@ -279,7 +291,8 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
           );
         }
 
-        const value = field ? recordSource.current?.[field] : undefined;
+        const rawValue = field ? recordSource.current?.[field] : undefined;
+        const value = rawValue !== undefined ? rawValue : (field ? computedValues[field] : undefined);
 
         if (ctrl.type === "tab") {
           return (
@@ -317,7 +330,7 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
           </div>
         );
       },
-      [recordSource.current, allowEdits, handleFieldChange, allSectionControls, isFieldHidden, isFieldReadonly]
+      [recordSource.current, allowEdits, handleFieldChange, allSectionControls, isFieldHidden, isFieldReadonly, computedValues, calcFieldNames]
     );
 
   renderControlRef.current = renderControl;
