@@ -144,3 +144,33 @@ export function testExpression(
     body: JSON.stringify({ expression, values }),
   });
 }
+
+/** Result of evaluating an aggregate expression. */
+export interface AggregateResult {
+  result: number | null;
+  cached: boolean;
+}
+
+/**
+ * Evaluate an aggregate expression against a specific record.
+ *
+ * Sends the expression, table name, and record ID to the server-side
+ * aggregate evaluator which builds and executes a SQL query. Results
+ * are cached server-side with a 30s TTL.
+ */
+export function evaluateAggregate(
+  tableName: string,
+  expression: string,
+  recordId: number,
+  fieldName?: string,
+): Promise<AggregateResult> {
+  return request<AggregateResult>('/calculated-fields/evaluate-aggregate', {
+    method: 'POST',
+    body: JSON.stringify({
+      table_name: tableName,
+      expression,
+      record_id: recordId,
+      parent_field_name: fieldName,
+    }),
+  });
+}

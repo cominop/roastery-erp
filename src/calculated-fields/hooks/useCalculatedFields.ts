@@ -13,7 +13,10 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { fetchCalculatedFields } from "@/calculated-fields/api/calculatedFieldsApi";
+import {
+  fetchCalculatedFields,
+  evaluateAggregate,
+} from "@/calculated-fields/api/calculatedFieldsApi";
 import { evaluateExpression } from "@/lib/expressions";
 import type { CalculatedField } from "@/calculated-fields/schema/calculatedFieldSchema";
 import type { ExprContext } from "@/types";
@@ -21,9 +24,13 @@ import type { ExprContext } from "@/types";
 // ─── Static definition cache (per table) ────────────────
 const definitionsCache = new Map<string, CalculatedField[]>();
 
-/** Clear the static definition cache (used by tests). */
+// ─── Client-side aggregate result cache (per key, no TTL — TTL is server-side) ──
+const aggregateResultsCache = new Map<string, unknown>();
+
+/** Clear all static caches (used by tests). */
 export function clearCalculatedFieldsCache(): void {
   definitionsCache.clear();
+  aggregateResultsCache.clear();
 }
 
 // ─── Public interface ───────────────────────────────────
@@ -118,6 +125,13 @@ export function useCalculatedFields(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Aggregate-specific state
+  const [aggregateValues, setAggregateValues] = useState<
+    Record<string, unknown>
+  >({});
+  const [aggregateLoading, setAggregateLoading] = useState(false);
+  const previousAggregateKeyRef = useRef<string>("");
+
   // Track tables we've already attempted to load
   const loadedTablesRef = useRef(new Set<string>());
 
@@ -167,15 +181,86 @@ export function useCalculatedFields(
       });
   }, [tableName]);
 
-  // ── Evaluate expressions against current record ──────
-  const computedValues = useMemo<Record<string, unknown>>(() => {
+  // ── Separate aggregate vs non-aggregate fields ────────
+  const { aggregateDefs, nonAggregateDefs } = useMemo(() => {
+    const agg: CalculatedField[] = [];
+    const nonAgg: CalculatedField[] = [];
+    for (const f of definitions) {
+      if (f.calcType === "aggregate") agg.push(f);
+      else nonAgg.push(f);
+    }
+    return { aggregateDefs: agg, nonAggregateDefs: nonAgg };
+  }, [definitions]);
+
+  // ── Extract record ID for aggregate lookups ──────────
+  const recordId = useMemo<number | null>(() => {
+    if (!currentRecord) return null;
+    const id = (currentRecord as Record<string, unknown>).id;
+    return id != null ? Number(id) : null;
+  }, [currentRecord]);
+
+  // ── Fetch aggregate values via API ───────────────────
+  useEffect(() => {
+    // Clean out resolved aggregate entries from previous run so stale
+    // results never leak across table/record changes.
+    previousAggregateKeyRef.current = `${tableName ?? ""}:${recordId ?? ""}`;
+
+    if (!tableName || recordId === null || aggregateDefs.length === 0) {
+      setAggregateValues({});
+      setAggregateLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setAggregateLoading(true);
+
+    const promises = aggregateDefs.map(async (field) => {
+      const cacheKey = `${tableName}:${field.name}:${recordId}`;
+
+      // Check client-side cache first (avoids redundant API calls)
+      const cached = aggregateResultsCache.get(cacheKey);
+      if (cached !== undefined) {
+        return { name: field.name, value: cached };
+      }
+
+      try {
+        const result = await evaluateAggregate(
+          tableName,
+          field.expression,
+          recordId,
+          field.name,
+        );
+        aggregateResultsCache.set(cacheKey, result.result);
+        return { name: field.name, value: result.result };
+      } catch {
+        return { name: field.name, value: "#Error" };
+      }
+    });
+
+    Promise.all(promises).then((results) => {
+      if (cancelled) return;
+      const values: Record<string, unknown> = {};
+      for (const r of results) {
+        values[r.name] = r.value;
+      }
+      setAggregateValues(values);
+      setAggregateLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tableName, recordId, aggregateDefs]);
+
+  // ── Evaluate non-aggregate expressions ────────────────
+  const scalarValues = useMemo<Record<string, unknown>>(() => {
     const record = currentRecord ?? {};
     const result: Record<string, unknown> = {};
     const recordKeys = new Set(
       Object.keys(record).map((k) => k.toLowerCase()),
     );
 
-    for (const field of definitions) {
+    for (const field of nonAggregateDefs) {
       // When a record is present but none of the dependencies are available yet,
       // skip evaluation (field will be null/default until data arrives)
       if (
@@ -211,7 +296,17 @@ export function useCalculatedFields(
     }
 
     return result;
-  }, [definitions, currentRecord]);
+  }, [nonAggregateDefs, currentRecord]);
 
-  return { computedValues, definitions, loading, error };
+  // ── Merge scalar + aggregate values ──────────────────
+  const computedValues = useMemo<Record<string, unknown>>(() => {
+    return { ...scalarValues, ...aggregateValues };
+  }, [scalarValues, aggregateValues]);
+
+  return {
+    computedValues,
+    definitions,
+    loading: loading || aggregateLoading,
+    error,
+  };
 }

@@ -1597,6 +1597,181 @@ app.post("/api/calculated-fields/test-expression", async (req, res) => {
   }
 });
 
+// ─── Aggregate Evaluation ────────────────────────────
+
+/**
+ * POST /api/calculated-fields/evaluate-aggregate
+ * Body: { table_name, expression, record_id, parent_field_name }
+ *
+ * Parses an aggregate expression (e.g., SUM(order_details.{quantity}))
+ * using the Python aggregate CLI, builds a SQL query, executes it against
+ * PostgreSQL, caches the result with 30s TTL, and returns it.
+ *
+ * The Python CLI returns the parsed components; the server builds and
+ * executes the actual SQL query for persistence across calls.
+ *
+ * Returns: { result: number | null, cached: boolean }
+ */
+const AGGREGATE_CLI = path.resolve(
+  __dirname,
+  "calculated_fields",
+  "aggregate_eval_cli.py",
+);
+
+// In-memory LRU cache with 30s TTL for aggregate results
+const aggregateCache = new Map();
+const AGGREGATE_CACHE_TTL = 30_000; // 30 seconds
+
+function getAggregateFromCache(key) {
+  const entry = aggregateCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    aggregateCache.delete(key);
+    return undefined;
+  }
+  // Move to end (LRU — delete & re-set)
+  aggregateCache.delete(key);
+  aggregateCache.set(key, entry);
+  return entry.value;
+}
+
+function setAggregateCache(key, value) {
+  // Evict LRU if at capacity (500)
+  if (!aggregateCache.has(key) && aggregateCache.size >= 500) {
+    const firstKey = aggregateCache.keys().next().value;
+    aggregateCache.delete(firstKey);
+  }
+  aggregateCache.set(key, { value, expiresAt: Date.now() + AGGREGATE_CACHE_TTL });
+}
+
+/**
+ * Build a SQL query for an aggregate expression.
+ *
+ * @param {{ fn: string, related_table: string, sql_field: string, is_count_star: boolean }} parsed
+ * @param {string} foreignKey — inferred FK column name
+ * @returns {string}
+ */
+function buildAggregateSQL(parsed, foreignKey) {
+  const { fn, related_table, sql_field, is_count_star } = parsed;
+  if (is_count_star || sql_field === "*") {
+    return `SELECT COUNT(*) AS result FROM ${related_table} WHERE ${foreignKey} = $1`;
+  }
+  return `SELECT ${fn}(${sql_field}) AS result FROM ${related_table} WHERE ${foreignKey} = $1`;
+}
+
+/**
+ * Infer the foreign key column name from the parent table name.
+ * @param {string} parentTable
+ * @returns {string}
+ */
+function inferForeignKey(parentTable) {
+  let name = parentTable.toLowerCase();
+  // Simple singularization
+  if (name.endsWith("ies")) name = name.slice(0, -3) + "y";
+  else if (name.endsWith("ses")) name = name.slice(0, -2);
+  else if (name.endsWith("shes")) name = name.slice(0, -2);
+  else if (name.endsWith("ches")) name = name.slice(0, -2);
+  else if (name.endsWith("xes")) name = name.slice(0, -2);
+  else if (name.endsWith("s") && !name.endsWith("ss")) name = name.slice(0, -1);
+  return `${name}_id`;
+}
+
+app.post("/api/calculated-fields/evaluate-aggregate", async (req, res) => {
+  try {
+    const { table_name, expression, record_id, parent_field_name } = req.body;
+
+    if (!table_name || !expression || record_id === undefined) {
+      return res.status(400).json({
+        error: "table_name, expression, and record_id are required",
+      });
+    }
+
+    // Build cache key
+    const fieldName = parent_field_name || "aggregate";
+    const cacheKey = `${table_name}:${fieldName}:${record_id}`;
+
+    // Check in-memory cache first
+    const cached = getAggregateFromCache(cacheKey);
+    if (cached !== undefined) {
+      return res.json({ result: cached, cached: true });
+    }
+
+    // Find Python — same logic as detect-dependencies
+    const candidates = ["python3", "python"];
+    let pythonCmd = "python3";
+    for (const cmd of candidates) {
+      try {
+        require("child_process").execSync(`${cmd} --version`, {
+          stdio: "ignore",
+        });
+        pythonCmd = cmd;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    // Parse the expression using the Python CLI
+    const cliArgs = [
+      AGGREGATE_CLI,
+      "--expression",
+      expression,
+      "--parent",
+      table_name,
+    ];
+    if (record_id != null) {
+      cliArgs.push("--record-id", String(record_id));
+    }
+
+    const parsed = await new Promise((resolve, reject) => {
+      execFile(
+        pythonCmd,
+        cliArgs,
+        {
+          cwd: path.dirname(AGGREGATE_CLI),
+          timeout: 5000,
+          maxBuffer: 1024 * 64,
+          env: {
+            PATH: process.env.PATH || "",
+            PYTHONIOENCODING: "utf-8",
+            PYTHONUNBUFFERED: "1",
+          },
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            const msg = stderr.trim() || stdout.trim() || error.message;
+            reject(new Error(msg));
+            return;
+          }
+          try {
+            resolve(JSON.parse(stdout.trim()));
+          } catch {
+            reject(new Error(`Invalid JSON from aggregate CLI: ${stdout.trim()}`));
+          }
+        },
+      );
+    });
+
+    if (parsed.error) {
+      return res.status(400).json({ error: parsed.error });
+    }
+
+    // Build and execute the SQL query
+    const foreignKey = parsed.foreign_key || inferForeignKey(table_name);
+    const sql = buildAggregateSQL(parsed, foreignKey);
+
+    const { rows } = await pool.query(sql, [record_id]);
+    const result = rows[0]?.result ?? null;
+
+    // Cache the result
+    setAggregateCache(cacheKey, result);
+
+    res.json({ result, cached: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");

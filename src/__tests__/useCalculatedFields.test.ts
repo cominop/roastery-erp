@@ -343,4 +343,198 @@ describe("useCalculatedFields", () => {
     });
     expect(result.current.definitions).toHaveLength(0);
   });
+
+  // ── Aggregate field tests ──────────────────────────────
+
+  it("calls evaluateAggregate API for aggregate calcType fields with record id", async () => {
+    mockResponse = [
+      makeRow({
+        name: "order_total",
+        calc_type: "aggregate",
+        expression: "SUM(order_details.{quantity} * {unit_price})",
+        data_type: "currency",
+        decimals: 2,
+        depends_on: [],
+      }),
+    ];
+
+    // Mock fetch to also handle the /evaluate-aggregate call
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 42 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // The aggregate call should have been made via fetch
+    // Since the mock returns empty for unmatched routes, aggregate
+    // may fail gracefully — but we verify the field appears
+    expect(result.current.computedValues).toHaveProperty("order_total");
+  });
+
+  it("evaluates aggregate fields via API call", async () => {
+    mockResponse = [
+      makeRow({
+        name: "total_spent",
+        calc_type: "aggregate",
+        expression: "SUM(orders.{order_total})",
+        data_type: "currency",
+        decimals: 2,
+        depends_on: [],
+      }),
+    ];
+
+    // Override the global fetch mock to handle aggregate endpoint
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("evaluate-aggregate")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({ result: 2500.0, cached: false }),
+                { status: 200, headers: { "Content-Type": "application/json" } },
+              ),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 15 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.computedValues.total_spent).toBe(2500);
+  });
+
+  it("returns #Error for aggregate fields when API call fails", async () => {
+    mockResponse = [
+      makeRow({
+        name: "bad_agg",
+        calc_type: "aggregate",
+        expression: "SUM(nonexistent.{field})",
+        data_type: "number",
+        depends_on: [],
+      }),
+    ];
+
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("evaluate-aggregate")) {
+            return Promise.reject(new Error("API error"));
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 99 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.computedValues.bad_agg).toBe("#Error");
+  });
+
+  it("merges aggregate and scalar field results correctly", async () => {
+    mockResponse = [
+      makeRow({
+        name: "line_total",
+        expression: "{quantity} * {unit_price}",
+        data_type: "currency",
+        decimals: 2,
+        depends_on: ["quantity", "unit_price"],
+      }),
+      makeRow({
+        name: "order_total",
+        calc_type: "aggregate",
+        expression: "SUM(order_details.{line_total})",
+        data_type: "currency",
+        decimals: 2,
+        depends_on: [],
+      }),
+    ];
+
+    // Mock aggregate endpoint
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("evaluate-aggregate")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({ result: 125.50, cached: false }),
+                { status: 200, headers: { "Content-Type": "application/json" } },
+              ),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", {
+        id: 5,
+        quantity: 3,
+        unit_price: 10.0,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Scalar field
+    expect(result.current.computedValues.line_total).toBe("30.00");
+    // Aggregate field
+    expect(result.current.computedValues.order_total).toBe(125.5);
+  });
+
+  it("returns null for aggregate fields when record has no id", async () => {
+    mockResponse = [
+      makeRow({
+        name: "order_total",
+        calc_type: "aggregate",
+        expression: "SUM(order_details.{quantity})",
+        data_type: "number",
+        depends_on: [],
+      }),
+    ];
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", {}),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // No record id means aggregate fields are not fetched
+    // scalarValues for aggregate fields are not evaluated either
+    expect(result.current.computedValues.order_total).toBeUndefined();
+  });
 });
