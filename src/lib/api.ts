@@ -260,3 +260,39 @@ export function getAuditLog(params?: {
   const qs = searchParams.toString();
   return request<AuditLogResponse>(`/audit-log${qs ? `?${qs}` : ""}`);
 }
+
+// ─── Audit undo / restore ──────────────────────────────
+
+export interface UndoResult {
+  ok: boolean;
+  message: string;
+  action: string;
+  fields?: string[];
+  record?: Record<string, unknown>;
+}
+
+export interface RestoreResult {
+  ok: boolean;
+  message: string;
+  action: string;
+  fields?: string[];
+}
+
+/** Revert a single audit entry */
+export function undoAuditEntry(id: string) {
+  return request<UndoResult>(`/audit-log/${id}/undo`, {
+    method: "POST",
+  });
+}
+
+/** Point-in-time restore — revert to state at a given timestamp */
+export function restoreAuditEntry(params: {
+  table_name: string;
+  record_id: number;
+  timestamp: string;
+}) {
+  return request<RestoreResult>("/audit-log/restore", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

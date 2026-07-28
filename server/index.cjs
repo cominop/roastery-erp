@@ -2140,6 +2140,280 @@ app.get("/api/audit-log/:id", async (req, res) => {
 });
 
 /**
+ * POST /api/audit-log/:id/undo — revert a single audit entry
+ *
+ * For UPDATE: sets the record back to old_data values
+ * For INSERT: deletes the record
+ * For DELETE: re-inserts the record from old_data
+ */
+app.post("/api/audit-log/:id/undo", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch the audit entry
+    const { rows: auditRows } = await pool.query(
+      "SELECT * FROM shared.audit_log WHERE id = $1",
+      [id]
+    );
+    if (auditRows.length === 0) {
+      return res.status(404).json({ error: "Audit entry not found" });
+    }
+    const entry = auditRows[0];
+    const { table_name, record_id, action, old_data, new_data } = entry;
+
+    if (action === "INSERT") {
+      // ── Undo INSERT → DELETE the record ──────────────────
+      const pk = await getPkColumn(table_name);
+      await queryWithAudit(
+        `DELETE FROM db_fcc_erp."${table_name}" WHERE "${pk}" = $1 AND company_id = 1`,
+        [record_id],
+        req.user
+      );
+      return res.json({
+        ok: true,
+        message: `Deleted record #${record_id} from ${table_name}`,
+        action: "DELETE",
+      });
+    }
+
+    if (action === "UPDATE") {
+      // ── Undo UPDATE → revert changed fields to old_data ──
+      if (!old_data || !new_data) {
+        return res.status(400).json({ error: "No data snapshots available for this entry" });
+      }
+
+      // Compute only the fields that actually changed in this entry
+      const changedFields = {};
+      const oldKeys = Object.keys(old_data);
+      const newKeys = Object.keys(new_data);
+      const allKeys = new Set([...oldKeys, ...newKeys]);
+
+      for (const key of allKeys) {
+        // Skip primary key and internal fields
+        if (key === "id") continue;
+        const ov = old_data[key];
+        const nv = new_data[key];
+        if (JSON.stringify(ov) !== JSON.stringify(nv)) {
+          changedFields[key] = ov;
+        }
+      }
+
+      const revertKeys = Object.keys(changedFields);
+      if (revertKeys.length === 0) {
+        return res.status(400).json({ error: "No changed fields to revert" });
+      }
+
+      const pk = await getPkColumn(table_name);
+      const sets = revertKeys.map((c, i) => `"${c}" = $${i + 1}`);
+      const values = [...Object.values(changedFields), record_id];
+
+      await queryWithAudit(
+        `UPDATE db_fcc_erp."${table_name}" SET ${sets.join(", ")} WHERE "${pk}" = $${values.length} AND company_id = 1`,
+        values,
+        req.user
+      );
+
+      return res.json({
+        ok: true,
+        message: `Reverted ${revertKeys.length} field(s) on ${table_name} #${record_id}`,
+        action: "UPDATE",
+        fields: revertKeys,
+      });
+    }
+
+    if (action === "DELETE") {
+      // ── Undo DELETE → re-insert the record ───────────────
+      if (!old_data) {
+        return res.status(400).json({ error: "No data snapshot available to restore" });
+      }
+
+      // Remove any keys that would conflict (auto PK, etc.)
+      const insertData = { ...old_data, company_id: 1 };
+
+      const columns = Object.keys(insertData);
+      const values = Object.values(insertData);
+      const placeholders = values.map((_, i) => `$${i + 1}`);
+
+      const result = await queryWithAudit(
+        `INSERT INTO db_fcc_erp."${table_name}" (${columns.map((c) => `"${c}"`).join(", ")})
+         VALUES (${placeholders.join(", ")})
+         RETURNING *`,
+        values,
+        req.user
+      );
+
+      return res.json({
+        ok: true,
+        message: `Restored record in ${table_name}`,
+        action: "INSERT",
+        record: result.rows[0],
+      });
+    }
+
+    return res.status(400).json({ error: `Cannot undo action: ${action}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/audit-log/restore — point-in-time restore
+ *
+ * Restores a record to the state it had at a given timestamp
+ * by replaying audit entries in chronological order up to that point.
+ *
+ * Body: { table_name, record_id, timestamp }
+ */
+app.post("/api/audit-log/restore", async (req, res) => {
+  try {
+    const { table_name, record_id, timestamp } = req.body;
+
+    if (!table_name || record_id == null || !timestamp) {
+      return res.status(400).json({ error: "table_name, record_id, and timestamp are required" });
+    }
+
+    const pk = await getPkColumn(table_name);
+
+    // Collect current state of the record (may not exist if deleted)
+    let currentRecord = null;
+    try {
+      const { rows } = await pool.query(
+        `SELECT * FROM db_fcc_erp."${table_name}" WHERE "${pk}" = $1 AND company_id = 1`,
+        [record_id]
+      );
+      if (rows.length > 0) currentRecord = rows[0];
+    } catch {
+      // Table might not have company_id — try without
+      const { rows } = await pool.query(
+        `SELECT * FROM db_fcc_erp."${table_name}" WHERE "${pk}" = $1`,
+        [record_id]
+      );
+      if (rows.length > 0) currentRecord = rows[0];
+    }
+
+    // Fetch all audit entries for this record up to the timestamp, chronological order
+    const { rows: auditEntries } = await pool.query(
+      `SELECT * FROM shared.audit_log
+       WHERE table_name = $1 AND record_id = $2 AND changed_at <= $3
+       ORDER BY changed_at ASC`,
+      [table_name, record_id, timestamp]
+    );
+
+    if (auditEntries.length === 0) {
+      return res.status(404).json({
+        error: "No audit entries found for this record before the given timestamp",
+      });
+    }
+
+    // Replay audit entries chronologically to determine state at the timestamp
+    let targetState = null;
+    let lastAction = null;
+
+    for (const entry of auditEntries) {
+      if (entry.action === "INSERT") {
+        targetState = entry.new_data;
+        lastAction = "INSERT";
+      } else if (entry.action === "UPDATE") {
+        targetState = entry.new_data;
+        lastAction = "UPDATE";
+      } else if (entry.action === "DELETE") {
+        targetState = null;
+        lastAction = "DELETE";
+      }
+    }
+
+    if (targetState === null) {
+      // Record was deleted before the timestamp — can't restore state
+      if (currentRecord !== null) {
+        // Record currently exists but was deleted by the target time — delete it
+        await queryWithAudit(
+          `DELETE FROM db_fcc_erp."${table_name}" WHERE "${pk}" = $1 AND company_id = 1`,
+          [record_id],
+          req.user
+        );
+        return res.json({
+          ok: true,
+          message: `Deleted ${table_name} #${record_id} — it did not exist at the given timestamp`,
+          action: "DELETE",
+        });
+      }
+      return res.json({
+        ok: true,
+        message: `Record ${table_name} #${record_id} did not exist at the given timestamp`,
+        action: "NONE",
+      });
+    }
+
+    // Remove company_id from target — we'll set it explicitly
+    const targetData = { ...targetState };
+    delete targetData.company_id;
+
+    if (currentRecord === null) {
+      // Record doesn't exist now but did at the target time — INSERT it
+      targetData.company_id = 1;
+      const columns = Object.keys(targetData);
+      const values = Object.values(targetData);
+      const placeholders = values.map((_, i) => `$${i + 1}`);
+
+      await queryWithAudit(
+        `INSERT INTO db_fcc_erp."${table_name}" (${columns.map((c) => `"${c}"`).join(", ")})
+         VALUES (${placeholders.join(", ")})`,
+        values,
+        req.user
+      );
+
+      return res.json({
+        ok: true,
+        message: `Restored deleted record ${table_name} #${record_id} to state at ${timestamp}`,
+        action: "INSERT",
+      });
+    }
+
+    // Record exists — compute diff and UPDATE changed fields
+    const changedFields = {};
+    const currentKeys = Object.keys(currentRecord);
+    const targetKeys = Object.keys(targetData);
+    const allKeys = new Set([...currentKeys, ...targetKeys]);
+
+    for (const key of allKeys) {
+      if (key === "id" || key === pk || key === "company_id") continue;
+      const cv = currentRecord[key];
+      const tv = targetData[key];
+      if (JSON.stringify(cv) !== JSON.stringify(tv)) {
+        changedFields[key] = tv;
+      }
+    }
+
+    const changeKeys = Object.keys(changedFields);
+    if (changeKeys.length === 0) {
+      return res.json({
+        ok: true,
+        message: `Record ${table_name} #${record_id} already matches state at ${timestamp}`,
+        action: "NONE",
+      });
+    }
+
+    const sets = changeKeys.map((c, i) => `"${c}" = $${i + 1}`);
+    const values = [...Object.values(changedFields), record_id];
+
+    await queryWithAudit(
+      `UPDATE db_fcc_erp."${table_name}" SET ${sets.join(", ")} WHERE "${pk}" = $${values.length} AND company_id = 1`,
+      values,
+      req.user
+    );
+
+    return res.json({
+      ok: true,
+      message: `Restored ${table_name} #${record_id} to state at ${timestamp} (${changeKeys.length} field(s) changed)`,
+      action: "UPDATE",
+      fields: changeKeys,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/audit/triggers — trigger coverage report
  * Returns total ERP tables, tables with triggers, tables missing triggers
  */

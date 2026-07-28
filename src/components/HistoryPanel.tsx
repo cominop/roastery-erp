@@ -1,7 +1,7 @@
 // HistoryPanel — slide-out panel showing audit log entries for a record
 import { useState, useEffect, useCallback } from "react";
-import { X, RotateCw, Clock, Plus, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
-import { getAuditLog } from "@/lib/api";
+import { X, RotateCw, Clock, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Undo2 } from "lucide-react";
+import { getAuditLog, restoreAuditEntry } from "@/lib/api";
 import type { AuditEntry } from "@/lib/api";
 import AuditDiffView from "@/components/AuditDiffView";
 
@@ -97,6 +97,8 @@ export default function HistoryPanel({ table, recordId, isNew, open, onClose }: 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [restoreMsg, setRestoreMsg] = useState<{ entryId: string; message: string; error?: boolean } | null>(null);
 
   const fetchHistory = useCallback(async (pageNum: number) => {
     if (!table || recordId == null || isNew) return;
@@ -118,6 +120,26 @@ export default function HistoryPanel({ table, recordId, isNew, open, onClose }: 
       setLoading(false);
     }
   }, [table, recordId, isNew]);
+
+  const handleRestore = async (entry: AuditEntry) => {
+    if (!table || recordId == null) return;
+    setRestoringId(entry.id);
+    setRestoreMsg(null);
+    try {
+      const result = await restoreAuditEntry({
+        table_name: table,
+        record_id: typeof recordId === "string" ? Number(recordId) : recordId,
+        timestamp: entry.changed_at,
+      });
+      setRestoreMsg({ entryId: entry.id, message: result.message });
+      // Refresh history
+      fetchHistory(page);
+    } catch (e) {
+      setRestoreMsg({ entryId: entry.id, message: (e as Error).message, error: true });
+    } finally {
+      setRestoringId(null);
+    }
+  };
 
   // Re-fetch when panel opens or record changes
   useEffect(() => {
@@ -251,8 +273,38 @@ export default function HistoryPanel({ table, recordId, isNew, open, onClose }: 
 
                 {/* Expanded diff */}
                 {expandedId === entry.id && (entry.old_data || entry.new_data) && (
-                  <div className="ml-9 pb-2 pr-2.5 pl-0.5">
+                  <div className="ml-9 pb-2 pr-2.5 pl-0.5 space-y-1.5">
                     <AuditDiffView entry={entry} compact />
+
+                    {/* Restore message */}
+                    {restoreMsg && restoreMsg.entryId === entry.id && (
+                      <div className={`text-[10px] px-1.5 py-1 rounded ${
+                        restoreMsg.error
+                          ? "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-900"
+                          : "text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400 border border-green-200 dark:border-green-900"
+                      }`}>
+                        {restoreMsg.error ? "❌ " : "✅ "}{restoreMsg.message}
+                      </div>
+                    )}
+
+                    {/* Restore button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRestore(entry);
+                      }}
+                      disabled={restoringId === entry.id}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
+                      title="Restore record to this point in time"
+                    >
+                      {restoringId === entry.id ? (
+                        <RotateCw className="size-2.5 animate-spin" />
+                      ) : (
+                        <Undo2 className="size-2.5" />
+                      )}
+                      Restore to this point
+                    </button>
                   </div>
                 )}
               </div>

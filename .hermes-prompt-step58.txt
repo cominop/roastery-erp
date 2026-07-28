@@ -1,0 +1,127 @@
+# Step 58 — Audit Trail 7: Undo / revert functionality (single change + point-in-time)
+
+## Context
+The Roastery ERP audit trail is fully operational. Steps 52-57 are complete:
+- Step 52: `audit_log` table + indexes (in `shared` schema)
+- Step 53: PostgreSQL `audit_log_trigger()` function
+- Step 54: Triggers applied to all ERP tables
+- Step 55: `HistoryButton` + `HistoryPanel` in form header
+- Step 56: `AuditLogPage` — full audit log page with filters
+- Step 57: `AuditDiffView` — old/new value diff (used in `HistoryPanel` timeline and `AuditLogPage` detail dialog)
+
+The server already has:
+- `GET /api/audit-log` — paginated, filtered audit log list
+- `GET /api/audit-log/:id` — single audit entry by ID
+- `GET /api/audit/triggers` — trigger coverage report
+
+The existing `AuditDiffView` component already includes placeholder buttons in the spec layout:
+```
+[Undo this change]  [Revert to this point]
+```
+
+## Spec Reference (Section 6)
+From `Roastery ERP - SPEC - Audit Trail.md`, section 6:
+
+### 6.1 Single Change Undo
+```python
+def undo_audit_entry(audit_id):
+    entry = AuditLog.query.get(audit_id)
+    if entry.action == 'UPDATE':
+        # Restore old_values
+        update_record(entry.table_name, entry.record_id, entry.old_values)
+        # Log the undo
+        audit_log(action='UNDO', note=f'Reverted audit #{audit_id}')
+    elif entry.action == 'DELETE':
+        # Re-insert the deleted record
+        insert_record(entry.table_name, entry.old_values)
+```
+
+### 6.2 Point-in-Time Revert
+```python
+def revert_to_timestamp(table_name, record_id, timestamp):
+    entry = AuditLog.query.filter(
+        table_name=table_name,
+        record_id=record_id,
+        changed_at <= timestamp,
+        action != 'DELETE'
+    ).order_by(AuditLog.changed_at.desc()).first()
+
+    if entry:
+        # Apply the new_values from that point
+        update_record(table_name, record_id, entry.new_values)
+```
+
+## What to Build
+
+### Server-side (Express routes in server/index.cjs)
+
+**1. POST /api/audit-log/:id/undo — Undo a single change**
+- Look up the audit entry from `shared.audit_log`
+- If action == 'UPDATE': restore `old_values` back to the record in `db_fcc_erp` schema via UPDATE SQL
+- If action == 'DELETE': re-insert using `old_values` via INSERT SQL
+- If action == 'INSERT': delete the record (inverse of insert — but ONLY if no subsequent changes exist for this record)
+- Create an `UNDO` audit log entry recording what was done
+- Return: `{ success: true, message: "Change undone", new_audit_id: ... }`
+
+**2. POST /api/audit-log/:table/:record_id/revert — Point-in-time revert**
+- Accept body: `{ timestamp: "2026-07-28T10:00:00Z" }`
+- Find the most recent audit entry BEFORE that timestamp (action != 'DELETE'), ordered by changed_at DESC
+- Apply that entry's `new_values` to the record via UPDATE SQL
+- Create an audit entry for the revert
+- Return: `{ success: true, message: "Reverted to point-in-time", new_audit_id: ... }`
+
+**Important server-side considerations:**
+- The `audit_log` is in the `shared` schema: `shared.audit_log`
+- The ERP tables are in the `db_fcc_erp` schema: `db_fcc_erp.<table_name>`
+- Check that the record still exists before undoing a DELETE (it may have been deleted again)
+- For point-in-time revert: skip entries where `new_values` is null
+- Log the undo/revert as a new audit entry with action='UNDO' and note field recording what was done
+- Get current user info from request (already set by middleware: req.user)
+- IMPORTANT: The existing audit trigger will fire on the data modification, creating a new audit entry. This is expected — the UNDO entry we manually insert is separate.
+
+### Frontend
+
+**3. Add `UndoButton` component**
+Create `src/components/UndoButton.tsx`:
+- A small button/icon with an undo icon (use `Undo2` from lucide-react)
+- Props: `auditId: string`, `table: string`, `recordId: number | string`, `action: 'INSERT' | 'UPDATE' | 'DELETE'`, `onSuccess?: () => void`, `variant?: 'button' | 'icon'`
+- On click: show a confirmation dialog ("Undo this change? This will restore the previous values.")
+- On confirm: call `POST /api/audit-log/:id/undo`
+- Show loading state during the undo
+- On success: show a toast/notification, call `onSuccess` to refresh
+- On error: show error state
+
+**4. Add API functions to `src/lib/api.ts`**
+```typescript
+export function undoAuditEntry(auditId: string): Promise<{ success: boolean; message: string; new_audit_id: number }>
+export function revertToPointInTime(table: string, recordId: number | string, timestamp: string): Promise<{ success: boolean; message: string; new_audit_id: number }>
+```
+
+**5. Integrate into existing components**
+- `AuditDiffView.tsx` — add "Undo this change" button at the bottom of FullDiff (for UPDATE and DELETE entries) and "Revert to this point" button (for UPDATE entries with a timestamp)
+- `AuditLogPage.tsx` — pass undo capability in the detail dialog
+- `HistoryPanel.tsx` — add undo button on expanded audit entries (in CompactDiff or the expanded section)
+
+## What NOT to build
+- ❌ Do NOT touch the audit_log SQL schema or triggers
+- ❌ Do NOT modify the existing HistoryButton component
+- ❌ Do NOT build retention/pruning (that's Step 59)
+- ❌ Do NOT build performance optimization (that's Step 60)
+
+## Files to create/modify
+
+1. **MODIFY** `server/index.cjs` — add POST /api/audit-log/:id/undo and POST /api/audit-log/:table/:record_id/revert routes
+2. **CREATE** `src/components/UndoButton.tsx` — undo single change button component
+3. **MODIFY** `src/lib/api.ts` — add `undoAuditEntry` and `revertToPointInTime` functions
+4. **MODIFY** `src/components/AuditDiffView.tsx` — add undo/revert buttons at the bottom of FullDiff
+5. **MODIFY** `src/components/AuditLogPage.tsx` — add undo/revert in detail dialog
+6. **MODIFY** `src/components/HistoryPanel.tsx` — add undo/revert option on expanded entries
+
+## Already existing patterns to follow
+- Use shadcn components: Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
+- Use lucide-react icons: Undo2, RotateCcw, AlertTriangle
+- Follow same API pattern as `getAuditLog`/`fetchAuditEntry` in `src/lib/api.ts`
+- TypeScript strict mode
+- Tailwind CSS for styling
+- The existing `request()` helper in api.ts handles JSON parsing and errors
+- The existing `useToast()` hook from `@/hooks/use-toast` for success/error notifications

@@ -36,8 +36,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import AuditDiffView from "@/components/AuditDiffView";
+import { undoAuditEntry } from "@/lib/api";
 
 // ─── Helpers (shared with HistoryPanel) ─────────────────
 
@@ -149,6 +151,9 @@ export default function AuditLogPage({ tables }: Props) {
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(50);
   const [detailEntry, setDetailEntry] = useState<AuditEntry | null>(null);
+  const [undoing, setUndoing] = useState(false);
+  const [undoResult, setUndoResult] = useState<string | null>(null);
+  const [undoError, setUndoError] = useState<string | null>(null);
 
   const fetchEntries = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -187,6 +192,29 @@ export default function AuditLogPage({ tables }: Props) {
 
   const clearFilters = () => {
     setFilters({ ...EMPTY_FILTERS });
+  };
+
+  const handleUndo = async () => {
+    if (!detailEntry) return;
+    setUndoing(true);
+    setUndoResult(null);
+    setUndoError(null);
+    try {
+      const result = await undoAuditEntry(detailEntry.id);
+      setUndoResult(result.message);
+      // Refresh the entries list
+      fetchEntries(page);
+    } catch (e) {
+      setUndoError((e as Error).message);
+    } finally {
+      setUndoing(false);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setDetailEntry(null);
+    setUndoResult(null);
+    setUndoError(null);
   };
 
   const updateFilter = (key: keyof AuditFilters, value: string) => {
@@ -424,7 +452,10 @@ export default function AuditLogPage({ tables }: Props) {
       )}
 
       {/* ─── Detail dialog ───────────────────────────── */}
-      <Dialog open={!!detailEntry} onOpenChange={(open) => { if (!open) setDetailEntry(null); }}>
+      <Dialog
+        open={!!detailEntry}
+        onOpenChange={(open) => { if (!open) handleCloseDetail(); }}
+      >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -433,7 +464,45 @@ export default function AuditLogPage({ tables }: Props) {
                detailEntry?.action === "DELETE" ? "Record Deleted" : "Audit Detail"}
             </DialogTitle>
           </DialogHeader>
+
+          {undoResult && (
+            <div className="p-2 text-xs text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400 rounded border border-green-200 dark:border-green-900">
+              ✅ {undoResult}
+            </div>
+          )}
+          {undoError && (
+            <div className="p-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 rounded border border-red-200 dark:border-red-900">
+              ❌ {undoError}
+            </div>
+          )}
+
           {detailEntry && <AuditDiffView entry={detailEntry} />}
+
+          <DialogFooter>
+            {!undoResult && detailEntry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUndo}
+                disabled={undoing}
+                className="text-xs gap-1"
+              >
+                {undoing ? (
+                  <span className="flex items-center gap-1">
+                    <RotateCw className="size-3 animate-spin" />
+                    Undoing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <RotateCw className="size-3" />
+                    {detailEntry.action === "INSERT" ? "Undo Create" :
+                     detailEntry.action === "UPDATE" ? "Undo Changes" :
+                     detailEntry.action === "DELETE" ? "Undo Delete" : "Undo"}
+                  </span>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
