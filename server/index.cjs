@@ -2133,6 +2133,42 @@ app.get("/api/audit-log/:id", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/audit/triggers — trigger coverage report
+ * Returns total ERP tables, tables with triggers, tables missing triggers
+ */
+app.get("/api/audit/triggers", async (_req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      WITH table_list AS (
+        SELECT tablename
+        FROM pg_catalog.pg_tables
+        WHERE schemaname = 'db_fcc_erp'
+      ),
+      trigger_list AS (
+        SELECT DISTINCT c.relname AS tablename
+        FROM pg_trigger tg
+        JOIN pg_class c ON c.oid = tg.tgrelid
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'db_fcc_erp'
+          AND tg.tgname LIKE 'trg_audit_%'
+          AND NOT tg.tgisinternal
+      )
+      SELECT
+        (SELECT COUNT(*) FROM table_list)::INT AS total_tables,
+        (SELECT COUNT(*) FROM trigger_list)::INT AS triggered_tables,
+        (SELECT COUNT(*) FROM table_list WHERE tablename NOT IN (SELECT tablename FROM trigger_list))::INT AS missing_triggers,
+        COALESCE(
+          (SELECT json_agg(tablename) FROM table_list WHERE tablename NOT IN (SELECT tablename FROM trigger_list)),
+          '[]'::json
+        ) AS missing_table_names
+    `);
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");
