@@ -13,7 +13,13 @@
  *   DELETE /api/data/:table/:id     — delete record
  *   POST /api/lookup                — run row-source SQL
  *   GET  /api/schema/:table         — column metadata
- *   GET  /api/audit-log             — list audit log entries (filtered, paginated)
+ *   GET  /api/nav/tree             — navigation tree (hierarchical, flat ordered list)
+ *   GET  /api/nav/tree/:id         — single nav tree node
+ *   POST /api/nav/tree             — create nav tree node
+ *   PUT  /api/nav/tree/reorder     — batch reorder siblings
+ *   PUT  /api/nav/tree/:id         — update nav tree node
+ *   DELETE /api/nav/tree/:id       — delete nav tree node (cascade children)
+ *   GET  /api/audit-log            — list audit log entries (filtered, paginated)
  *   GET  /api/audit-log/:id         — single audit log entry
  */
 
@@ -121,6 +127,240 @@ app.get("/api/nav", async (_req, res) => {
     );
 
     res.json({ tables, forms, reports });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Navigation Tree (nav_tree table) ───────────────────
+
+/**
+ * GET /api/nav/tree — return the full navigation tree
+ *
+ * Returns a flat ordered list with depth and path arrays
+ * for client-side hierarchy reconstruction.
+ *
+ * Query params:
+ *   ?visible_only=true  — filter to visible nodes only (default: true)
+ *   ?company_id=1       — company scope (default: 1)
+ */
+app.get("/api/nav/tree", async (req, res) => {
+  try {
+    const visibleOnly = req.query.visible_only !== "false";
+    const companyId = parseInt(req.query.company_id || "1", 10);
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_nav_tree($1, $2)`,
+      [companyId, visibleOnly]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/nav/tree/:id — get a single nav tree node
+ */
+app.get("/api/nav/tree/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.nav_tree WHERE id = $1`,
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Nav tree node not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/nav/tree — create a nav tree node
+ *
+ * Body: { parent_id?, label, icon?, target_type, target_name?,
+ *         target_params?, sort_order?, is_visible?, is_expanded?,
+ *         color?, badge? }
+ */
+app.post("/api/nav/tree", async (req, res) => {
+  try {
+    const {
+      parent_id, label, icon, target_type, target_name,
+      target_params, sort_order, is_visible, is_expanded,
+      color, badge,
+    } = req.body;
+
+    if (!label || typeof label !== "string" || !label.trim()) {
+      return res.status(400).json({ error: "label is required" });
+    }
+
+    // Validate target_type
+    const validTypes = ["group", "table", "form", "report", "link", "divider"];
+    const resolvedType = target_type || "group";
+    if (!validTypes.includes(resolvedType)) {
+      return res.status(400).json({
+        error: `Invalid target_type. Must be one of: ${validTypes.join(", ")}`,
+      });
+    }
+
+    // Auto-compute sort_order: append to end of siblings
+    let resolvedSort = sort_order;
+    if (resolvedSort === undefined || resolvedSort === null) {
+      const { rows: lastSibling } = await pool.query(
+        `SELECT COALESCE(MAX(sort_order), 0) + 10 AS next_sort
+         FROM shared.nav_tree
+         WHERE parent_id IS NOT DISTINCT FROM $1 AND company_id = 1`,
+        [parent_id || null]
+      );
+      resolvedSort = lastSibling[0].next_sort;
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO shared.nav_tree
+       (parent_id, label, icon, target_type, target_name, target_params,
+        sort_order, is_visible, is_expanded, color, badge, company_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1)
+       RETURNING *`,
+      [
+        parent_id || null,
+        label.trim(),
+        icon || null,
+        resolvedType,
+        target_name || null,
+        target_params ? JSON.stringify(target_params) : null,
+        resolvedSort,
+        is_visible !== undefined ? is_visible : true,
+        is_expanded !== undefined ? is_expanded : true,
+        color || null,
+        badge || null,
+      ]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/nav/tree/reorder — batch reorder siblings
+ *
+ * Body: { siblings: [{ id: number, sort_order: number }] }
+ *
+ * NOTE: Must be defined BEFORE the :id parameterized routes so Express
+ * matches the literal "reorder" path before treating it as a parameter.
+ */
+app.put("/api/nav/tree/reorder", async (req, res) => {
+  try {
+    const { siblings } = req.body;
+
+    if (!Array.isArray(siblings) || siblings.length === 0) {
+      return res.status(400).json({ error: "siblings array is required" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      for (const sib of siblings) {
+        if (sib.id == null || sib.sort_order === undefined) continue;
+        await client.query(
+          `UPDATE shared.nav_tree SET sort_order = $1, updated_at = NOW() WHERE id = $2`,
+          [sib.sort_order, sib.id]
+        );
+      }
+
+      await client.query("COMMIT");
+      res.json({ ok: true, count: siblings.length });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/nav/tree/:id — update a nav tree node (partial)
+ */
+app.put("/api/nav/tree/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fields = [
+      "parent_id", "label", "icon", "target_type", "target_name",
+      "target_params", "sort_order", "is_visible", "is_expanded",
+      "color", "badge",
+    ];
+
+    const sets = [];
+    const params = [];
+    let idx = 1;
+
+    for (const field of fields) {
+      if (req.body[field] !== undefined) {
+        let val = req.body[field];
+        if (field === "target_params" && val !== null && typeof val === "object") {
+          val = JSON.stringify(val);
+        }
+        sets.push(`${field} = $${idx++}`);
+        params.push(val);
+      }
+    }
+
+    // Validate target_type if changing
+    if (req.body.target_type !== undefined) {
+      const validTypes = ["group", "table", "form", "report", "link", "divider"];
+      if (!validTypes.includes(req.body.target_type)) {
+        return res.status(400).json({
+          error: `Invalid target_type. Must be one of: ${validTypes.join(", ")}`,
+        });
+      }
+    }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    sets.push(`updated_at = NOW()`);
+    params.push(id);
+
+    const { rows } = await pool.query(
+      `UPDATE shared.nav_tree SET ${sets.join(", ")} WHERE id = $${idx}
+       RETURNING *`,
+      params
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Nav tree node not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/nav/tree/:id — delete a nav tree node (cascade deletes children)
+ */
+app.delete("/api/nav/tree/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rowCount } = await pool.query(
+      `DELETE FROM shared.nav_tree WHERE id = $1`,
+      [id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ error: "Nav tree node not found" });
+    }
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
