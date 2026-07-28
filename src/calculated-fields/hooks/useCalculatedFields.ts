@@ -16,6 +16,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   fetchCalculatedFields,
   evaluateAggregate,
+  fetchStoredValues,
 } from "@/calculated-fields/api/calculatedFieldsApi";
 import { evaluateExpression } from "@/lib/expressions";
 import type { CalculatedField } from "@/calculated-fields/schema/calculatedFieldSchema";
@@ -132,6 +133,12 @@ export function useCalculatedFields(
   const [aggregateLoading, setAggregateLoading] = useState(false);
   const previousAggregateKeyRef = useRef<string>("");
 
+  // ── Stored value state ──────────────────────────────────
+  const [storedValues, setStoredValues] = useState<
+    Record<string, unknown>
+  >({});
+  const [storedLoading, setStoredLoading] = useState(false);
+
   // Track tables we've already attempted to load
   const loadedTablesRef = useRef(new Set<string>());
 
@@ -167,10 +174,9 @@ export function useCalculatedFields(
         const normalized = fields.map((f) =>
           normalizeField(f as unknown as Record<string, unknown>),
         );
-        // Filter to visible, non-stored calc types
-        const relevant = normalized.filter(
-          (f) => f.visible && f.calcType !== "stored",
-        );
+        // Keep visible fields — include stored so FormRenderer knows to treat
+        // them as read-only computed values. Stored values are fetched separately.
+        const relevant = normalized.filter((f) => f.visible);
         definitionsCache.set(tableName, relevant);
         setDefinitions(relevant);
         setLoading(false);
@@ -181,15 +187,17 @@ export function useCalculatedFields(
       });
   }, [tableName]);
 
-  // ── Separate aggregate vs non-aggregate fields ────────
-  const { aggregateDefs, nonAggregateDefs } = useMemo(() => {
+  // ── Separate aggregate, stored, and non-aggregate fields ──
+  const { aggregateDefs, storedDefs, nonAggregateDefs } = useMemo(() => {
     const agg: CalculatedField[] = [];
+    const stored: CalculatedField[] = [];
     const nonAgg: CalculatedField[] = [];
     for (const f of definitions) {
       if (f.calcType === "aggregate") agg.push(f);
+      else if (f.calcType === "stored") stored.push(f);
       else nonAgg.push(f);
     }
-    return { aggregateDefs: agg, nonAggregateDefs: nonAgg };
+    return { aggregateDefs: agg, storedDefs: stored, nonAggregateDefs: nonAgg };
   }, [definitions]);
 
   // ── Extract record ID for aggregate lookups ──────────
@@ -252,6 +260,35 @@ export function useCalculatedFields(
     };
   }, [tableName, recordId, aggregateDefs]);
 
+  // ── Fetch stored values via API ──────────────────────
+  useEffect(() => {
+    if (!tableName || recordId === null || storedDefs.length === 0) {
+      setStoredValues({});
+      setStoredLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setStoredLoading(true);
+
+    fetchStoredValues(tableName, recordId)
+      .then((result) => {
+        if (cancelled) return;
+        setStoredValues(result.stored_values as Record<string, unknown>);
+        setStoredLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // On error, stored values remain empty — fields display as null
+        setStoredValues({});
+        setStoredLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tableName, recordId, storedDefs]);
+
   // ── Evaluate non-aggregate expressions ────────────────
   const scalarValues = useMemo<Record<string, unknown>>(() => {
     const record = currentRecord ?? {};
@@ -298,15 +335,15 @@ export function useCalculatedFields(
     return result;
   }, [nonAggregateDefs, currentRecord]);
 
-  // ── Merge scalar + aggregate values ──────────────────
+  // ── Merge scalar + aggregate + stored values ─────────
   const computedValues = useMemo<Record<string, unknown>>(() => {
-    return { ...scalarValues, ...aggregateValues };
-  }, [scalarValues, aggregateValues]);
+    return { ...scalarValues, ...aggregateValues, ...storedValues };
+  }, [scalarValues, aggregateValues, storedValues]);
 
   return {
     computedValues,
     definitions,
-    loading: loading || aggregateLoading,
+    loading: loading || aggregateLoading || storedLoading,
     error,
   };
 }

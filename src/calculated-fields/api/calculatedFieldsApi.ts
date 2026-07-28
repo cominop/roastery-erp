@@ -174,3 +174,50 @@ export function evaluateAggregate(
     }),
   });
 }
+
+/** Result of computing stored calculation values. */
+export interface ComputeStoredResult {
+  stored_values: Record<string, unknown>;
+  computed_at: string;
+}
+
+/**
+ * Compute and store all stored-type calculated field values for a
+ * given record. Evaluates each expression server-side, stores the
+ * results in shared.calculated_field_values, and returns them.
+ *
+ * This is called automatically after POST/PUT data saves, but can
+ * also be called manually to refresh stored values.
+ */
+export function computeStoredValues(
+  tableName: string,
+  recordId: number,
+): Promise<ComputeStoredResult> {
+  return request<ComputeStoredResult>('/calculated-fields/compute-stored', {
+    method: 'POST',
+    body: JSON.stringify({
+      table_name: tableName,
+      record_id: recordId,
+    }),
+  });
+}
+
+/** Result of fetching stored calculation values. */
+export interface StoredValuesResult {
+  stored_values: Record<string, unknown>;
+}
+
+/**
+ * Fetch pre-computed stored calculation values for a given record.
+ * These values were computed on save and stored in the DB; no
+ * recomputation happens here — just a read from
+ * shared.calculated_field_values.
+ */
+export function fetchStoredValues(
+  tableName: string,
+  recordId: number,
+): Promise<StoredValuesResult> {
+  return request<StoredValuesResult>(
+    `/calculated-fields/stored-values/${encodeURIComponent(tableName)}/${recordId}`,
+  );
+}

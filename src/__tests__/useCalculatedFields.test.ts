@@ -238,21 +238,50 @@ describe("useCalculatedFields", () => {
     expect(result.current.computedValues).not.toHaveProperty("hidden_field");
   });
 
-  it("filters out stored-type calculated fields", async () => {
+  it("includes stored-type calculated fields in definitions but fetches values via API", async () => {
     mockResponse = [
-      makeRow({ name: "calc_field", calc_type: "formula", depends_on: [] }),
-      makeRow({ name: "stored_field", calc_type: "stored", depends_on: [] }),
+      makeRow({ name: "calc_field", calc_type: "formula", depends_on: [], expression: "[x]", data_type: "number" }),
+      makeRow({ name: "stored_field", calc_type: "stored", depends_on: [], expression: "[a] + [b]", data_type: "number" }),
     ];
+
+    // Mock stored-values endpoint
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("stored-values")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({ stored_values: { stored_field: 42 } }),
+                { status: 200, headers: { "Content-Type": "application/json" } },
+              ),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
     const { result } = renderHook(() =>
-      useCalculatedFields("orders", { x: 1 }),
+      useCalculatedFields("orders", { id: 1, x: 5 }),
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.definitions.length).toBe(1);
-    expect(result.current.definitions[0].name).toBe("calc_field");
-    expect(result.current.computedValues).toHaveProperty("calc_field");
-    expect(result.current.computedValues).not.toHaveProperty("stored_field");
+    // Stored field should be in definitions (form renderer needs it for read-only marking)
+    expect(result.current.definitions.length).toBe(2);
+    expect(result.current.definitions.map((d) => d.name)).toContain("stored_field");
+
+    // Stored field value should come from API
+    expect(result.current.computedValues).toHaveProperty("stored_field");
+    expect(result.current.computedValues.stored_field).toBe(42);
   });
 
   it("caches definitions across re-renders (no re-fetch)", async () => {
@@ -536,5 +565,104 @@ describe("useCalculatedFields", () => {
     // No record id means aggregate fields are not fetched
     // scalarValues for aggregate fields are not evaluated either
     expect(result.current.computedValues.order_total).toBeUndefined();
+  });
+
+  // ── Stored value tests ──────────────────────────────────
+
+  it("returns empty stored values when no stored fields defined", async () => {
+    mockResponse = [
+      makeRow({ name: "qty", calc_type: "formula", depends_on: [], expression: "[x]", data_type: "number", decimals: null }),
+    ];
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 1, x: 5 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.computedValues.qty).toBe(5);
+    expect(result.current.computedValues).not.toHaveProperty("stored_field");
+    expect(result.current.definitions.length).toBe(1);
+  });
+
+  it("handles stored values API failure gracefully", async () => {
+    mockResponse = [
+      makeRow({ name: "stored_field", calc_type: "stored", depends_on: [], expression: "[a] + [b]", data_type: "number" }),
+    ];
+
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("stored-values")) {
+            return Promise.reject(new Error("API error"));
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Stored field name should be in definitions
+    expect(result.current.definitions.length).toBe(1);
+    expect(result.current.definitions[0].name).toBe("stored_field");
+    // But computedValues should not have it (API failed)
+    expect(result.current.computedValues.stored_field).toBeUndefined();
+  });
+
+  it("returns stored values when record has an id", async () => {
+    mockResponse = [
+      makeRow({
+        name: "total_with_tax",
+        calc_type: "stored",
+        expression: "[subtotal] * 1.13",
+        data_type: "number",
+        depends_on: ["subtotal"],
+      }),
+    ];
+
+    const originalMock = vi.spyOn(globalThis, "fetch");
+    originalMock.mockImplementation(
+      (url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/calculated-fields")) {
+          if (urlStr.includes("stored-values")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({ stored_values: { total_with_tax: 113.0 } }),
+                { status: 200, headers: { "Content-Type": "application/json" } },
+              ),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify(mockResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.reject(new Error("Unexpected URL: " + urlStr));
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useCalculatedFields("orders", { id: 10, subtotal: 100 }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.definitions.length).toBe(1);
+    expect(result.current.computedValues.total_with_tax).toBe(113);
   });
 });

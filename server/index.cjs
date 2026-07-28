@@ -341,7 +341,31 @@ app.post("/api/data/:table", permissionGuard((req) => req.params.table), async (
        RETURNING *`,
       values
     );
-    res.status(201).json(rows[0]);
+    const saved = rows[0];
+
+    // Auto-compute stored calculated fields after insert (fire-and-forget)
+    try {
+      const pkCol = await getPkColumn(table);
+      const recordId = saved[pkCol];
+      if (recordId != null) {
+        const { rows: storedDefs } = await pool.query(
+          'SELECT id FROM shared.calculated_fields WHERE table_name = $1 AND calc_type = $$stored$$ AND visible = true LIMIT 1',
+          [table]
+        );
+        if (storedDefs.length > 0) {
+          const triggerUrl = `http://localhost:${PORT}/api/calculated-fields/compute-stored`;
+          fetch(triggerUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table_name: table, record_id: recordId }),
+          }).catch(() => {});
+        }
+      }
+    } catch {
+      // Stored calc computation is best-effort; don't fail the save
+    }
+
+    res.status(201).json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -367,7 +391,30 @@ app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
       values
     );
     if (rows.length === 0) return res.status(404).json({ error: "Not found" });
-    res.json(rows[0]);
+    const saved = rows[0];
+
+    // Auto-compute stored calculated fields after update (fire-and-forget)
+    try {
+      const recordId = saved[pk] || saved.id;
+      if (recordId != null) {
+        const { rows: storedDefs } = await pool.query(
+          'SELECT id FROM shared.calculated_fields WHERE table_name = $1 AND calc_type = $$stored$$ AND visible = true LIMIT 1',
+          [table]
+        );
+        if (storedDefs.length > 0) {
+          const triggerUrl = `http://localhost:${PORT}/api/calculated-fields/compute-stored`;
+          fetch(triggerUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ table_name: table, record_id: recordId }),
+          }).catch(() => {});
+        }
+      }
+    } catch {
+      // Stored calc computation is best-effort; don't fail the save
+    }
+
+    res.json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1767,6 +1814,172 @@ app.post("/api/calculated-fields/evaluate-aggregate", async (req, res) => {
     setAggregateCache(cacheKey, result);
 
     res.json({ result, cached: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Stored Calculation (compute on save, store in DB) ───
+
+/**
+ * POST /api/calculated-fields/compute-stored
+ * Body: { table_name: string, record_id: number }
+ *
+ * Fetches all stored-type calculated field definitions for the given table,
+ * evaluates each expression against the current record data, and upserts
+ * the results into shared.calculated_field_values.
+ *
+ * Returns: { stored_values: Record<string, any>, computed_at: string }
+ */
+app.post("/api/calculated-fields/compute-stored", async (req, res) => {
+  try {
+    const { table_name, record_id } = req.body;
+    if (!table_name || record_id === undefined) {
+      return res.status(400).json({
+        error: "table_name and record_id are required",
+      });
+    }
+
+    // 1. Fetch stored-type calculated fields for this table
+    const { rows: definitions } = await pool.query(
+      `SELECT * FROM shared.calculated_fields
+       WHERE table_name = $1 AND calc_type = 'stored' AND visible = true
+       ORDER BY name`,
+      [table_name]
+    );
+
+    if (definitions.length === 0) {
+      return res.json({ stored_values: {}, computed_at: new Date().toISOString() });
+    }
+
+    // 2. Fetch the actual record data from the ERP table
+    const pkCol = await getPkColumn(table_name);
+    const { rows: records } = await pool.query(
+      `SELECT * FROM db_fcc_erp."${table_name}" WHERE "${pkCol}" = $1 AND company_id = 1`,
+      [record_id]
+    );
+    if (records.length === 0) {
+      return res.status(404).json({ error: `Record not found in ${table_name}` });
+    }
+    const record = records[0];
+
+    // 3. Evaluate each stored expression via Python CLI
+    const candidates = ["python3", "python"];
+    let pythonCmd = "python3";
+    for (const cmd of candidates) {
+      try {
+        require("child_process").execSync(`${cmd} --version`, { stdio: "ignore" });
+        pythonCmd = cmd;
+        break;
+      } catch { continue; }
+    }
+
+    const EVAL_CLI = path.resolve(__dirname, "calculated_fields", "evaluate_cli.py");
+    const stored_values = {};
+    const now = new Date().toISOString();
+
+    for (const def of definitions) {
+      try {
+        const valuesJson = JSON.stringify(record);
+        const result = await new Promise((resolve, reject) => {
+          const child = require("child_process").execFile(
+            pythonCmd,
+            [EVAL_CLI, "--expression", def.expression, "--values", valuesJson],
+            {
+              cwd: path.dirname(EVAL_CLI),
+              timeout: 10000,
+              maxBuffer: 1024 * 64,
+              env: { PATH: process.env.PATH || "", PYTHONIOENCODING: "utf-8", PYTHONUNBUFFERED: "1" },
+            },
+            (error, stdout, stderr) => {
+              if (error) {
+                const msg = stderr.trim() || stdout.trim() || error.message;
+                reject(new Error(msg));
+                return;
+              }
+              try { resolve(JSON.parse(stdout.trim())); }
+              catch { reject(new Error(`Invalid JSON: ${stdout.trim()}`)); }
+            }
+          );
+        });
+        const value = result?.result !== undefined ? String(result.result) : null;
+
+        // 4. Upsert into shared.calculated_field_values
+        await pool.query(
+          `INSERT INTO shared.calculated_field_values
+           (table_name, record_id, field_name, value, expression, computed_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $6)
+           ON CONFLICT (table_name, record_id, field_name)
+           DO UPDATE SET value = EXCLUDED.value,
+                         expression = EXCLUDED.expression,
+                         computed_at = EXCLUDED.computed_at,
+                         updated_at = EXCLUDED.updated_at`,
+          [table_name, record_id, def.name, value, def.expression, now]
+        );
+
+        stored_values[def.name] = result?.result ?? null;
+      } catch (evalErr) {
+        // Store error marker
+        stored_values[def.name] = "#Error";
+        // Also upsert the error marker so subsequent reads get it
+        await pool.query(
+          `INSERT INTO shared.calculated_field_values
+           (table_name, record_id, field_name, value, expression, computed_at, updated_at)
+           VALUES ($1, $2, $3, '#Error', $4, $5, $5)
+           ON CONFLICT (table_name, record_id, field_name)
+           DO UPDATE SET value = '#Error',
+                         expression = EXCLUDED.expression,
+                         computed_at = EXCLUDED.computed_at,
+                         updated_at = EXCLUDED.updated_at`,
+          [table_name, record_id, def.name, def.expression, now]
+        );
+      }
+    }
+
+    res.json({ stored_values, computed_at: now });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/calculated-fields/stored-values/:table/:recordId
+ *
+ * Retrieves all pre-computed stored calculation values for a given
+ * table + record. Returns what's in the shared.calculated_field_values
+ * table — no recomputation happens here.
+ *
+ * Returns: { stored_values: Record<string, any> }
+ */
+app.get("/api/calculated-fields/stored-values/:table/:recordId", async (req, res) => {
+  try {
+    const { table, recordId } = req.params;
+    if (!table || !recordId) {
+      return res.status(400).json({ error: "table and recordId are required" });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT field_name, value FROM shared.calculated_field_values
+       WHERE table_name = $1 AND record_id = $2`,
+      [table, Number(recordId)]
+    );
+
+    const stored_values = {};
+    for (const row of rows) {
+      // Try to parse the value as a number if it looks numeric
+      const val = row.value;
+      if (val === "#Error") {
+        stored_values[row.field_name] = "#Error";
+      } else if (val === null || val === undefined) {
+        stored_values[row.field_name] = null;
+      } else if (!isNaN(Number(val)) && val.trim() !== "") {
+        stored_values[row.field_name] = Number(val);
+      } else {
+        stored_values[row.field_name] = val;
+      }
+    }
+
+    res.json({ stored_values });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
