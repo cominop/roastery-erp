@@ -33,6 +33,42 @@ const pool = new Pool({
   // defaults to local socket — override with env vars for production
 });
 
+// ─── Audit-aware query helper ──────────────────────────
+// Wraps a write query with session context so the DB trigger
+// captures who made the change. Uses a dedicated client from
+// the pool so SET LOCAL and the DML execute on the same connection.
+async function queryWithAudit(sql, params, user) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    if (user && user.userId) {
+      await client.query(
+        `SELECT set_config('app.changed_by_id', $1, true)`,
+        [String(user.userId)]
+      );
+      if (user.isAdmin) {
+        await client.query(
+          `SELECT set_config('app.changed_by_name', $1, true)`,
+          ["admin"]
+        );
+      }
+    } else {
+      await client.query(
+        `SELECT set_config('app.changed_by_name', $1, true)`,
+        ["system"]
+      );
+    }
+    const result = await client.query(sql, params);
+    await client.query("COMMIT");
+    return result;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 // ─── Middleware ───────────────────────────────────────
 
 app.use(cors());
@@ -337,11 +373,12 @@ app.post("/api/data/:table", permissionGuard((req) => req.params.table), async (
     const values = Object.values(data);
     const placeholders = values.map((_, i) => `$${i + 1}`);
 
-    const { rows } = await pool.query(
+    const { rows } = await queryWithAudit(
       `INSERT INTO db_fcc_erp."${table}" (${columns.map((c) => `"${c}"`).join(", ")})
        VALUES (${placeholders.join(", ")})
        RETURNING *`,
-      values
+      values,
+      req.user
     );
     const saved = rows[0];
 
@@ -367,19 +404,6 @@ app.post("/api/data/:table", permissionGuard((req) => req.params.table), async (
       // Stored calc computation is best-effort; don't fail the save
     }
 
-    // Audit log (fire-and-forget)
-    try {
-      const pkCol = await getPkColumn(table);
-      const recordId = saved[pkCol] || saved.id;
-      await pool.query(
-        `INSERT INTO shared.audit_log (table_name, record_id, action, new_data, changed_by, changed_by_name)
-         VALUES ($1, $2, 'INSERT', $3::jsonb, $4, $5)`,
-        [table, recordId, JSON.stringify(saved), null, 'system']
-      );
-    } catch {
-      // Audit logging is best-effort; don't fail the save
-    }
-
     res.status(201).json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -393,30 +417,18 @@ app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
 
   try {
     const pk = await getPkColumn(table);
-
-    // Fetch old data before update (for audit log)
-    let oldData = null;
-    try {
-      const { rows: oldRows } = await pool.query(
-        `SELECT * FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
-        [id]
-      );
-      oldData = oldRows[0] || null;
-    } catch {
-      // Best-effort; audit logging won't block the update
-    }
-
     const data = req.body;
     const columns = Object.keys(data);
     const sets = columns.map((c, i) => `"${c}" = $${i + 1}`);
     const values = [...Object.values(data), id];
 
-    const { rows } = await pool.query(
+    const { rows } = await queryWithAudit(
       `UPDATE db_fcc_erp."${table}" 
        SET ${sets.join(", ")} 
        WHERE "${pk}" = $${values.length} AND company_id = 1
        RETURNING *`,
-      values
+      values,
+      req.user
     );
     if (rows.length === 0) return res.status(404).json({ error: "Not found" });
     const saved = rows[0];
@@ -442,18 +454,6 @@ app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
       // Stored calc computation is best-effort; don't fail the save
     }
 
-    // Audit log (fire-and-forget)
-    try {
-      const recordId = saved[pk] || saved.id;
-      await pool.query(
-        `INSERT INTO shared.audit_log (table_name, record_id, action, old_data, new_data, changed_by, changed_by_name)
-         VALUES ($1, $2, 'UPDATE', $3::jsonb, $4::jsonb, $5, $6)`,
-        [table, recordId, JSON.stringify(oldData), JSON.stringify(saved), null, 'system']
-      );
-    } catch {
-      // Audit logging is best-effort; don't fail the save
-    }
-
     res.json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -468,35 +468,11 @@ app.delete("/api/data/:table/:id", permissionGuard((req) => req.params.table), a
   try {
     const pk = await getPkColumn(table);
 
-    // Fetch record before delete (for audit log)
-    let oldData = null;
-    try {
-      const { rows: oldRows } = await pool.query(
-        `SELECT * FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
-        [id]
-      );
-      oldData = oldRows[0] || null;
-    } catch {
-      // Best-effort; audit logging won't block the delete
-    }
-
-    await pool.query(
+    await queryWithAudit(
       `DELETE FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
-      [id]
+      [id],
+      req.user
     );
-
-    // Audit log (fire-and-forget)
-    if (oldData) {
-      try {
-        await pool.query(
-          `INSERT INTO shared.audit_log (table_name, record_id, action, old_data, changed_by, changed_by_name)
-           VALUES ($1, $2, 'DELETE', $3::jsonb, $4, $5)`,
-          [table, Number(id), JSON.stringify(oldData), null, 'system']
-        );
-      } catch {
-        // Audit logging is best-effort; don't fail the delete
-      }
-    }
 
     res.json({ ok: true });
   } catch (err) {

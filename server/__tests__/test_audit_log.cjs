@@ -221,7 +221,8 @@ async function fetchJson(url, options = {}) {
           const entry = insertEntries[0];
           assert("INSERT entry has new_data", entry.new_data != null);
           assert("INSERT action is correct", entry.action === "INSERT");
-          assert("INSERT changed_by_name is 'system'", entry.changed_by_name === "system");
+          assert("INSERT changed_by_name is 'admin' (default admin user via trigger)",
+            entry.changed_by_name === "admin");
         }
 
         // 7b. PUT creates an UPDATE audit entry

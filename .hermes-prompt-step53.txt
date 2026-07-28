@@ -1,0 +1,62 @@
+# Step 53 — Audit Trail 2: PostgreSQL Trigger Function (or Python Wrapper)
+
+## Context
+Step 52 created the `audit_log` table and indexes. Now implement the **audit trigger** that automatically logs every INSERT, UPDATE, and DELETE across all tables.
+
+## What to Build
+
+### 1. PostgreSQL Trigger Function
+Create `src/audit/server/audit_trigger.sql` containing:
+- `audit_trigger()` function (PL/pgSQL) that:
+  - Reads `app.current_user_id`, `app.current_user_name`, `app.current_user_role` from PostgreSQL session variables (set by the app via `SET SESSION "app.current_user_id" = '...'`)
+  - For INSERT: logs `table_name`, `record_id`, `action='INSERT'`, `user_id`, `user_name`, `user_role`, `new_values` (to_jsonb(NEW))
+  - For UPDATE: computes changed fields by comparing `to_jsonb(OLD)` vs `to_jsonb(NEW)`, skipping `updated_at`. If any fields changed, logs `table_name`, `record_id`, `action='UPDATE'`, `old_values`, `new_values`, `changed_fields`
+  - For DELETE: logs `table_name`, `record_id`, `action='DELETE'`, `old_values`, `new_values='{}'::jsonb`
+- A test trigger: `CREATE TRIGGER trg_audit_products AFTER INSERT OR UPDATE OR DELETE ON products FOR EACH ROW EXECUTE FUNCTION audit_trigger();`
+- The AUDIT_EXCLUDED_FIELDS list: `password_hash`, `password_reset_token`, `session_token`, `updated_at`, `last_login`, `search_vector`
+
+### 2. User Context Middleware
+Add middleware to `server/index.cjs` (or the relevant Express handler) that:
+- Runs before ALL write API endpoints (POST/PUT/PATCH/DELETE)
+- Reads the authenticated user from the request (session/user context)
+- Calls `await db.query("SET SESSION \"app.current_user_id\" = $1", [user.id])` and similar for `user_name` and `user_role`
+- This ensures the PostgreSQL trigger has access to who made the change
+
+### 3. Python Fallback Logger
+Create `src/audit/server/audit_logger.py` with:
+- `AuditLogger` class that can log INSERT, UPDATE, DELETE events
+- Method `log(table_name, record_id, action, user_id, user_name, user_role, old_values=None, new_values=None, changed_fields=None)`
+- This can be used as an alternative if PG triggers are not desired
+- Include the `undo_audit_entry()` and `revert_to_timestamp()` functions from the spec (Section 6)
+
+### 4. API Endpoints
+Create `src/audit/api/auditApi.ts` with:
+- `GET /api/audit/:tableName/:recordId` — fetch audit history for a specific record
+- `POST /api/audit/undo/:auditId` — undo a single audit entry
+- Response format: `{ entries: AuditEntry[], total: number }`
+
+### 5. Audit Schema Types
+Create or update `src/audit/schema/auditSchema.ts` with:
+- TypeScript types: `AuditEntry`, `AuditAction`, `AuditQueryParams`
+- Matching the `audit_log` table schema
+
+### 6. Integration Test
+Create a basic test that:
+- Verifies the audit_trigger.sql is syntactically valid
+- (Optional, skip if no PG connection available in test env)
+
+## Important
+- The codebase uses React + Express + PostgreSQL
+- Server code is in `server/index.cjs` (CommonJS)
+- DB queries use `pg` library with parameterised queries (`$1`, `$2`, etc.)
+- The base API path pattern is `/api/:tableName`
+- Authentication is already implemented — user is available as `req.user` with fields: `id` (UUID), `name`, `role`
+- Keep the function defensive (use `current_setting(..., true)` with `true` for missing-ok)
+- Do NOT touch any existing working code unnecessarily
+
+## Files to Create/Modify
+- CREATE: `src/audit/server/audit_trigger.sql`
+- CREATE: `src/audit/server/audit_logger.py`
+- CREATE: `src/audit/api/auditApi.ts`
+- CREATE: `src/audit/schema/auditSchema.ts`
+- MODIFY: `server/index.cjs` (add user context middleware before write operations)
