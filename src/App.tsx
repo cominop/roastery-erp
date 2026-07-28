@@ -22,6 +22,7 @@ import {
   Code,
   Shield,
   FunctionSquare,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FormRenderer from "@/components/FormRenderer";
@@ -36,6 +37,7 @@ import { FilterPanel, QuickFilterBar } from "@/filters";
 import type { QuickFilterPreset } from "@/filters";
 import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
+import AuditLogPage from "@/components/AuditLogPage";
 
 interface NavItem {
   name: string;
@@ -55,6 +57,7 @@ type ActiveView =
   | { type: "events" }
   | { type: "permissions" }
   | { type: "calculated-fields" }
+  | { type: "audit-log" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -611,6 +614,18 @@ export default function App() {
           <span>Calculated Fields</span>
         </button>
         <button
+          onClick={() => setActive({ type: "audit-log" })}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+            active?.type === "audit-log"
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <List className="h-4 w-4" />
+          <span>Audit Log</span>
+        </button>
+        <button
           onClick={openSettings}
           className={cn(
             "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
@@ -841,6 +856,9 @@ export default function App() {
         )}
         {active?.type === "calculated-fields" && (
           <CalculatedFieldsAdmin tables={nav.tables.map(t => t.name)} />
+        )}
+        {active?.type === "audit-log" && (
+          <AuditLogPage tables={nav.tables.map(t => t.name)} />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
