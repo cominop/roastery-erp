@@ -10,6 +10,7 @@ import {
   X,
   Filter,
   List,
+  Eye,
 } from "lucide-react";
 import { getAuditLog } from "@/lib/api";
 import type { AuditEntry } from "@/lib/api";
@@ -30,6 +31,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import AuditDiffView from "@/components/AuditDiffView";
 
 // ─── Helpers (shared with HistoryPanel) ─────────────────
 
@@ -140,6 +148,7 @@ export default function AuditLogPage({ tables }: Props) {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(50);
+  const [detailEntry, setDetailEntry] = useState<AuditEntry | null>(null);
 
   const fetchEntries = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -339,7 +348,11 @@ export default function AuditLogPage({ tables }: Props) {
             </TableHeader>
             <TableBody>
               {entries.map((entry) => (
-                <TableRow key={entry.id}>
+                <TableRow
+                  key={entry.id}
+                  className="cursor-pointer hover:bg-muted/30"
+                  onClick={() => setDetailEntry(entry)}
+                >
                   <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
                     {formatTimestamp(entry.changed_at)}
                   </TableCell>
@@ -362,10 +375,17 @@ export default function AuditLogPage({ tables }: Props) {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-[11px] text-muted-foreground max-w-[300px] truncate" title={entry.action === "UPDATE" ? changedFieldSummary(entry) : ""}>
-                    {entry.action === "UPDATE" ? changedFieldSummary(entry) : (
-                      entry.action === "INSERT" ? "Record created" : "Record deleted"
-                    )}
+                  <TableCell className="text-[11px] text-muted-foreground max-w-[300px]">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate" title={entry.action === "UPDATE" ? changedFieldSummary(entry) : ""}>
+                        {entry.action === "UPDATE" ? changedFieldSummary(entry) : (
+                          entry.action === "INSERT" ? "Record created" : "Record deleted"
+                        )}
+                      </span>
+                      {(entry.action === "UPDATE" || entry.old_data || entry.new_data) && (
+                        <Eye className="size-3 shrink-0 text-muted-foreground/40" />
+                      )}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}
@@ -402,6 +422,20 @@ export default function AuditLogPage({ tables }: Props) {
           </div>
         </div>
       )}
+
+      {/* ─── Detail dialog ───────────────────────────── */}
+      <Dialog open={!!detailEntry} onOpenChange={(open) => { if (!open) setDetailEntry(null); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {detailEntry?.action === "INSERT" ? "Record Created" :
+               detailEntry?.action === "UPDATE" ? "Field Changes" :
+               detailEntry?.action === "DELETE" ? "Record Deleted" : "Audit Detail"}
+            </DialogTitle>
+          </DialogHeader>
+          {detailEntry && <AuditDiffView entry={detailEntry} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,0 +1,94 @@
+# Step 57 — Audit Detail View (old/new value diff per field)
+
+## Context
+The Roastery ERP audit trail system is well-established. Steps 52-56 are complete:
+- Step 52: `audit_log` table + indexes
+- Step 53: PostgreSQL trigger function (or Python wrapper)
+- Step 54: Apply triggers to all 42 ERP tables
+- Step 55: `HistoryButton` + `HistoryPanel` in form header
+- Step 56: `AuditLogPage` — full audit log page with filters
+
+The server already has:
+- `GET /api/audit-log` — paginated, filtered audit log list
+- `GET /api/audit-log/:id` — single audit entry by ID (returns `AuditEntry` with `old_data` and `new_data` JSONB columns)
+
+## What to Build
+Create `src/audit/components/AuditDetail.tsx` — a **detail view** that shows the old/new value diff per field for a single change entry.
+
+### Spec Reference (Section 5.3)
+From `Roastery ERP - SPEC - Audit Trail.md`, section 5.3:
+
+```
+┌─ Audit Detail — Order #1042 ────────────────┐
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │ 2026-07-19 09:15:23                    │  │
+│  │ User: Peter (admin)                    │  │
+│  │ Action: UPDATE                         │  │
+│  │ IP: 192.168.1.50                       │  │
+│  │                                        │  │
+│  │ Changed fields:                        │  │
+│  │  Field    | Old Value    | New Value   │  │
+│  │  ─────────|──────────────|──────────── │  │
+│  │  status   | "Pending"    | "Paid"      │  │
+│  │  paid_at  | null         | "2026-07-19"│  │
+│  │  pay_ref  | null         | "PAY-8921"  │  │
+│  └────────────────────────────────────────┘  │
+│                                              │
+│  [Undo this change]  [Revert to this point]  │
+└──────────────────────────────────────────────┘
+```
+
+### Requirements
+
+1. **Component**: `AuditDetail` — displays a full old/new value comparison for a single audit entry (by ID, loaded via `GET /api/audit-log/:id`).
+
+2. **Layout**:
+   - Header area showing: timestamp, user name + role, action type (INSERT/UPDATE/DELETE), IP address
+   - Action badge colored per action type (green=INSERT, amber=UPDATE, red=DELETE — matching existing patterns in HistoryPanel.tsx and AuditLogPage.tsx)
+   - Divider
+
+3. **Diff Table** (for UPDATE actions):
+   - Three columns: **Field**, **Old Value**, **New Value**
+   - Rows for each field that actually changed (compare `old_data` vs `new_data` JSONB objects)
+   - For INSERT: show all fields as old=null → new=value
+   - For DELETE: show all fields as old=value → new=null
+   - Handle nested objects/arrays: show JSON serialized
+   - Handle null values: display as "—" or "null" styled differently
+   - Highlight rows with visual cue (subtle background tint on changed rows)
+
+4. **Integration with existing code**:
+   - Follow the same patterns as `AuditLogPage.tsx` and `HistoryPanel.tsx` (same shadcn components, same styling conventions)
+   - The `AuditEntry` type is already defined in `src/lib/api.ts` — reuse it
+   - Add a `fetchAuditEntry(id: string)` function to `src/lib/api.ts` that calls `GET /api/audit-log/:id`
+   - The component should accept either an `auditId` (string) to load, or a full `AuditEntry` prop (in case parent already has it)
+   - Accept an `open` boolean and `onClose` callback for use as a modal/dialog or slide-in panel
+
+5. **States to handle**:
+   - Loading state (spinner)
+   - Error state (fetch failure)
+   - Not found (404)
+   - Empty data (missing old_data/new_data)
+   - Different action types (INSERT full field list, UPDATE diff, DELETE full field list)
+
+6. **Navigation**:
+   - "Back to audit log" button/link at the top
+   - The AuditLogPage should link into this detail view when clicking on an entry row
+
+## What NOT to build
+- ❌ Do NOT implement Undo/Revert buttons — that's Step 58
+- ❌ Do NOT modify the server-side API (already exists)
+- ❌ Do NOT touch HistoryButton.tsx or HistoryPanel.tsx
+- ❌ Do NOT modify the existing audit_log SQL or triggers
+
+## Files to create/modify
+1. **CREATE** `src/audit/components/AuditDetail.tsx` — the main component
+2. **MODIFY** `src/lib/api.ts` — add `fetchAuditEntry(id)` function
+3. **MODIFY** `src/components/AuditLogPage.tsx` — make rows clickable, linking to the detail view
+
+## Already existing patterns to follow
+- Use shadcn components: Table, Button, Badge, Card
+- Use lucide-react icons: ArrowLeft, Clock, Plus, Pencil, Trash2
+- Follow the same `formatTimestamp`, `actionIcon`, `actionLabel`, `actionColor` helpers from AuditLogPage.tsx
+- TypeScript strict mode
+- Tailwind CSS for styling

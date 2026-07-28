@@ -1,8 +1,9 @@
 // HistoryPanel — slide-out panel showing audit log entries for a record
 import { useState, useEffect, useCallback } from "react";
-import { X, RotateCw, Clock, Plus, Pencil, Trash2 } from "lucide-react";
+import { X, RotateCw, Clock, Plus, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { getAuditLog } from "@/lib/api";
 import type { AuditEntry } from "@/lib/api";
+import AuditDiffView from "@/components/AuditDiffView";
 
 interface Props {
   /** Table name for the current record */
@@ -95,6 +96,7 @@ export default function HistoryPanel({ table, recordId, isNew, open, onClose }: 
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async (pageNum: number) => {
     if (!table || recordId == null || isNew) return;
@@ -201,37 +203,58 @@ export default function HistoryPanel({ table, recordId, isNew, open, onClose }: 
             <div className="absolute left-5 top-1 bottom-1 w-px bg-border" />
 
             {entries.map((entry) => (
-              <div key={entry.id} className="relative flex gap-2.5 px-2.5 py-2">
-                {/* Timeline dot */}
-                <div className="relative z-10 mt-0.5 flex items-center justify-center size-4 rounded-full bg-background border shrink-0">
-                  {actionIcon(entry.action)}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`inline-flex items-center gap-0.5 px-1 py-0 rounded text-[10px] font-medium leading-tight ${actionColor(entry.action)}`}>
-                      {actionLabel(entry.action)}
-                    </span>
-                    <span className="text-muted-foreground/50 text-[10px]">
-                      {formatTimestamp(entry.changed_at)}
-                    </span>
+              <div key={entry.id} className="relative">
+                <div
+                  className="relative flex gap-2.5 px-2.5 py-2 cursor-pointer hover:bg-muted/20 rounded-sm"
+                  onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
+                >
+                  {/* Timeline dot */}
+                  <div className="relative z-10 mt-0.5 flex items-center justify-center size-4 rounded-full bg-background border shrink-0">
+                    {actionIcon(entry.action)}
                   </div>
 
-                  <div className="text-[10px] text-muted-foreground/80 leading-tight">
-                    {entry.changed_by_name && (
-                      <span className="font-medium text-muted-foreground">
-                        {entry.changed_by_name}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={`inline-flex items-center gap-0.5 px-1 py-0 rounded text-[10px] font-medium leading-tight ${actionColor(entry.action)}`}>
+                        {actionLabel(entry.action)}
                       </span>
+                      <span className="text-muted-foreground/50 text-[10px]">
+                        {formatTimestamp(entry.changed_at)}
+                      </span>
+                      {/* Expand indicator */}
+                      {(entry.old_data || entry.new_data) && (
+                        <span className="ml-auto text-muted-foreground/30">
+                          {expandedId === entry.id
+                            ? <ChevronDown className="size-3" />
+                            : <ChevronRight className="size-3" />
+                          }
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-[10px] text-muted-foreground/80 leading-tight">
+                      {entry.changed_by_name && (
+                        <span className="font-medium text-muted-foreground">
+                          {entry.changed_by_name}
+                        </span>
+                      )}
+                    </div>
+
+                    {entry.action === "UPDATE" && entry.old_data && entry.new_data && (
+                      <div className="text-[10px] text-muted-foreground/60 mt-0.5 truncate" title={changedFieldSummary(entry)}>
+                        {changedFieldSummary(entry)}
+                      </div>
                     )}
                   </div>
-
-                  {entry.action === "UPDATE" && entry.old_data && entry.new_data && (
-                    <div className="text-[10px] text-muted-foreground/60 mt-0.5 truncate" title={changedFieldSummary(entry)}>
-                      {changedFieldSummary(entry)}
-                    </div>
-                  )}
                 </div>
+
+                {/* Expanded diff */}
+                {expandedId === entry.id && (entry.old_data || entry.new_data) && (
+                  <div className="ml-9 pb-2 pr-2.5 pl-0.5">
+                    <AuditDiffView entry={entry} compact />
+                  </div>
+                )}
               </div>
             ))}
           </div>
