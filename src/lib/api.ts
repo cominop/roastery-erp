@@ -296,3 +296,91 @@ export function restoreAuditEntry(params: {
     body: JSON.stringify(params),
   });
 }
+
+// ─── Audit retention / pruning ────────────────────────
+
+export interface RetentionOverride {
+  id: number;
+  table_name: string;
+  retention_days: number;
+  last_pruned_at: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RetentionConfig {
+  default_retention_days: number;
+  default_last_pruned_at: string | null;
+  overrides: RetentionOverride[];
+  stats: {
+    total_entries: number;
+    oldest_entry: string;
+    newest_entry: string;
+    table_count: number;
+  };
+}
+
+export function getRetentionConfig() {
+  return request<RetentionConfig>("/audit/retention");
+}
+
+export function updateRetentionConfig(body: {
+  default_retention_days?: number;
+  overrides?: Array<{
+    id?: number;
+    table_name?: string;
+    retention_days?: number;
+    _delete?: boolean;
+  }>;
+}) {
+  return request<{ ok: boolean }>("/audit/retention", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export interface PruneResult {
+  table_name: string;
+  retention_days: number;
+  entries_before: number;
+  entries_pruned: number;
+  oldest_kept: string | null;
+  cutoff_date: string;
+}
+
+export interface PruneResponse {
+  pruned: PruneResult[];
+}
+
+export function triggerPrune(body?: { table_name?: string; dry_run?: boolean }) {
+  return request<PruneResponse>("/audit/prune", {
+    method: "POST",
+    body: JSON.stringify(body || {}),
+  });
+}
+
+export interface PruneStatsTable {
+  table_name: string;
+  effective_retention_days: number;
+  override_retention_days: number | null;
+  has_override: boolean;
+  last_pruned_at: string | null;
+  entry_count: number;
+  oldest_entry: string | null;
+  newest_entry: string | null;
+  prunable_count: number;
+}
+
+export interface PruneStats {
+  tables: PruneStatsTable[];
+  summary: {
+    total_entries: number;
+    total_prunable: number;
+    table_count: number;
+  };
+}
+
+export function getPruneStats() {
+  return request<PruneStats>("/audit/prune/stats");
+}

@@ -1,5 +1,5 @@
 // AuditLogPage — full-page audit log viewer with filters (table, action, user, date range)
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import {
   Clock,
   Plus,
@@ -11,6 +11,7 @@ import {
   Filter,
   List,
   Eye,
+  Settings2,
 } from "lucide-react";
 import { getAuditLog } from "@/lib/api";
 import type { AuditEntry } from "@/lib/api";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import AuditDiffView from "@/components/AuditDiffView";
 import { undoAuditEntry } from "@/lib/api";
+import AuditRetentionPanel from "@/components/AuditRetentionPanel";
 
 // ─── Helpers (shared with HistoryPanel) ─────────────────
 
@@ -142,6 +144,7 @@ interface Props {
 }
 
 export default function AuditLogPage({ tables }: Props) {
+  const [tab, setTab] = useState<"log" | "retention">("log");
   const [filters, setFilters] = useState<AuditFilters>({ ...EMPTY_FILTERS });
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -225,6 +228,34 @@ export default function AuditLogPage({ tables }: Props) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* ─── Tabbed header ──────────────────────────── */}
+      <div className="flex items-center border-b bg-muted/30 shrink-0">
+        <button
+          onClick={() => setTab("log")}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 ${
+            tab === "log"
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <List className="size-3.5" />
+          Audit Log
+        </button>
+        <button
+          onClick={() => setTab("retention")}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-b-2 ${
+            tab === "retention"
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Settings2 className="size-3.5" />
+          Retention
+        </button>
+      </div>
+
+      {/* ─── Log view ───────────────────────────────── */}
+      {tab === "log" && (<Fragment>
       {/* ─── Header ─────────────────────────────────── */}
       <div className="px-4 py-2 border-b bg-muted/30 shrink-0">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -505,6 +536,8 @@ export default function AuditLogPage({ tables }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </Fragment>)}
+      {tab === "retention" && <AuditRetentionPanel />}
     </div>
   );
 }

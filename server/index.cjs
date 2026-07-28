@@ -2414,6 +2414,192 @@ app.post("/api/audit-log/restore", async (req, res) => {
 });
 
 /**
+ * GET /api/audit/retention — get audit retention config
+ */
+app.get("/api/audit/retention", async (_req, res) => {
+  try {
+    // Get the default config
+    const { rows: defaults } = await pool.query(
+      `SELECT retention_days, last_pruned_at, created_at, updated_at
+       FROM shared.audit_retention_config
+       WHERE table_name IS NULL AND active = true`
+    );
+
+    // Get per-table overrides
+    const { rows: overrides } = await pool.query(
+      `SELECT id, table_name, retention_days, last_pruned_at, active, created_at, updated_at
+       FROM shared.audit_retention_config
+       WHERE table_name IS NOT NULL AND active = true
+       ORDER BY table_name`
+    );
+
+    // Get global stats
+    const { rows: stats } = await pool.query(
+      `SELECT
+         COUNT(*)::INT AS total_entries,
+         COALESCE(MIN(changed_at)::TEXT, 'N/A') AS oldest_entry,
+         COALESCE(MAX(changed_at)::TEXT, 'N/A') AS newest_entry
+       FROM shared.audit_log`
+    );
+
+    // Count distinct tables with audit entries
+    const { rows: tables } = await pool.query(
+      `SELECT COUNT(DISTINCT table_name)::INT AS table_count FROM shared.audit_log`
+    );
+
+    res.json({
+      default_retention_days: defaults.length > 0 ? defaults[0].retention_days : 365,
+      default_last_pruned_at: defaults.length > 0 ? defaults[0].last_pruned_at : null,
+      overrides,
+      stats: {
+        total_entries: stats[0].total_entries,
+        oldest_entry: stats[0].oldest_entry,
+        newest_entry: stats[0].newest_entry,
+        table_count: tables[0].table_count,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/audit/retention — update retention config
+ *
+ * Body:
+ *   { default_retention_days: 365 }                            — update global default
+ *   { overrides: [{ table_name: 'products', retention_days: 90 }] }  — set per-table overrides
+ *   { overrides: [{ id: 1, retention_days: 180 }] }            — update existing override by id
+ *   { overrides: [{ id: 1, _delete: true }] }                  — remove an override
+ */
+app.put("/api/audit/retention", async (req, res) => {
+  try {
+    const { default_retention_days, overrides } = req.body;
+
+    // Update global default
+    if (default_retention_days != null) {
+      const days = parseInt(default_retention_days, 10);
+      if (isNaN(days) || days < 1) {
+        return res.status(400).json({ error: "default_retention_days must be >= 1" });
+      }
+      await pool.query(
+        `UPDATE shared.audit_retention_config SET retention_days = $1, updated_at = NOW() WHERE table_name IS NULL`,
+        [days]
+      );
+      // Ensure default row exists
+      await pool.query(
+        `INSERT INTO shared.audit_retention_config (table_name, retention_days)
+         SELECT NULL, $1
+         WHERE NOT EXISTS (SELECT 1 FROM shared.audit_retention_config WHERE table_name IS NULL)`,
+        [days]
+      );
+    }
+
+    // Process per-table overrides
+    if (overrides && Array.isArray(overrides)) {
+      for (const ov of overrides) {
+        if (ov._delete && ov.id) {
+          await pool.query(
+            `DELETE FROM shared.audit_retention_config WHERE id = $1 AND table_name IS NOT NULL`,
+            [ov.id]
+          );
+          continue;
+        }
+        if (ov._delete && ov.table_name) {
+          await pool.query(
+            `DELETE FROM shared.audit_retention_config WHERE table_name = $1 AND table_name IS NOT NULL`,
+            [ov.table_name]
+          );
+          continue;
+        }
+        if (ov.retention_days != null && ov.table_name) {
+          const days = parseInt(ov.retention_days, 10);
+          if (isNaN(days) || days < 1) {
+            return res.status(400).json({ error: `Invalid retention_days for ${ov.table_name}` });
+          }
+          await pool.query(
+            `INSERT INTO shared.audit_retention_config (table_name, retention_days)
+             VALUES ($1, $2)
+             ON CONFLICT (table_name) DO UPDATE SET retention_days = $2, updated_at = NOW()`,
+            [ov.table_name, days]
+          );
+        } else if (ov.retention_days != null && ov.id) {
+          const days = parseInt(ov.retention_days, 10);
+          if (isNaN(days) || days < 1) {
+            return res.status(400).json({ error: `Invalid retention_days for override id ${ov.id}` });
+          }
+          await pool.query(
+            `UPDATE shared.audit_retention_config SET retention_days = $1, updated_at = NOW() WHERE id = $2`,
+            [days, ov.id]
+          );
+        }
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/audit/prune — manually trigger pruning
+ *
+ * Body:
+ *   {}                          — prune all tables using config
+ *   { table_name: 'products' }  — prune a specific table
+ *   { dry_run: true }           — preview without deleting
+ *
+ * Returns: array of { table_name, retention_days, entries_before, entries_pruned, oldest_kept, cutoff_date }
+ */
+app.post("/api/audit/prune", async (req, res) => {
+  try {
+    const { table_name, dry_run } = req.body;
+
+    if (table_name) {
+      const { rows } = await pool.query(
+        `SELECT * FROM shared.prune_audit_log($1, $2)`,
+        [table_name, !!dry_run]
+      );
+      return res.json({ pruned: rows });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.prune_audit_log(NULL, $1)`,
+      [!!dry_run]
+    );
+    res.json({ pruned: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/audit/prune/stats — preview prune stats via the retention_status view
+ */
+app.get("/api/audit/prune/stats", async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.audit_retention_status ORDER BY entry_count DESC`
+    );
+
+    const total_entries = rows.reduce((s, r) => s + parseInt(r.entry_count), 0);
+    const total_prunable = rows.reduce((s, r) => s + parseInt(r.prunable_count), 0);
+
+    res.json({
+      tables: rows,
+      summary: {
+        total_entries,
+        total_prunable,
+        table_count: rows.length,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/audit/triggers — trigger coverage report
  * Returns total ERP tables, tables with triggers, tables missing triggers
  */
