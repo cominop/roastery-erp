@@ -13,6 +13,8 @@
  *   DELETE /api/data/:table/:id     — delete record
  *   POST /api/lookup                — run row-source SQL
  *   GET  /api/schema/:table         — column metadata
+ *   GET  /api/audit-log             — list audit log entries (filtered, paginated)
+ *   GET  /api/audit-log/:id         — single audit log entry
  */
 
 const express = require("express");
@@ -365,6 +367,19 @@ app.post("/api/data/:table", permissionGuard((req) => req.params.table), async (
       // Stored calc computation is best-effort; don't fail the save
     }
 
+    // Audit log (fire-and-forget)
+    try {
+      const pkCol = await getPkColumn(table);
+      const recordId = saved[pkCol] || saved.id;
+      await pool.query(
+        `INSERT INTO shared.audit_log (table_name, record_id, action, new_data, changed_by, changed_by_name)
+         VALUES ($1, $2, 'INSERT', $3::jsonb, $4, $5)`,
+        [table, recordId, JSON.stringify(saved), null, 'system']
+      );
+    } catch {
+      // Audit logging is best-effort; don't fail the save
+    }
+
     res.status(201).json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -378,6 +393,19 @@ app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
 
   try {
     const pk = await getPkColumn(table);
+
+    // Fetch old data before update (for audit log)
+    let oldData = null;
+    try {
+      const { rows: oldRows } = await pool.query(
+        `SELECT * FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
+        [id]
+      );
+      oldData = oldRows[0] || null;
+    } catch {
+      // Best-effort; audit logging won't block the update
+    }
+
     const data = req.body;
     const columns = Object.keys(data);
     const sets = columns.map((c, i) => `"${c}" = $${i + 1}`);
@@ -414,6 +442,18 @@ app.put("/api/data/:table/:id", permissionGuard((req) => req.params.table), asyn
       // Stored calc computation is best-effort; don't fail the save
     }
 
+    // Audit log (fire-and-forget)
+    try {
+      const recordId = saved[pk] || saved.id;
+      await pool.query(
+        `INSERT INTO shared.audit_log (table_name, record_id, action, old_data, new_data, changed_by, changed_by_name)
+         VALUES ($1, $2, 'UPDATE', $3::jsonb, $4::jsonb, $5, $6)`,
+        [table, recordId, JSON.stringify(oldData), JSON.stringify(saved), null, 'system']
+      );
+    } catch {
+      // Audit logging is best-effort; don't fail the save
+    }
+
     res.json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -427,10 +467,37 @@ app.delete("/api/data/:table/:id", permissionGuard((req) => req.params.table), a
 
   try {
     const pk = await getPkColumn(table);
+
+    // Fetch record before delete (for audit log)
+    let oldData = null;
+    try {
+      const { rows: oldRows } = await pool.query(
+        `SELECT * FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
+        [id]
+      );
+      oldData = oldRows[0] || null;
+    } catch {
+      // Best-effort; audit logging won't block the delete
+    }
+
     await pool.query(
       `DELETE FROM db_fcc_erp."${table}" WHERE "${pk}" = $1 AND company_id = 1`,
       [id]
     );
+
+    // Audit log (fire-and-forget)
+    if (oldData) {
+      try {
+        await pool.query(
+          `INSERT INTO shared.audit_log (table_name, record_id, action, old_data, changed_by, changed_by_name)
+           VALUES ($1, $2, 'DELETE', $3::jsonb, $4, $5)`,
+          [table, Number(id), JSON.stringify(oldData), null, 'system']
+        );
+      } catch {
+        // Audit logging is best-effort; don't fail the delete
+      }
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1980,6 +2047,111 @@ app.get("/api/calculated-fields/stored-values/:table/:recordId", async (req, res
     }
 
     res.json({ stored_values });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Audit Log ─────────────────────────────────────────
+
+/**
+ * GET /api/audit-log — list audit log entries with filtering
+ *
+ * Query params:
+ *   ?table_name=   — filter by table
+ *   ?action=       — filter by action (INSERT|UPDATE|DELETE)
+ *   ?changed_by=   — filter by user ID
+ *   ?from=         — start date (ISO or YYYY-MM-DD)
+ *   ?to=           — end date
+ *   ?page=1        — page number
+ *   ?limit=50      — page size
+ *
+ * Returns: { rows, total, page, limit, pages }
+ */
+app.get("/api/audit-log", async (req, res) => {
+  try {
+    const {
+      table_name,
+      action,
+      changed_by,
+      from,
+      to,
+      page = "1",
+      limit = "50",
+    } = req.query;
+
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+
+    if (table_name) {
+      conditions.push(`table_name = $${idx++}`);
+      params.push(table_name);
+    }
+    if (action) {
+      conditions.push(`action = $${idx++}`);
+      params.push(action);
+    }
+    if (changed_by) {
+      conditions.push(`changed_by = $${idx++}`);
+      params.push(Number(changed_by));
+    }
+    if (from) {
+      conditions.push(`changed_at >= $${idx++}`);
+      params.push(from);
+    }
+    if (to) {
+      conditions.push(`changed_at <= $${idx++}`);
+      params.push(to);
+    }
+
+    const where = conditions.length > 0
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+    const offset = (pageNum - 1) * limitNum;
+
+    // Total count for pagination
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) AS total FROM shared.audit_log ${where}`,
+      params
+    );
+    const total = parseInt(countRows[0].total, 10);
+
+    // Fetch page
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.audit_log ${where} ORDER BY changed_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
+      [...params, limitNum, offset]
+    );
+
+    res.json({
+      rows,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages: Math.ceil(total / limitNum),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/audit-log/:id — single audit log entry
+ */
+app.get("/api/audit-log/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      "SELECT * FROM shared.audit_log WHERE id = $1",
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Audit entry not found" });
+    }
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
