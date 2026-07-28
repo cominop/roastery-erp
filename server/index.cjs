@@ -2035,6 +2035,7 @@ app.get("/api/calculated-fields/stored-values/:table/:recordId", async (req, res
  *
  * Query params:
  *   ?table_name=   — filter by table
+ *   ?record_id=    — filter by record ID
  *   ?action=       — filter by action (INSERT|UPDATE|DELETE)
  *   ?changed_by=   — filter by user ID
  *   ?from=         — start date (ISO or YYYY-MM-DD)
@@ -2048,6 +2049,7 @@ app.get("/api/audit-log", async (req, res) => {
   try {
     const {
       table_name,
+      record_id,
       action,
       changed_by,
       from,
@@ -2063,6 +2065,10 @@ app.get("/api/audit-log", async (req, res) => {
     if (table_name) {
       conditions.push(`table_name = $${idx++}`);
       params.push(table_name);
+    }
+    if (record_id) {
+      conditions.push(`record_id = $${idx++}`);
+      params.push(Number(record_id));
     }
     if (action) {
       conditions.push(`action = $${idx++}`);

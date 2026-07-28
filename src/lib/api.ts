@@ -210,3 +210,53 @@ export function fetchDispatchChain(formName: string, eventName?: string) {
     body: JSON.stringify({ formName, eventName: eventName || "" }),
   });
 }
+
+// ─── Audit log ────────────────────────────────────────
+
+export interface AuditEntry {
+  id: string;
+  table_name: string;
+  record_id: number;
+  action: "INSERT" | "UPDATE" | "DELETE";
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+  changed_by: number | null;
+  changed_by_name: string | null;
+  changed_at: string;
+  company_id: number;
+}
+
+export interface AuditLogResponse {
+  rows: AuditEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+/**
+ * Fetch audit log entries with optional filters.
+ * The most common use: pass table_name + record_id to get history for one record.
+ */
+export function getAuditLog(params?: {
+  table_name?: string;
+  record_id?: number | string;
+  action?: string;
+  changed_by?: number | string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const searchParams = new URLSearchParams();
+  if (params?.table_name) searchParams.set("table_name", params.table_name);
+  if (params?.record_id != null) searchParams.set("record_id", String(params.record_id));
+  if (params?.action) searchParams.set("action", params.action);
+  if (params?.changed_by != null) searchParams.set("changed_by", String(params.changed_by));
+  if (params?.from) searchParams.set("from", params.from);
+  if (params?.to) searchParams.set("to", params.to);
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  const qs = searchParams.toString();
+  return request<AuditLogResponse>(`/audit-log${qs ? `?${qs}` : ""}`);
+}

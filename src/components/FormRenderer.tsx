@@ -27,6 +27,8 @@ import SubformControl from "@/subforms/subform-control";
 import { resolveSubformDefinition } from "@/subforms/subform-metadata-overrides";
 import FormNavigation from "@/components/FormNavigation";
 import { useFormEvent, useEvent } from "@/events/EventProvider";
+import HistoryButton from "@/components/HistoryButton";
+import HistoryPanel from "@/components/HistoryPanel";
 
 const CONTROL_MAP: Record<
   string,
@@ -99,6 +101,19 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
   const recordSource = useRecordSource(table, combinedFilter);
   const allowEdits = (definition?.["allow-edits"] ?? 1) !== 0;
   const showNavButtons = (definition?.["navigation-buttons"] ?? 1) !== 0;
+
+  // ─── History panel state ──────────────────────────────
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+
+  // Derive the record ID from the current record using primary key convention
+  // Table "customers" → PK field "customerid" or "id"
+  const recordId = useMemo(() => {
+    if (!table || !recordSource.current || recordSource.isNew) return null;
+    // Try the table-specific PK first (strip 's' from table name + 'id')
+    const tablePk = `${table.slice(0, -1)}id`;
+    const pkValue = recordSource.current[tablePk] ?? recordSource.current.id;
+    return pkValue != null ? pkValue : null;
+  }, [table, recordSource.current, recordSource.isNew]);
 
   // ─── Field-level permissions ──────────────────────────
   const { isFieldHidden, isFieldReadonly } = useFieldPermissions(table);
@@ -378,13 +393,21 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
     <div className="flex flex-col h-full"
         style={{ backgroundColor: 'var(--app-form-bg-color, #FFFFFF)' }}>
         {/* Form caption — title bar */}
-        <div className="px-3 py-1.5 border-b text-xs font-semibold"
+        <div className="px-3 py-1.5 border-b text-xs font-semibold flex items-center gap-2"
           style={{
             backgroundColor: 'var(--app-form-header-bg, #F3F4F6)',
             color: 'var(--app-form-header-color, #6B7280)',
           }}>
-          {definition.caption || formName}
+          <span className="flex-1">{definition.caption || formName}</span>
+          <HistoryButton
+            active={historyPanelOpen}
+            disabled={!table || !recordId || recordSource.isNew}
+            onClick={() => setHistoryPanelOpen((v) => !v)}
+          />
         </div>
+
+      {/* Form body — wraps sections so HistoryPanel can overlay */}
+      <div className="relative flex-1 min-h-0 flex flex-col">
 
       {/* Form Header — fixed record context */}
       {detailSec && (detailSec as Record<string, unknown>)?.visible !== false && (detailSec as Record<string, unknown>)?.visible !== 0 && (
@@ -466,6 +489,16 @@ export default function FormRenderer({ formName, externalFilter }: Props) {
           {renderPairedSection((footerSec as Record<string, unknown>)?.controls as Control[] || [])}
         </div>
       )}
+
+        {/* History panel overlay */}
+        <HistoryPanel
+          table={table}
+          recordId={recordId}
+          isNew={recordSource.isNew}
+          open={historyPanelOpen}
+          onClose={() => setHistoryPanelOpen(false)}
+        />
+      </div>
 
       {/* Record navigation */}
       {showNavButtons && (

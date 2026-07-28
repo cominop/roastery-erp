@@ -1,0 +1,147 @@
+Implement Step 55 — Audit Trail 4: HistoryButton + HistoryPanel in form header
+
+## Context
+
+The Roastery ERP is a React/Express/PostgreSQL application. The audit trail infrastructure is already in place:
+
+### What's already built (previous steps)
+1. **Step 52** — `shared.audit_log` table with columns: id (UUID), table_name, record_id, action, old_data (JSONB), new_data (JSONB), changed_by, changed_by_name, changed_at, company_id — in the `polyaccess` database
+2. **Step 53** — PostgreSQL trigger function (`audit_trigger()`) at `server/sql/step-53-audit-trigger-function.sql`
+3. **Step 54** — Triggers applied to all 42 ERP tables (SQL at `server/sql/step-54-audit-triggers-apply.sql`)
+4. **Server API** — Already has:
+   - `GET /api/audit-log` — list audit log entries with filters (table_name, action, changed_by, from, to, page, limit) and pagination
+   - `GET /api/audit-log/:id` — single audit log entry
+   - `GET /api/audit/triggers` — trigger coverage report (shows which tables have audit triggers)
+   - Plus per-CRUD audit logging (app-level in the create/update/delete handlers)
+
+**IMPORTANT: The server API endpoint `GET /api/audit-log` does NOT currently support filtering by `record_id`. You need to add this parameter to the endpoint.** Add `record_id` as a query parameter to `server/index.cjs` at line ~2047-2115. When `record_id` is provided, add `AND record_id = $N` to the WHERE clause. This is needed so the HistoryPanel can fetch history for a specific record.
+
+### The form renderer
+`src/components/FormRenderer.tsx` renders forms from JSON definitions. The form has a title bar (caption area) that looks like:
+```tsx
+<div className="px-3 py-1.5 border-b text-xs font-semibold"
+  style={{ backgroundColor: 'var(--app-form-header-bg, #F3F4F6)', ... }}>
+  {definition.caption || formName}
+</div>
+```
+
+### The spec (from SPEC - Audit Trail.md)
+Step 55 is Section 5.1 — "History Button in Form Header":
+```
+┌─ Edit Order #1042 ──────── [History] ──────┐
+│                                              │
+│  Customer: John Smith                       │
+│  ...                                        │
+│                                              │
+│  ┌─ History ────────────────────────────┐   │
+│  │  Just now    | Peter | Updated status │   │
+│  │  Today 9:15  | Peter | Created order  │   │
+│  └───────────────────────────────────────┘   │
+└──────────────────────────────────────────────┘
+```
+
+## What To Build
+
+Create the following files in `src/audit/`:
+
+### 1. `src/audit/schema/auditSchema.ts`
+TypeScript types for audit log entries:
+- `AuditEntry` — with fields matching the DB columns (id, table_name, record_id, action, old_data?, new_data?, changed_by, changed_by_name, changed_at, company_id)
+- `AuditAction` — 'INSERT' | 'UPDATE' | 'DELETE'
+- `AuditLogResponse` — { rows: AuditEntry[], total: number }
+- `HistoryPanelProps` — { tableName: string, recordId: number | null, open: boolean, onClose: () => void }
+
+### 2. `src/audit/api/auditApi.ts`
+API client module with functions:
+- `fetchAuditLog(params: { table_name?: string, record_id?: number, action?: string, limit?: number, offset?: number }): Promise<AuditLogResponse>` — calls `GET /api/audit-log?...`
+- `fetchAuditEntry(id: string): Promise<AuditEntry>` — calls `GET /api/audit-log/:id`
+- `fetchTriggerCoverage(): Promise<{ table_name: string, has_trigger: boolean }[]>` — calls `GET /api/audit/triggers`
+
+Use relative fetch (same origin). Follow the patterns in existing API calls in the codebase (e.g., `fetch('/api/...')`).
+
+### 3. `src/audit/useAudit.ts`
+React hook:
+- Takes `tableName: string | undefined` and `recordId: number | null`
+- Returns `{ entries: AuditEntry[], loading: boolean, error: string | null, refetch: () => void }`
+- Calls `fetchAuditLog({ table_name: tableName, record_id: recordId, limit: 50 })` when tableName and recordId change
+- Debounce or skip fetch when recordId is null
+
+### 4. `src/audit/AuditProvider.tsx`
+React context that provides audit functionality:
+- Wraps the app (already has providers in `src/main.tsx`)
+- Context value: `{ openHistory: (tableName: string, recordId: number) => void, closeHistory: () => void, isOpen: boolean, currentTable: string | null, currentRecordId: number | null }`
+- Manages state for which history panel is currently open
+
+### 5. `src/audit/components/HistoryButton.tsx`
+A small button component:
+- Props: `{ tableName: string, recordId: number | null, onClick: () => void, disabled?: boolean }`
+- Renders as a small text button with an icon (use `History` icon from lucide-react): `[History]` 
+- Disabled when recordId is null (no record loaded yet)
+- Has subtle hover/focus styling consistent with the form's title bar (small font, subtle border)
+
+### 6. `src/audit/components/HistoryPanel.tsx`
+A slide-out panel component:
+- Props: `{ tableName: string | null, recordId: number | null, open: boolean, onClose: () => void }`
+- Uses the `useAudit` hook to fetch history
+- Renders as a fixed-position slide-out panel from the right side of the form area
+- Shows:
+  - Header: "History — {tableName} #{recordId}" with close button
+  - Loading state
+  - Empty state ("No history for this record yet")
+  - Error state
+  - List of recent entries with:
+    - Timestamp (formatted as relative time: "Just now", "5 min ago", "Today 9:15", "Yesterday", or full date)
+    - User name (changed_by_name)
+    - Action label (INSERT: "Created record", UPDATE: "Updated: field1, field2", DELETE: "Deleted record")
+    - Each entry is a compact card with subtle styling
+- Styling: slide in/out animation, z-index overlay, max width ~400px, scrollable list
+- Use shadcn ScrollArea component if available, or basic overflow-auto
+
+### 7. Modify `src/audit/AuditProvider.tsx` to export a wrapper component `<AuditProvider>` and hook `<useAuditContext>`
+
+### 8. Modify `src/components/FormRenderer.tsx`
+- Import `useAuditContext` from the audit provider
+- Import `HistoryButton` component
+- In the form caption bar (the `px-3 py-1.5 border-b text-xs font-semibold` div at line ~381-387), add the `HistoryButton` to the right side of the caption text. The button should be right-aligned in the caption bar — use a flex container with `justify-between`.
+- The table name should be derived from the form's record source (the `table` variable is already computed at line ~80-89)
+- The recordId comes from `recordSource.current?.id || recordSource.current?.productid` etc.
+- Pass `onClick` which calls `openHistory(table, recordId)`
+
+### 9. Modify `src/main.tsx`
+- Import and wrap the app with `AuditProvider`
+- Add the HistoryPanel somewhere in the app tree (it renders as a portal/fixed overlay, so position doesn't matter much — stick it inside the provider or after the router)
+
+### 10. Add barrel export `src/audit/index.ts`
+- Re-export all public components, hooks, and types
+
+## Important Implementation Notes
+
+- **Use shadcn Button component** from `@/components/ui/button` for HistoryButton
+- **Use lucide-react icons** (History icon for the button)
+- **Follow existing patterns** — look at how FormNavigation.tsx imports from '@/components/ui/button' and uses lucide-react
+- **The table variable** is already computed in FormRenderer (line 80-89). Use it for the audit log table_name parameter.
+- **Current record ID** — records usually have `id` or specific PK fields like `productid`, `orderid`, `employeeid`. Check `recordSource.current` for these.
+- **CSS**: Use Tailwind classes consistent with the existing codebase. The form header has a light gray background (`#F3F4F6`).
+- **The HistoryPanel should appear as a slide-out panel** on the right side of the form, not as a modal dialog. Use a fixed/absolute positioned div that slides in from the right.
+
+## Testing
+
+After implementing, run:
+- `npx vitest run` — unit tests
+- `npx playwright test` — E2E tests (if available)
+- Fix any test failures
+
+## File Tree (after implementation)
+```
+src/audit/
+├── index.ts                  # Barrel exports
+├── AuditProvider.tsx          # React context
+├── useAudit.ts                # Hook: fetch history for a record
+├── components/
+│   ├── HistoryButton.tsx      # Button in form header
+│   └── HistoryPanel.tsx       # Slide-out panel
+├── api/
+│   └── auditApi.ts            # API client
+└── schema/
+    └── auditSchema.ts         # Types
+```
