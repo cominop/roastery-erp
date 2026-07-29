@@ -35,3 +35,12 @@ export type {
   FieldPickerItem,
   FieldPickerProps,
 } from './FieldPicker';
+
+export {
+  default as ColumnLayoutConfig,
+} from './ColumnLayoutConfig';
+
+export type {
+  ColumnLayoutConfigProps,
+  LayoutPanel,
+} from './ColumnLayoutConfig';
