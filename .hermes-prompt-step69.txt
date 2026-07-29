@@ -1,0 +1,96 @@
+# Step 69: Navigation Tree 9 — Drag-to-reorder in editor
+
+## Context
+You are working on the Roastery ERP project at `/home/fcc-student/Desktop/_DEV/roastery-ui/`. The codebase is a React + Express + PostgreSQL ERP system.
+
+The navigation tree already has:
+- A `nav_tree` table with `parent_id`, `sort_order`, `type`, `caption`, `icon`, etc.
+- A `<SidebarTree>` component that renders the tree in the sidebar
+- A `<NavEditorPanel>` admin panel (at `src/components/NavEditorPanel.tsx`) with:
+  - Add/Delete nodes (with confirmation dialogs)
+  - ArrowUp/ArrowDown buttons for reordering (uses `PUT /api/nav/tree/reorder` API)
+  - "Regenerate from DB" button (from previous step)
+
+## What to Build
+
+Replace the current ArrowUp/ArrowDown button reordering with **drag-and-drop reordering** inside the NavEditorPanel. Users should be able to drag a node and drop it at a new position within the same parent (reordering siblings), or onto a different parent node (moving to a different group).
+
+### Requirements
+
+1. **Drag source**: Each node row in the editor should be draggable. Show a visual indicator (grip handle or the entire row) when hovering.
+
+2. **Drop zone**: Nodes should show a visual drop indicator (horizontal line) between siblings when the user drags over them. Parent groups should also accept drops to move a node into that group.
+
+3. **Drag ghost**: Show a semi-transparent clone of the dragged node following the cursor.
+
+4. **Drop zones for parent groups**: Dropping a node onto a group node should move it as a child of that group (at the end of the group's children list, or at the position indicated by the drop indicator).
+
+5. **API integration**: Use the existing `PUT /api/nav/tree/reorder` endpoint for simple sibling reordering (swap sort_order values). For cross-parent moves, you may need to update the node's `parent_id` as well — use `PUT /api/nav/tree/:id` endpoint (or create a move endpoint `PUT /api/nav/tree/reorder` that accepts `{ id, parent_id, sort_order }`).
+
+6. **Visual feedback**: 
+   - Drag handle/grip icon on the left of each node row
+   - Dashed drop indicator line when hovering over a valid drop position
+   - Highlighted parent group when hovering over it as a drop target
+   - Cursor changes to "grab" when hovering a draggable node, "grabbing" while dragging
+
+7. **Cancel on Escape**: Pressing Escape should cancel the drag operation.
+
+8. **Touch support**: The drag should work on touch devices (HTML5 drag-and-drop has limited touch support — consider using `@dnd-kit/core` or implement pointer events).
+
+### Implementation Approach
+
+**Option A: HTML5 Drag and Drop API** (simpler, no dependencies)
+- Use `draggable` attribute, `onDragStart`, `onDragOver`, `onDrop` events
+- Works well on desktop, limited on mobile
+- No additional dependencies needed
+
+**Option B: @dnd-kit** (recommended for production quality)
+- Install `@dnd-kit/core` and `@dnd-kit/sortable`
+- Provides accessible, touch-friendly, keyboard-friendly DnD
+- More complex setup but better UX
+- Use `npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
+
+**I recommend Option B (@dnd-kit) for production quality**, but Option A is fine if you prefer simplicity.
+
+### Files to modify
+
+1. **`src/components/NavEditorPanel.tsx`** — Main editor panel. Replace the flat list rendering with drag-and-drop sortable list.
+2. **`src/components/NavEditorNode.tsx`** — If needed, create a new component for the draggable node row. Or build it inline in NavEditorPanel.
+3. **`server/index.cjs`** — If the API needs a move endpoint (cross-parent), add it.
+
+### Existing code patterns
+
+The current move logic in `NavEditorPanel.tsx` (lines 415-454) uses ArrowUp/ArrowDown buttons that swap `sort_order` values between siblings. The drag-and-drop version should ultimately call the same `/api/nav/tree/reorder` endpoint, but with a full sibling list payload (all siblings in the new order) rather than just swapping two:
+
+```json
+{
+  "siblings": [
+    { "id": 1, "sort_order": 0 },
+    { "id": 2, "sort_order": 1 },
+    { "id": 3, "sort_order": 2 }
+  ]
+}
+```
+
+For cross-parent moves, also send the new parent_id:
+```json
+{
+  "id": 3,
+  "parent_id": 5,
+  "sort_order": 0
+}
+```
+
+### Testing
+
+After implementing, verify:
+1. Drag a node up/down within the same parent — reorders correctly
+2. Drag a node onto a different parent group — moves and reorders
+3. Press Escape during drag — cancels
+4. The sidebar tree refreshes after the reorder
+
+### Git Rules
+- Working directory: `/home/fcc-student/Desktop/_DEV/roastery-ui/`
+- Always `git add -A` before commit
+- Never `git push --force`
+- Previous commit (Step 68): `f5baf94`

@@ -1,6 +1,7 @@
 // NavEditorPanel — admin-only nav tree editor (add/remove/reorder nodes)
 // Step 67: Admin panel for editing the navigation tree structure
 // Step 68: Regenerate from DB button — auto-generates tree from DB schema
+// Step 69: Drag-to-reorder in editor — drag nodes to reorder siblings
 import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -21,8 +22,27 @@ import {
   AlertTriangle,
   Check,
   RotateCcw,
+  GripVertical,
 } from "lucide-react";
 import type { NavTreeNode } from "./SidebarTree";
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -329,6 +349,156 @@ function ConfirmDialog({
   );
 }
 
+// ─── Sortable node editor row ──────────────────────────
+
+function SortableNodeEditorRow({
+  item,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+}: {
+  item: FlatItem;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: String(item.node.id),
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex items-center gap-1 px-1 py-1 text-xs border-b border-muted/20 group",
+        isDragging && "opacity-40 z-10"
+      )}
+      style={{ ...style, paddingLeft: 8 + item.depth * 12 }}
+    >
+      {/* Drag handle (always visible, activates drag) */}
+      <button
+        className="p-0.5 rounded cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground shrink-0 touch-none"
+        title="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
+
+      {/* Tree branch indicator */}
+      {item.depth > 0 && (
+        <span className="text-muted-foreground/30 mr-0.5">
+          {item.isLastChild ? "└" : "├"}
+        </span>
+      )}
+
+      {/* Icon */}
+      {(() => {
+        const Icon = resolveIcon(item.node.icon);
+        if (Icon && item.node.target_type !== "divider") {
+          return <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />;
+        } else if (item.node.target_type === "divider") {
+          return <span className="text-muted-foreground/40 text-[10px]">—</span>;
+        }
+        return <span className="w-3 shrink-0" />;
+      })()}
+
+      {/* Label */}
+      <span className="truncate flex-1 min-w-0 text-[11px]">
+        {item.node.label}
+      </span>
+
+      {/* Type badge */}
+      <span
+        className={cn(
+          "text-[9px] px-1 rounded shrink-0",
+          TYPE_COLORS[item.node.target_type] || "bg-muted text-muted-foreground"
+        )}
+      >
+        {TYPE_LABELS[item.node.target_type] || item.node.target_type}
+      </span>
+
+      {/* Action buttons (visible on hover) */}
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <button
+          onClick={onMoveUp}
+          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          title="Move up"
+        >
+          <ArrowUp className="h-3 w-3" />
+        </button>
+        <button
+          onClick={onMoveDown}
+          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          title="Move down"
+        >
+          <ArrowDown className="h-3 w-3" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-0.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600"
+          title="Delete node"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Drag overlay (renders while dragging) ─────────────
+
+function DragOverlayContent({ item }: { item: FlatItem }) {
+  const Icon = resolveIcon(item.node.icon);
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-1 px-1 py-1 text-xs border rounded-md bg-background shadow-lg"
+      )}
+      style={{ paddingLeft: 8 + item.depth * 12 }}
+    >
+      <span className="text-muted-foreground shrink-0">
+        <GripVertical className="h-3 w-3" />
+      </span>
+      {item.depth > 0 && (
+        <span className="text-muted-foreground/30 mr-0.5">
+          {item.isLastChild ? "└" : "├"}
+        </span>
+      )}
+      {Icon && item.node.target_type !== "divider" ? (
+        <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
+      ) : item.node.target_type === "divider" ? (
+        <span className="text-muted-foreground/40 text-[10px]">—</span>
+      ) : (
+        <span className="w-3 shrink-0" />
+      )}
+      <span className="truncate flex-1 min-w-0 text-[11px] font-medium">
+        {item.node.label}
+      </span>
+      <span
+        className={cn(
+          "text-[9px] px-1 rounded shrink-0",
+          TYPE_COLORS[item.node.target_type] || "bg-muted text-muted-foreground"
+        )}
+      >
+        {TYPE_LABELS[item.node.target_type] || item.node.target_type}
+      </span>
+    </div>
+  );
+}
+
 // ─── NavEditorPanel ─────────────────────────────────────
 
 export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: NavEditorPanelProps) {
@@ -340,9 +510,23 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const rootNodes = useMemo(() => buildTree(tree), [tree]);
   const flatItems = useMemo(() => flattenTree(rootNodes), [rootNodes]);
+
+  const sortableIds = useMemo(() => flatItems.map((f) => String(f.node.id)), [flatItems]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 4, // 4px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Clear success message after 3 seconds
   const flashSuccess = useCallback((msg: string) => {
@@ -453,6 +637,77 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
     [flatItems, headers, onRefresh]
   );
 
+  // ── Drag-to-reorder ──────────────────────────────────
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      setActiveDragId(null);
+
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const activeId = Number(active.id);
+      const overId = Number(over.id);
+
+      // Find the dragged item and the drop target
+      const activeItem = flatItems.find((f) => f.node.id === activeId);
+      const overItem = flatItems.find((f) => f.node.id === overId);
+      if (!activeItem || !overItem) return;
+
+      // Only allow reorder within the same parent group
+      if (activeItem.parentId !== overItem.parentId) return;
+
+      // Get all siblings in this parent group, ordered by visual position
+      const siblings = flatItems
+        .filter((f) => f.parentId === activeItem.parentId && f.depth === activeItem.depth)
+        .sort((a, b) => a.node.sort_order - b.node.sort_order);
+
+      const oldIndex = siblings.findIndex((s) => s.node.id === activeId);
+      const newIndex = siblings.findIndex((s) => s.node.id === overId);
+      if (oldIndex < 0 || newIndex < 0) return;
+
+      // Reorder the array
+      const reordered = [...siblings];
+      const [moved] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, moved);
+
+      // Assign new sequential sort_order values
+      const siblingsPayload = reordered.map((s, i) => ({
+        id: s.node.id,
+        sort_order: i,
+      }));
+
+      try {
+        const res = await fetch("/api/nav/tree/reorder", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ siblings: siblingsPayload }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Reorder failed" }));
+          throw new Error(err.error || "Reorder failed");
+        }
+        flashSuccess(`Reordered "${activeItem.node.label}"`);
+        onRefresh();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Reorder failed");
+      }
+    },
+    [flatItems, headers, onRefresh, flashSuccess]
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
+
+  const activeDragItem = useMemo(
+    () => (activeDragId ? flatItems.find((f) => String(f.node.id) === activeDragId) ?? null : null),
+    [activeDragId, flatItems]
+  );
+
   // ── Regenerate from DB ─────────────────────────────
   const handleRegenerate = useCallback(async () => {
     setRegenerating(true);
@@ -560,22 +815,40 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
         </button>
       </div>
 
-      {/* Node list */}
+      {/* Node list with drag-to-reorder */}
       <div className="flex-1 overflow-y-auto py-1">
         {flatItems.length === 0 && (
           <div className="px-3 py-8 text-center text-[10px] text-muted-foreground">
             No nodes in the tree. Add one above.
           </div>
         )}
-        {flatItems.map((item) => (
-          <NodeEditorRow
-            key={item.node.id}
-            item={item}
-            onMoveUp={() => handleMove(item, "up")}
-            onMoveDown={() => handleMove(item, "down")}
-            onDelete={() => setDeleteTarget({ id: item.node.id, label: item.node.label })}
-          />
-        ))}
+        {flatItems.length > 0 && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <SortableContext
+              items={sortableIds}
+              strategy={verticalListSortingStrategy}
+            >
+              {flatItems.map((item) => (
+                <SortableNodeEditorRow
+                  key={item.node.id}
+                  item={item}
+                  onMoveUp={() => handleMove(item, "up")}
+                  onMoveDown={() => handleMove(item, "down")}
+                  onDelete={() => setDeleteTarget({ id: item.node.id, label: item.node.label })}
+                />
+              ))}
+            </SortableContext>
+            <DragOverlay>
+              {activeDragItem ? <DragOverlayContent item={activeDragItem} /> : null}
+            </DragOverlay>
+          </DndContext>
+        )}
       </div>
 
       {/* Delete confirmation */}
@@ -600,91 +873,6 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
           variant="default"
         />
       )}
-    </div>
-  );
-}
-
-// ─── Node editor row ──────────────────────────────────
-
-function NodeEditorRow({
-  item,
-  onMoveUp,
-  onMoveDown,
-  onDelete,
-}: {
-  item: FlatItem;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
-}) {
-  const { node, depth, isLastChild } = item;
-  const Icon = resolveIcon(node.icon);
-
-  // Find siblings at same depth for move button bounds
-  // (enabled/disabled handled by the parent)
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-1 px-1 py-1 text-xs border-b border-muted/20 hover:bg-muted/20 group"
-      )}
-      style={{ paddingLeft: 8 + depth * 12 }}
-    >
-      {/* Drag handle / indicator */}
-      {depth > 0 && (
-        <span className="text-muted-foreground/30 mr-0.5">
-          {isLastChild ? "└" : "├"}
-        </span>
-      )}
-
-      {/* Icon */}
-      {Icon && node.target_type !== "divider" ? (
-        <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
-      ) : node.target_type === "divider" ? (
-        <span className="text-muted-foreground/40 text-[10px]">—</span>
-      ) : (
-        <span className="w-3 shrink-0" />
-      )}
-
-      {/* Label */}
-      <span className="truncate flex-1 min-w-0 text-[11px]">
-        {node.label}
-      </span>
-
-      {/* Type badge */}
-      <span
-        className={cn(
-          "text-[9px] px-1 rounded shrink-0",
-          TYPE_COLORS[node.target_type] || "bg-muted text-muted-foreground"
-        )}
-      >
-        {TYPE_LABELS[node.target_type] || node.target_type}
-      </span>
-
-      {/* Action buttons (visible on hover) */}
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        <button
-          onClick={onMoveUp}
-          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-          title="Move up"
-        >
-          <ArrowUp className="h-3 w-3" />
-        </button>
-        <button
-          onClick={onMoveDown}
-          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-          title="Move down"
-        >
-          <ArrowDown className="h-3 w-3" />
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-0.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600"
-          title="Delete node"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      </div>
     </div>
   );
 }
