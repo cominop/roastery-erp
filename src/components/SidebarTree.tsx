@@ -1,6 +1,8 @@
 // SidebarTree — renders the navigation sidebar from the nav_tree API
-import { useState, useMemo, useCallback } from "react";
+// Step 63: Collapsible groups + fuzzy search
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -14,6 +16,8 @@ import {
   FunctionSquare,
   List,
   Menu,
+  Search,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +58,74 @@ interface SidebarTreeProps {
   settingsOpen: boolean;
 }
 
+// ─── Fuzzy match ──────────────────────────────────────────
+
+/** Character-by-character in-order fuzzy match (case-insensitive) */
+function fuzzyMatch(query: string, text: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  const t = text.toLowerCase();
+  let qi = 0;
+  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) qi++;
+  }
+  return qi === q.length;
+}
+
+// ─── Highlighted label ────────────────────────────────────
+
+function HighlightedLabel({ text, query }: { text: string; query: string }) {
+  if (!query) return <span className="truncate">{text}</span>;
+
+  const lower = text.toLowerCase();
+  const q = query.toLowerCase();
+
+  // Find positions of fuzzy-matched characters
+  const positions: number[] = [];
+  let qi = 0;
+  for (let ti = 0; ti < lower.length && qi < q.length; ti++) {
+    if (lower[ti] === q[qi]) {
+      positions.push(ti);
+      qi++;
+    }
+  }
+
+  if (positions.length === 0 || positions.length < q.length) {
+    return <span className="truncate">{text}</span>;
+  }
+
+  // Build segments
+  const segments: { start: number; end: number; highlighted: boolean }[] = [];
+  let lastEnd = 0;
+  for (const pos of positions) {
+    if (pos > lastEnd) {
+      segments.push({ start: lastEnd, end: pos, highlighted: false });
+    }
+    segments.push({ start: pos, end: pos + 1, highlighted: true });
+    lastEnd = pos + 1;
+  }
+  if (lastEnd < text.length) {
+    segments.push({ start: lastEnd, end: text.length, highlighted: false });
+  }
+
+  return (
+    <span className="truncate">
+      {segments.map((seg, i) =>
+        seg.highlighted ? (
+          <mark
+            key={i}
+            className="bg-yellow-200 dark:bg-yellow-700 rounded-sm px-0.5"
+          >
+            {text.slice(seg.start, seg.end)}
+          </mark>
+        ) : (
+          <span key={i}>{text.slice(seg.start, seg.end)}</span>
+        )
+      )}
+    </span>
+  );
+}
+
 // ─── Icon resolver ─────────────────────────────────────
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -80,7 +152,6 @@ interface TreeNode extends NavTreeNode {
 }
 
 function buildTree(nodes: NavTreeNode[]): TreeNode[] {
-  // Group children by parent_id, preserving the sort_order from the flat list
   const childrenByParent = new Map<number | null, NavTreeNode[]>();
   for (const node of nodes) {
     const key = node.parent_id;
@@ -88,7 +159,6 @@ function buildTree(nodes: NavTreeNode[]): TreeNode[] {
     childrenByParent.get(key)!.push(node);
   }
 
-  // Sort each group by sort_order (already in path order from the DB, but be safe)
   for (const [, children] of childrenByParent) {
     children.sort((a, b) => a.sort_order - b.sort_order);
   }
@@ -103,6 +173,42 @@ function buildTree(nodes: NavTreeNode[]): TreeNode[] {
   return build(null);
 }
 
+// ─── Filter tree by search query ──────────────────────────
+
+/**
+ * Returns only nodes (and their ancestors) where any descendant leaf
+ * or the node itself matches the fuzzy query. Groups with no matches
+ * are pruned.
+ */
+function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
+  if (!query) return nodes;
+
+  function matches(node: TreeNode): boolean {
+    // Does this node's label match?
+    if (fuzzyMatch(query, node.label)) return true;
+    // Does any child match?
+    for (const child of node.children) {
+      if (matches(child)) return true;
+    }
+    return false;
+  }
+
+  function prune(nodes: TreeNode[]): TreeNode[] {
+    const result: TreeNode[] = [];
+    for (const node of nodes) {
+      if (matches(node)) {
+        result.push({
+          ...node,
+          children: prune(node.children),
+        });
+      }
+    }
+    return result;
+  }
+
+  return prune(nodes);
+}
+
 // ─── TreeNodeRow — single clickable leaf item ──────────
 
 function TreeNodeRow({
@@ -110,11 +216,13 @@ function TreeNodeRow({
   active,
   onSelect,
   depth,
+  searchQuery,
 }: {
   node: TreeNode;
   active: ActiveView;
   onSelect: (v: ActiveView) => void;
   depth: number;
+  searchQuery: string;
 }) {
   const Icon = resolveIcon(node.icon);
 
@@ -150,7 +258,7 @@ function TreeNodeRow({
           style={node.color ? { color: node.color } : undefined}
         />
       )}
-      <span className="truncate">{node.label}</span>
+      <HighlightedLabel text={node.label} query={searchQuery} />
       {node.badge && (
         <span className="ml-auto text-[10px] px-1 py-0.5 rounded bg-muted-foreground/10 text-muted-foreground tabular-nums">
           {node.badge}
@@ -167,13 +275,19 @@ function NavGroup({
   active,
   onSelect,
   defaultOpen,
+  searchQuery,
 }: {
   node: TreeNode;
   active: ActiveView;
   onSelect: (v: ActiveView) => void;
   defaultOpen: boolean;
+  searchQuery: string;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  // When a search is active, force groups open; otherwise use user toggle state
+  const [userOpen, setUserOpen] = useState(defaultOpen);
+  const isSearching = searchQuery.length > 0;
+  const open = isSearching ? true : userOpen;
+
   const Icon = resolveIcon(node.icon);
 
   const leafCount = useMemo(() => {
@@ -191,7 +305,9 @@ function NavGroup({
   return (
     <div>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!isSearching) setUserOpen(!userOpen);
+        }}
         className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wide"
       >
         {open ? (
@@ -200,10 +316,12 @@ function NavGroup({
           <ChevronRight className="h-3 w-3 shrink-0" />
         )}
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-        <span>{node.label}</span>
-        <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/60">
-          {leafCount}
-        </span>
+        <HighlightedLabel text={node.label} query={searchQuery} />
+        {!isSearching && (
+          <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/60">
+            {leafCount}
+          </span>
+        )}
       </button>
       {open && (
         <div className="pb-0.5">
@@ -219,6 +337,7 @@ function NavGroup({
                   active={active}
                   onSelect={onSelect}
                   defaultOpen={child.is_expanded ?? false}
+                  searchQuery={searchQuery}
                 />
               );
             }
@@ -229,6 +348,7 @@ function NavGroup({
                 active={active}
                 onSelect={onSelect}
                 depth={(child.depth ?? 1) - 1}
+                searchQuery={searchQuery}
               />
             );
           })}
@@ -247,40 +367,123 @@ export default function SidebarTree({
   onOpenSettings,
   settingsOpen,
 }: SidebarTreeProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
   const rootNodes = useMemo(() => buildTree(tree), [tree]);
+  const filteredNodes = useMemo(
+    () => filterTree(rootNodes, searchQuery),
+    [rootNodes, searchQuery]
+  );
+
+  const hasResults = filteredNodes.length > 0;
+
+  // Keyboard shortcut: focus search on Ctrl+/ or "/" key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Ctrl+/ or Cmd+/ toggles focus
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+        e.preventDefault();
+        if (searchRef.current) {
+          if (document.activeElement === searchRef.current) {
+            searchRef.current.blur();
+          } else {
+            searchRef.current.focus();
+          }
+        }
+        return;
+      }
+      // "/" key when not in an input focuses search
+      if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA" &&
+        !e.ctrlKey &&
+        !e.metaKey
+      ) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setSearchQuery("");
+    searchRef.current?.focus();
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
       {/* Fixed header */}
-      <div className="p-3 font-semibold text-sm border-b shrink-0">☕ Roastery ERP</div>
+      <div className="p-3 font-semibold text-sm border-b shrink-0">
+        ☕ Roastery ERP
+      </div>
+
+      {/* Search input */}
+      <div className="px-2 py-1.5 border-b shrink-0">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            ref={searchRef}
+            type="text"
+            placeholder="Search nav…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-7 pl-7 pr-7 text-xs"
+          />
+          {searchQuery && (
+            <button
+              onClick={handleClear}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted text-muted-foreground"
+              tabIndex={-1}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Scrollable nav */}
       <nav className="min-h-0 flex-1 overflow-y-auto py-1">
-        {rootNodes.map((node) => {
-          if (node.target_type === "divider") {
-            return <Separator key={node.id} className="my-1" />;
-          }
-          if (node.target_type === "group") {
+        {searchQuery && !hasResults && (
+          <div className="px-3 py-8 text-center text-xs text-muted-foreground">
+            <Search className="h-5 w-5 mx-auto mb-2 opacity-40" />
+            <p>No results for "{searchQuery}"</p>
+            <p className="mt-1 text-[10px] opacity-60">
+              Try a different search term
+            </p>
+          </div>
+        )}
+        {hasResults &&
+          filteredNodes.map((node) => {
+            if (node.target_type === "divider") {
+              return <Separator key={node.id} className="my-1" />;
+            }
+            if (node.target_type === "group") {
+              return (
+                <NavGroup
+                  key={node.id}
+                  node={node}
+                  active={active}
+                  onSelect={onSelect}
+                  defaultOpen={node.is_expanded ?? false}
+                  searchQuery={searchQuery}
+                />
+              );
+            }
             return (
-              <NavGroup
+              <TreeNodeRow
                 key={node.id}
                 node={node}
                 active={active}
                 onSelect={onSelect}
-                defaultOpen={node.is_expanded ?? false}
+                depth={0}
+                searchQuery={searchQuery}
               />
             );
-          }
-          return (
-            <TreeNodeRow
-              key={node.id}
-              node={node}
-              active={active}
-              onSelect={onSelect}
-              depth={0}
-            />
-          );
-        })}
+          })}
       </nav>
 
       {/* Fixed footer */}
