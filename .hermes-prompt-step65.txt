@@ -1,0 +1,85 @@
+Implement Step 65: Navigation Tree 5 — Count badges (live record counts next to each node)
+
+## Context
+The Roastery ERP project has a navigation tree with the following already implemented:
+- Step 61: `nav_tree` table + API endpoints
+- Step 62: `<SidebarTree>` component replacing hardcoded sidebar
+- Step 63: Collapsible groups + fuzzy search
+- Step 64: Role-based visibility filtering (server-side)
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+
+## What to Build
+Add live count badges to tree nodes. Each node in the nav tree should show a count badge next to its label. The badge system supports:
+
+1. **Record count badges** — `[156]` next to catalog nodes showing total records in the table
+2. **Pending item badges** — 🔴 `[12]` next to order nodes showing pending/attention-needed items
+3. **Custom SQL badges** — defined per node via `badge_field` in the nav_tree
+
+### Backend
+
+Create a new API endpoint (or extend the existing nav tree endpoint) that returns badge counts for all nodes:
+
+```sql
+GET /api/nav/badges
+Response: { [nodeId: string]: { count: number, status: 'info' | 'warning' | 'danger' | null } }
+```
+
+The endpoint should:
+- For each nav_tree node, if `badge_field` is set, use it to determine the count query
+- For nodes without `badge_field`, default to `SELECT COUNT(*) FROM <table_id>` where table_id is the node's linked table
+- Support special badge_field values like `pending_orders`, `low_stock` etc.
+- Return counts for ALL nodes (frontend filters what to show)
+- Cache results for 30 seconds (simple in-memory cache)
+
+### Frontend
+
+1. **`useNavBadge` hook** (typically `src/components/navigation/hooks/useNavBadge.ts`) — fetches badges from the API, polls every 60 seconds, returns a map of nodeId -> { count, status }
+
+2. **`NodeBadge` component** (typically `src/components/navigation/NodeBadge.tsx`) — renders the badge:
+   - Shows `[N]` for standard count badges
+   - Shows colored dot + count for status badges (🔴 for danger, 🟡 for warning)
+   - Shows nothing if count is 0 for status badges
+   - Small, compact, positioned after the node label
+
+3. **Integrate into `SidebarTree`** — each node renders its badge from the badge map
+
+### Spec Reference
+From `Roastery ERP - SPEC - Navigation Tree.md`:
+
+**Section 6.2 Features:**
+- Count badges — `[42]` next to catalogs shows total records
+- Status badges — 🔴 indicator for items needing attention (e.g., pending orders)
+
+**Section 8 - Badge System:**
+| Badge Type | Example | Query |
+|------------|---------|-------|
+| Record count | `[156]` | `SELECT COUNT(*) FROM products` |
+| Pending items | 🔴 `[12]` | `SELECT COUNT(*) FROM orders WHERE status = 'pending'` |
+| Low stock | 🟡 `[5]` | `SELECT COUNT(*) FROM products WHERE stock <= reorder_level` |
+| Custom | Custom SQL expression | Defined in node config |
+
+Badges poll every 60s or update on relevant form saves.
+
+### File Tree Reference
+```
+src/components/navigation/
+├── SidebarTree.tsx            # Main sidebar component (already exists)
+├── SidebarNode.tsx            # Single node (already exists)
+├── NodeBadge.tsx              # Count/status badge (NEW)
+├── hooks/
+│   ├── useNavTree.ts          # Fetch tree from API (already exists)
+│   └── useNavBadge.ts         # Poll badge counts (NEW)
+├── schema/
+│   └── navTreeSchema.ts       # Types (already exists)
+├── api/
+│   └── navTreeApi.ts          # CRUD endpoints (already exists)
+```
+
+### Important Notes
+- The nav_tree table already has a `badge_field` column for defining badge types
+- The SidebarTree and SidebarNode components already exist — integrate the badge into them
+- Run `npx vitest run` after implementing to make sure all 568 tests still pass
+- Run `npx playwright test` after to make sure all 12 E2E tests still pass
+- Do NOT remove or break role-based visibility filtering from Step 64
+- Keep the fuzzy search from Step 63 working

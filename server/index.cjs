@@ -170,6 +170,36 @@ app.get("/api/nav/tree", async (req, res) => {
 });
 
 /**
+ * GET /api/nav/tree/counts — live record counts for nav tree targets
+ *
+ * Returns a map of target_name → estimated row_count for all
+ * table/form/report nodes in the nav_tree. Uses pg_stat_user_tables
+ * for fast approximate counts (no full table scans).
+ *
+ * Response: { "customers": 4007, "orders": 38929, ... }
+ *
+ * NOTE: Must be defined BEFORE /api/nav/tree/:id so Express matches
+ * the literal "counts" path before treating it as a parameter.
+ */
+app.get("/api/nav/tree/counts", async (req, res) => {
+  try {
+    const companyId = parseInt(req.query.company_id || "1", 10);
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_nav_tree_counts($1)`,
+      [companyId]
+    );
+    // Return as a flat map for O(1) lookup on the frontend
+    const counts = {};
+    for (const row of rows) {
+      counts[row.target_name] = Number(row.row_count);
+    }
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/nav/tree/:id — get a single nav tree node
  */
 app.get("/api/nav/tree/:id", async (req, res) => {

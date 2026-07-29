@@ -357,6 +357,7 @@ function TableBrowser({ table }: { table: string }) {
 
 export default function App() {
   const [tree, setTree] = useState<NavTreeNode[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [active, setActive] = useState<ActiveView>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -373,6 +374,14 @@ export default function App() {
       .then((r) => r.json())
       .then(setTree)
       .catch(() => setTree([]));
+  }, [headers]);
+
+  // Fetch live record counts for nav tree badges
+  useEffect(() => {
+    fetch("/api/nav/tree/counts?company_id=1", { headers })
+      .then((r) => r.json())
+      .then(setCounts)
+      .catch(() => setCounts({}));
   }, [headers]);
 
   // Load saved appearance settings
@@ -463,6 +472,7 @@ export default function App() {
           onSelect={handleSelect}
           onOpenSettings={openSettings}
           settingsOpen={settingsOpen}
+          counts={counts}
         />
         {/* User switcher */}
         <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
@@ -495,6 +505,7 @@ export default function App() {
             onSelect={handleSelect}
             onOpenSettings={openSettings}
             settingsOpen={settingsOpen}
+            counts={counts}
           />
           {/* Mobile user switcher */}
           <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">

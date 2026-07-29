@@ -56,6 +56,16 @@ interface SidebarTreeProps {
   onSelect: (view: ActiveView) => void;
   onOpenSettings: () => void;
   settingsOpen: boolean;
+  counts?: Record<string, number>;
+}
+
+// ─── Count formatting ────────────────────────────────
+
+/** Format a number with compact notation for sidebar badges */
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+  return String(n);
 }
 
 // ─── Fuzzy match ──────────────────────────────────────────
@@ -217,12 +227,14 @@ function TreeNodeRow({
   onSelect,
   depth,
   searchQuery,
+  counts,
 }: {
   node: TreeNode;
   active: ActiveView;
   onSelect: (v: ActiveView) => void;
   depth: number;
   searchQuery: string;
+  counts?: Record<string, number>;
 }) {
   const Icon = resolveIcon(node.icon);
 
@@ -240,6 +252,14 @@ function TreeNodeRow({
   }, [node, onSelect]);
 
   const padLeft = depth > 0 ? 4 + depth * 8 : 8;
+
+  // Resolve badge: live count preferred over static badge
+  const liveCount =
+    counts && node.target_name && counts[node.target_name] != null
+      ? counts[node.target_name]
+      : null;
+  const displayBadge = liveCount != null ? formatCount(liveCount) : node.badge;
+  const isLiveBadge = liveCount != null;
 
   return (
     <button
@@ -259,9 +279,16 @@ function TreeNodeRow({
         />
       )}
       <HighlightedLabel text={node.label} query={searchQuery} />
-      {node.badge && (
-        <span className="ml-auto text-[10px] px-1 py-0.5 rounded bg-muted-foreground/10 text-muted-foreground tabular-nums">
-          {node.badge}
+      {displayBadge && (
+        <span
+          className={cn(
+            "ml-auto text-[10px] px-1 py-0.5 rounded tabular-nums",
+            isLiveBadge
+              ? "bg-primary/10 text-primary font-medium"
+              : "bg-muted-foreground/10 text-muted-foreground"
+          )}
+        >
+          {displayBadge}
         </span>
       )}
     </button>
@@ -276,12 +303,14 @@ function NavGroup({
   onSelect,
   defaultOpen,
   searchQuery,
+  counts,
 }: {
   node: TreeNode;
   active: ActiveView;
   onSelect: (v: ActiveView) => void;
   defaultOpen: boolean;
   searchQuery: string;
+  counts?: Record<string, number>;
 }) {
   // When a search is active, force groups open; otherwise use user toggle state
   const [userOpen, setUserOpen] = useState(defaultOpen);
@@ -290,17 +319,25 @@ function NavGroup({
 
   const Icon = resolveIcon(node.icon);
 
-  const leafCount = useMemo(() => {
-    let count = 0;
+  // Aggregate live record counts from all descendant table/form/report nodes
+  const aggCount = useMemo(() => {
+    if (!counts) return null;
+    let total = 0;
     function walk(nodes: TreeNode[]) {
       for (const n of nodes) {
-        if (n.target_type !== "group") count++;
+        if (
+          n.target_name &&
+          (n.target_type === "table" || n.target_type === "form" || n.target_type === "report")
+        ) {
+          const c = counts[n.target_name];
+          if (c != null) total += c;
+        }
         walk(n.children);
       }
     }
     walk(node.children);
-    return count;
-  }, [node.children]);
+    return total;
+  }, [node.children, counts]);
 
   return (
     <div>
@@ -317,9 +354,9 @@ function NavGroup({
         )}
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
         <HighlightedLabel text={node.label} query={searchQuery} />
-        {!isSearching && (
+        {!isSearching && aggCount != null && (
           <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/60">
-            {leafCount}
+            {formatCount(aggCount)}
           </span>
         )}
       </button>
@@ -338,6 +375,7 @@ function NavGroup({
                   onSelect={onSelect}
                   defaultOpen={child.is_expanded ?? false}
                   searchQuery={searchQuery}
+                  counts={counts}
                 />
               );
             }
@@ -349,6 +387,7 @@ function NavGroup({
                 onSelect={onSelect}
                 depth={(child.depth ?? 1) - 1}
                 searchQuery={searchQuery}
+                counts={counts}
               />
             );
           })}
@@ -366,6 +405,7 @@ export default function SidebarTree({
   onSelect,
   onOpenSettings,
   settingsOpen,
+  counts,
 }: SidebarTreeProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -470,6 +510,7 @@ export default function SidebarTree({
                   onSelect={onSelect}
                   defaultOpen={node.is_expanded ?? false}
                   searchQuery={searchQuery}
+                  counts={counts}
                 />
               );
             }
@@ -481,6 +522,7 @@ export default function SidebarTree({
                 onSelect={onSelect}
                 depth={0}
                 searchQuery={searchQuery}
+                counts={counts}
               />
             );
           })}
