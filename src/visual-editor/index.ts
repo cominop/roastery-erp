@@ -62,3 +62,22 @@ export type {
   FormProperties,
   FormPropertiesPanelProps,
 } from './FormPropertiesPanel';
+
+export {
+  default as TableFieldPicker,
+} from './TableFieldPicker';
+
+export type {
+  TableColumnConfig,
+  TableFieldPickerProps,
+} from './TableFieldPicker';
+
+export {
+  default as TableOptionsPanel,
+} from './TableOptionsPanel';
+
+export type {
+  TableRowHeight,
+  TableOptions,
+  TableOptionsPanelProps,
+} from './TableOptionsPanel';

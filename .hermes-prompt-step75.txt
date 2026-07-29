@@ -1,0 +1,143 @@
+HERMES_PROMPT
+# Step 75 — Visual Editor 5: TableFieldPicker + TableOptionsPanel (view-form column config)
+
+## Context
+You are implementing Step 75 of the Roastery ERP project. This is part of Track G — Visual Editor, Phase 5 — View Form Table Editor.
+
+The working directory is `/home/fcc-student/Desktop/_DEV/roastery-ui/`.
+
+You are working in a React + TypeScript + Vite + Tailwind project using lucide-react icons and shadcn/ui patterns (cn utility from @/lib/utils).
+
+## What to build
+
+You need to create two components for configuring view-form (datasheet) table columns:
+
+### 1. `src/visual-editor/TableFieldPicker.tsx`
+
+A two-list selector (like the existing FieldPicker) but tailored for view-form/datasheet column configuration. Each selected column has a per-column **width** input (in pixels).
+
+**Mockup from spec:**
+```
+┌─ Selected Columns ────┐  ┌─ Available Columns ┐
+│  Order #      (80px)  │  │  Internal ID      │
+│  Customer    (150px)  │  │  Created At       │
+│  Total       (100px)  │  │  Deleted Flag     │
+│  Status      (100px)  │  │  Notes            │
+│  Date        (120px)  │  │                   │
+└────────────────────────┘  └────────────────────┘
+```
+
+**Key differences from the existing FieldPicker:**
+- Each selected column has a width number input (inline, text input with px suffix)
+- Columns are always "visible" (no visibility checkbox per column — that's for edit forms)
+- Support column sorting via drag or inline up/down arrows
+- Same "move between lists" and "reorder" behavior as FieldPicker
+
+**Props:**
+```typescript
+export interface TableColumnItem {
+  name: string;
+  type: string;
+  width?: number;           // column width in px (default: 100)
+}
+
+export interface TableFieldPickerProps {
+  availableFields: TableColumnItem[];
+  selectedFields: TableColumnItem[];
+  onChange: (selected: TableColumnItem[]) => void;
+  disabled?: boolean;
+}
+```
+
+**Behaviour:**
+- Left list: available columns (all fields not yet selected)
+- Right list: selected columns in display order, each with inline width input
+- Arrow buttons: move selected between lists
+- Up/down buttons: reorder within right list
+- Width input: text input that updates the column's width property on blur
+- Empty states: "All fields selected" / "No columns selected"
+- Search/filter for both lists (same as FieldPicker)
+- Type color coding same as FieldPicker (number=emerald, text=blue, date=violet, boolean=amber)
+
+### 2. `src/visual-editor/TableOptionsPanel.tsx`
+
+A panel for view-form table options, following the same visual pattern as FormPropertiesPanel.
+
+**Options from spec:**
+
+| Option | Control | Description |
+|--------|---------|-------------|
+| Multiple selection | Checkbox | Checkbox column for bulk select |
+| Dblclick edit | Checkbox | Double-click opens edit form |
+| Number of rows | Number input | Fixed row count |
+| Height | Number input (px) | Or auto-calculate |
+| Row lines | Number input | Lines per row (0 = auto) |
+| Selected row lines | Number input | Min lines for selected row |
+| Freeze columns | Number input | Frozen left columns |
+| Sort fields | Multi-picker | Clickable column headers |
+| Summary fields | Multi-picker | Footer sums / counts |
+
+**Props:**
+```typescript
+export interface TableOptions {
+  multiSelect: boolean;
+  dblclickEdit: boolean;
+  numRows: number;          // 0 = auto
+  height: number;           // px, 0 = auto
+  rowLines: number;         // 0 = auto
+  selectedRowLines: number;
+  freezeColumns: number;    // 0 = none
+  sortFields: string[];     // field names
+  summaryFields: string[];  // field names
+}
+
+export interface TableOptionsPanelProps {
+  values: TableOptions;
+  onChange: (changes: Partial<TableOptions>) => void;
+  availableFields: TableColumnItem[];
+  disabled?: boolean;
+}
+```
+
+**Visual style:**
+- Same compact layout as FormPropertiesPanel (11px fonts, small inputs, steppers with +/- buttons)
+- Use lucide icons for each section header
+- Divided sections with border-t separators
+- Sort fields and Summary fields use a small inline FieldPicker or a multi-select popover (simplest approach: use a text-area-like list)
+
+### 3. Update `src/visual-editor/index.ts`
+
+Export both new components and their types.
+
+## Existing patterns to follow
+
+Look at these files for the exact styling patterns:
+
+1. **`src/visual-editor/FieldPicker.tsx`** — For the two-list layout, search/filter, move buttons, type color coding
+2. **`src/visual-editor/FormPropertiesPanel.tsx`** — For the options panel layout (section headers with icons, checkbox rows, +/- steppers, selects)
+3. **`src/visual-editor/ColumnLayoutConfig.tsx`** — For simplified stepper patterns
+
+**Styling constants (copy from existing components):**
+- Row class: `"flex items-center justify-between min-h-[28px]"`
+- Label class: `"text-[11px] font-medium text-muted-foreground shrink-0"`
+- Button class: `"flex items-center justify-center w-6 h-6 border rounded hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"`
+- Section header: `"text-[11px] font-semibold text-foreground flex items-center gap-1.5"`
+- Disabled outer: `"opacity-60 pointer-events-none"`
+- Checkbox: `"h-3 w-3 accent-foreground cursor-pointer"`
+
+## Codebase structure
+- `src/visual-editor/types.ts` — VisualEditorControl, VisualEditorSection, etc.
+- `src/visual-editor/FieldPicker.tsx` — Existing two-list picker (copy patterns from this)
+- `src/visual-editor/FormPropertiesPanel.tsx` — Existing options panel (copy patterns from this)
+- `src/visual-editor/index.ts` — Barrel exports (add your new exports here)
+- `src/visual-editor/__tests__/` — Existing test files (create tests here)
+
+## Deliverables
+1. Create `src/visual-editor/TableFieldPicker.tsx` with complete implementation
+2. Create `src/visual-editor/TableOptionsPanel.tsx` with complete implementation
+3. Update `src/visual-editor/index.ts` to export both new components and their types
+4. Create `src/visual-editor/__tests__/TableFieldPicker.test.tsx` with comprehensive tests
+5. Create `src/visual-editor/__tests__/TableOptionsPanel.test.tsx` with comprehensive tests
+
+Run the tests when done and fix any failures.
+HERMES_PROMPT
