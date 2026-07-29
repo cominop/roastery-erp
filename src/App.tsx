@@ -32,6 +32,7 @@ import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 import AuditLogPage from "@/components/AuditLogPage";
 import { useUser } from "@/hooks/useUser";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type ActiveView =
   | { type: "table"; name: string }
@@ -366,6 +367,7 @@ export default function App() {
   const [draft, setDraft] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const win = useFormWindowManager();
   const { headers, currentUser, setUserId, availableUsers } = useUser();
+  const { isAdmin } = usePermissions();
 
   // Derive flat nav item lists from tree for old consumers
   const navData = useMemo(() => extractNavItems(tree), [tree]);
@@ -471,6 +473,13 @@ export default function App() {
     setDraft({ ...DEFAULT_APPEARANCE });
   }, []);
 
+  const refreshTree = useCallback(() => {
+    fetch("/api/nav/tree?visible_only=true&company_id=1", { headers })
+      .then((r) => r.json())
+      .then(setTree)
+      .catch(() => setTree([]));
+  }, [headers]);
+
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
@@ -483,6 +492,9 @@ export default function App() {
           settingsOpen={settingsOpen}
           counts={counts}
           statusBadges={statusBadges}
+          isAdmin={isAdmin}
+          headers={headers}
+          onRefreshTree={refreshTree}
         />
         {/* User switcher */}
         <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
@@ -517,6 +529,9 @@ export default function App() {
             settingsOpen={settingsOpen}
             counts={counts}
             statusBadges={statusBadges}
+            isAdmin={isAdmin}
+            headers={headers}
+            onRefreshTree={refreshTree}
           />
           {/* Mobile user switcher */}
           <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
