@@ -140,6 +140,10 @@ app.get("/api/nav", async (_req, res) => {
  * Returns a flat ordered list with depth and path arrays
  * for client-side hierarchy reconstruction.
  *
+ * Role-based visibility: if the user has roles, only nodes
+ * whose role_visibility is NULL/empty or overlaps with the
+ * user's roles are returned.
+ *
  * Query params:
  *   ?visible_only=true  — filter to visible nodes only (default: true)
  *   ?company_id=1       — company scope (default: 1)
@@ -149,9 +153,14 @@ app.get("/api/nav/tree", async (req, res) => {
     const visibleOnly = req.query.visible_only !== "false";
     const companyId = parseInt(req.query.company_id || "1", 10);
 
+    // Look up user's roles for role-based visibility filtering
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId } = extractUser(req);
+    const { roleNames } = await getUserRoleIds(userId, companyId);
+
     const { rows } = await pool.query(
-      `SELECT * FROM shared.fn_nav_tree($1, $2)`,
-      [companyId, visibleOnly]
+      `SELECT * FROM shared.fn_nav_tree($1, $2, $3)`,
+      [companyId, visibleOnly, roleNames.length > 0 ? roleNames : null]
     );
 
     res.json(rows);

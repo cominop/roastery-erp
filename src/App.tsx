@@ -31,6 +31,7 @@ import type { QuickFilterPreset } from "@/filters";
 import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 import AuditLogPage from "@/components/AuditLogPage";
+import { useUser } from "@/hooks/useUser";
 
 type ActiveView =
   | { type: "table"; name: string }
@@ -362,16 +363,17 @@ export default function App() {
   const [appearance, setAppearance] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const [draft, setDraft] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const win = useFormWindowManager();
+  const { headers, currentUser, setUserId, availableUsers } = useUser();
 
   // Derive flat nav item lists from tree for old consumers
   const navData = useMemo(() => extractNavItems(tree), [tree]);
 
   useEffect(() => {
-    fetch("/api/nav/tree?visible_only=true&company_id=1")
+    fetch("/api/nav/tree?visible_only=true&company_id=1", { headers })
       .then((r) => r.json())
       .then(setTree)
       .catch(() => setTree([]));
-  }, []);
+  }, [headers]);
 
   // Load saved appearance settings
   useEffect(() => {
@@ -462,6 +464,21 @@ export default function App() {
           onOpenSettings={openSettings}
           settingsOpen={settingsOpen}
         />
+        {/* User switcher */}
+        <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
+          <select
+            value={currentUser.userId}
+            onChange={(e) => setUserId(Number(e.target.value))}
+            className="h-6 text-[10px] border rounded px-1 bg-background flex-1 min-w-0"
+            title="Switch user to test role-based nav visibility"
+          >
+            {availableUsers.map((u) => (
+              <option key={u.userId} value={u.userId}>
+                {u.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </aside>
 
       {/* Mobile sidebar */}
@@ -471,7 +488,7 @@ export default function App() {
             <Menu className="h-5 w-5" />
           </span>
         </SheetTrigger>
-        <SheetContent side="left" className="w-56 p-0">
+        <SheetContent side="left" className="w-56 p-0 flex flex-col">
           <SidebarTree
             tree={tree}
             active={active}
@@ -479,6 +496,21 @@ export default function App() {
             onOpenSettings={openSettings}
             settingsOpen={settingsOpen}
           />
+          {/* Mobile user switcher */}
+          <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
+            <select
+              value={currentUser.userId}
+              onChange={(e) => setUserId(Number(e.target.value))}
+              className="h-6 text-[10px] border rounded px-1 bg-background flex-1 min-w-0"
+              title="Switch user to test role-based nav visibility"
+            >
+              {availableUsers.map((u) => (
+                <option key={u.userId} value={u.userId}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </SheetContent>
       </Sheet>
 
