@@ -67,17 +67,16 @@ test.describe("App Shell", () => {
 
   test("clicking a form in sidebar opens a form window", async ({ page }) => {
     await page.goto("/");
-    // Wait for sidebar to render
-    await page.waitForTimeout(1500);
-    // Click on a form - try to find one in the sidebar
+    // Wait for sidebar to render — the tree loads from the API
+    await page.waitForTimeout(2000);
+    // Find and click the first visible form in the tree
     const formLink = page.locator("text=Orders by Customer").first();
-    if (await formLink.isVisible()) {
-      await formLink.click();
-      // Wait for form window to appear
-      await page.waitForTimeout(2000);
-      // Form should show a caption or content
-      await expect(page.locator("text=Orders by Customer")).toBeVisible();
-    }
+    await expect(formLink).toBeVisible({ timeout: 5000 });
+    await formLink.click();
+    // Wait for form window to appear (it loads the form definition from the API)
+    await page.waitForTimeout(2000);
+    // The form window header should show the form name
+    await expect(page.locator("text=Orders by Customer").first()).toBeVisible();
   });
 });
 
@@ -117,9 +116,12 @@ test.describe("Event Dispatch", () => {
 // ─── Event Handler Editor UI ─────────────────────────
 
 test.describe("Event Handler Editor", () => {
-  test("sidebar has Event Handlers button", async ({ page }) => {
+  test("sidebar has Event Handlers button inside Administration group", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1500);
+    // Event Handlers is inside the collapsed "Administration" group — expand it first
+    await page.getByRole("button", { name: /Administration/ }).click();
+    await page.waitForTimeout(500);
     const editorBtn = page.getByRole("button", { name: "Event Handlers" });
     await expect(editorBtn).toBeVisible();
   });
@@ -127,6 +129,9 @@ test.describe("Event Handler Editor", () => {
   test("clicking Event Handlers shows the editor page", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1500);
+    // Expand the Administration group
+    await page.getByRole("button", { name: /Administration/ }).click();
+    await page.waitForTimeout(500);
     await page.getByRole("button", { name: "Event Handlers" }).click();
     await page.waitForTimeout(1000);
     // Should see the editor header

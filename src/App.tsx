@@ -8,23 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Menu,
-  ChevronDown,
-  ChevronRight,
   Table2,
-  Layout,
-  FileText,
   Settings,
   X,
   Paintbrush,
   Type,
   Square,
   PanelTop,
-  Code,
-  Shield,
-  FunctionSquare,
-  List,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import SidebarTree, { extractNavItems } from "@/components/SidebarTree";
+import type { NavTreeNode } from "@/components/SidebarTree";
 import FormRenderer from "@/components/FormRenderer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EventProvider } from "@/events/EventProvider";
@@ -38,17 +31,6 @@ import type { QuickFilterPreset } from "@/filters";
 import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 import AuditLogPage from "@/components/AuditLogPage";
-
-interface NavItem {
-  name: string;
-  label: string;
-}
-
-interface NavData {
-  tables: NavItem[];
-  forms: NavItem[];
-  reports: NavItem[];
-}
 
 type ActiveView =
   | { type: "table"; name: string }
@@ -123,74 +105,6 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         onChange={(e) => onChange(e.target.value)}
         className="h-7 w-24 text-[10px] font-mono"
       />
-    </div>
-  );
-}
-
-// ─── Collapsible section ──────────────────────────────
-
-function NavSection({
-  title,
-  icon: Icon,
-  items,
-  active,
-  onSelect,
-  defaultOpen = false,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: NavItem[];
-  active: ActiveView;
-  onSelect: (v: ActiveView) => void;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div>
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wide"
-      >
-        {open ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronRight className="h-3 w-3" />
-        )}
-        <Icon className="h-3 w-3" />
-        {title}
-        <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/60">
-          {items.length}
-        </span>
-      </button>
-      {open && (
-        <div className="pb-0.5">
-          {items.map((item) => {
-            const isActive =
-              active != null && active.type !== "events" && active.type !== "permissions" && active.type !== "calculated-fields"
-                ? active.name === item.name &&
-                  active.type === title.toLowerCase().slice(0, -1)
-                : false;
-            return (
-              <button
-                key={item.name}
-                className={cn(
-                  "w-full text-left pl-8 pr-2 py-1 text-xs transition-colors",
-                  isActive
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-muted/50"
-                )}
-                onClick={() => {
-                  const type = title.toLowerCase().slice(0, -1) as NonNullable<ActiveView>["type"];
-                  onSelect({ type, name: item.name });
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
@@ -441,7 +355,7 @@ function TableBrowser({ table }: { table: string }) {
 // ─── App ──────────────────────────────────────────────
 
 export default function App() {
-  const [nav, setNav] = useState<NavData>({ tables: [], forms: [], reports: [] });
+  const [tree, setTree] = useState<NavTreeNode[]>([]);
   const [active, setActive] = useState<ActiveView>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -449,11 +363,14 @@ export default function App() {
   const [draft, setDraft] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const win = useFormWindowManager();
 
+  // Derive flat nav item lists from tree for old consumers
+  const navData = useMemo(() => extractNavItems(tree), [tree]);
+
   useEffect(() => {
-    fetch("/api/nav")
+    fetch("/api/nav/tree?visible_only=true&company_id=1")
       .then((r) => r.json())
-      .then(setNav)
-      .catch(() => setNav({ tables: [], forms: [], reports: [] }));
+      .then(setTree)
+      .catch(() => setTree([]));
   }, []);
 
   // Load saved appearance settings
@@ -514,10 +431,6 @@ export default function App() {
     setSettingsOpen(true);
   }, [appearance]);
 
-  const goToEvents = useCallback(() => {
-    setActive({ type: "events" });
-  }, []);
-
   const saveSettings = useCallback(async () => {
     setAppearance({ ...draft });
     try {
@@ -538,117 +451,17 @@ export default function App() {
     setDraft({ ...DEFAULT_APPEARANCE });
   }, []);
 
-  const sidebar = (
-    <div className="flex flex-col h-full">
-      {/* Fixed header */}
-      <div className="p-3 font-semibold text-sm border-b shrink-0">☕ Roastery ERP</div>
-
-      {/* Scrollable nav */}
-      <nav className="min-h-0 flex-1 overflow-y-auto py-1">
-        <NavSection
-          key="tables"
-          title="Tables"
-          icon={Table2}
-          items={nav.tables}
-          active={active}
-          onSelect={handleSelect}
-          defaultOpen
-        />
-        <Separator className="my-1" />
-        <NavSection
-          key="forms"
-          title="Forms"
-          icon={Layout}
-          items={nav.forms}
-          active={active}
-          onSelect={handleSelect}
-        />
-        <Separator className="my-1" />
-        <NavSection
-          key="reports"
-          title="Reports"
-          icon={FileText}
-          items={nav.reports}
-          active={active}
-          onSelect={handleSelect}
-        />
-      </nav>
-
-      {/* Fixed footer */}
-      <Separator />
-      <div className="shrink-0 border-t bg-muted/10">
-        <button
-          onClick={goToEvents}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
-            active?.type === "events"
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/50"
-          )}
-        >
-          <Code className="h-4 w-4" />
-          <span>Event Handlers</span>
-        </button>
-        <button
-          onClick={() => setActive({ type: "permissions" })}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
-            active?.type === "permissions"
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/50"
-          )}
-        >
-          <Shield className="h-4 w-4" />
-          <span>Permissions</span>
-        </button>
-        <button
-          onClick={() => setActive({ type: "calculated-fields" })}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
-            active?.type === "calculated-fields"
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/50"
-          )}
-        >
-          <FunctionSquare className="h-4 w-4" />
-          <span>Calculated Fields</span>
-        </button>
-        <button
-          onClick={() => setActive({ type: "audit-log" })}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
-            active?.type === "audit-log"
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/50"
-          )}
-        >
-          <List className="h-4 w-4" />
-          <span>Audit Log</span>
-        </button>
-        <button
-          onClick={openSettings}
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
-            settingsOpen
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/50"
-          )}
-        >
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
-        </button>
-        <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t">
-          Francesco's Coffee Co.
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 border-r bg-muted/20">
-        {sidebar}
+        <SidebarTree
+          tree={tree}
+          active={active}
+          onSelect={handleSelect}
+          onOpenSettings={openSettings}
+          settingsOpen={settingsOpen}
+        />
       </aside>
 
       {/* Mobile sidebar */}
@@ -659,7 +472,13 @@ export default function App() {
           </span>
         </SheetTrigger>
         <SheetContent side="left" className="w-56 p-0">
-          {sidebar}
+          <SidebarTree
+            tree={tree}
+            active={active}
+            onSelect={handleSelect}
+            onOpenSettings={openSettings}
+            settingsOpen={settingsOpen}
+          />
         </SheetContent>
       </Sheet>
 
@@ -855,10 +674,10 @@ export default function App() {
           </Tabs>
         )}
         {active?.type === "calculated-fields" && (
-          <CalculatedFieldsAdmin tables={nav.tables.map(t => t.name)} />
+          <CalculatedFieldsAdmin tables={navData.tables.map(t => t.name)} />
         )}
         {active?.type === "audit-log" && (
-          <AuditLogPage tables={nav.tables.map(t => t.name)} />
+          <AuditLogPage tables={navData.tables.map(t => t.name)} />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -866,8 +685,8 @@ export default function App() {
               <p className="text-2xl mb-1">☕</p>
               <p className="text-lg font-semibold">Roastery ERP</p>
               <p className="text-sm">
-                {nav.tables.length} tables · {nav.forms.length} forms ·{" "}
-                {nav.reports.length} reports
+                {navData.tables.length} tables · {navData.forms.length} forms ·{" "}
+                {navData.reports.length} reports
               </p>
               <p className="text-xs text-muted-foreground/60">
                 Select an item from the sidebar
