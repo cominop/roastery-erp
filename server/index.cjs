@@ -331,6 +331,35 @@ app.post("/api/nav/tree", async (req, res) => {
 });
 
 /**
+ * POST /api/nav/tree/regenerate — auto-generate tree from DB schema
+ *
+ * Calls shared.fn_regenerate_nav_tree() which scans pg_tables +
+ * shared.objects and builds a categorized navigation tree.
+ *
+ * Body: { company_id?, keep_existing? }
+ *   - company_id (int, default 1): company scope
+ *   - keep_existing (bool, default false): if true, only adds new nodes
+ *     without clearing existing ones
+ *
+ * Response: { ok: true, groups: N, tables: N, forms: N, reports: N, admin: N }
+ */
+app.post("/api/nav/tree/regenerate", async (req, res) => {
+  try {
+    const companyId = parseInt(req.body.company_id || "1", 10);
+    const keepExisting = req.body.keep_existing === true;
+
+    const { rows } = await pool.query(
+      `SELECT shared.fn_regenerate_nav_tree($1, $2) AS result`,
+      [companyId, keepExisting]
+    );
+
+    res.json(rows[0].result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PUT /api/nav/tree/reorder — batch reorder siblings
  *
  * Body: { siblings: [{ id: number, sort_order: number }] }

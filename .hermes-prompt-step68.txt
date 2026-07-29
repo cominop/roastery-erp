@@ -1,0 +1,55 @@
+You are implementing Step 68 of the Roastery ERP: "Auto-generate default tree from DB schema" for the Navigation Tree feature.
+
+## Context
+The Roastery ERP has a navigation tree system (shared.nav_tree table) that powers the sidebar. Currently, the tree is seeded with a hardcoded SQL script (step-61-nav-tree.sql). Step 68 adds the ability to **auto-generate** the tree by inspecting the database schema and classifying tables into categories.
+
+## What needs to be built
+
+### 1. Server-side API endpoint: POST /api/nav/tree/auto-generate
+
+Add this endpoint to `server/index.cjs` (before the GET /api/nav/tree route). It should:
+
+- Accept optional `company_id` (default 1) and `dry_run` (boolean, default false) query params
+- Inspect the `db_fcc_erp` schema using `information_schema.tables` and `information_schema.columns`
+- Classify each table into one of: **catalog**, **journal**, **detail**, or **report** using these heuristics:
+  - **Catalogs**: Tables with no FK to another ERP table, or tables that are lookup/reference data. These are typically: customers, products, employees, suppliers, category, packaging, grind, shipping_methods, payment_methods, discount, coffeeingredients, roastprofiles, assets
+  - **Journals**: Tables with FKs to catalogs + date fields (created_at, order_date, etc.) + transactional names. These are: orders, workorders, invoices, purchase_orders, roastbatches, roastsessions, inventory, payments
+  - **Details**: Tables that are exclusively FK targets with no independent meaning. These are: order_details, workorder_labor, workorder_parts, coffeerecipeingredients
+  - **Reports**: Empty by default (no tables)
+- If `dry_run=true`, return the classification result without modifying the database
+- If `dry_run` is false/missing:
+  1. Delete all existing nav_tree nodes for the given company_id (CASCADE handles children)
+  2. Create root groups: "Catalogs" (icon: 'Table2', sort_order: 10), "Journals" (icon: 'Layout', sort_order: 20), "Details" (icon: 'List', sort_order: 30), "Administration" (icon: 'Settings', sort_order: 40, color: '#6B7280')
+  3. Insert each catalog table as a child of "Catalogs" group (target_type: 'table', sort_order in increments of 10)
+  4. Insert each journal table as a child of "Journals" group
+  5. Insert each detail table as a child of "Details" group
+  6. Insert admin links: "Table Permissions" (link → 'permissions'), "Calculated Fields" (link → 'calculated-fields'), "Event Handlers" (link → 'events'), "Audit Log" (link → 'audit-log'), "Nav Editor" (link → 'nav-editor')
+  7. Return the new tree (use shared.fn_nav_tree() to fetch it)
+- Validation: check company_id is valid integer. If company_id param is missing, default to 1
+
+### 2. Add "Regenerate" button to NavEditorPanel
+
+In `src/components/NavEditorPanel.tsx`, add a "Regenerate from DB" button in the header area (next to the "Add Node" button area) that:
+
+- Shows a confirmation dialog before regenerating (since it deletes all existing nodes)
+- Calls `POST /api/nav/tree/auto-generate` with the headers
+- On success, calls `onRefresh()` to refresh the tree view
+- Shows a loading state while regenerating
+- Shows error/success messages
+
+### 3. Add a "dry_run" preview option (bonus)
+
+Add a "Preview auto-generated tree" button that calls the endpoint with `dry_run=true` and displays the classification result in a collapsible panel before the user commits to regenerating.
+
+## Important Notes
+
+- The server file is at `server/index.cjs` — it's a CommonJS module using `require()` and `pool.query()` for PostgreSQL
+- The NavEditorPanel is at `src/components/NavEditorPanel.tsx`
+- The existing SQL schema for nav_tree is in `server/sql/step-61-nav-tree.sql`
+- Route order matters in Express: define the auto-generate endpoint BEFORE the parameterized routes like `/api/nav/tree/:id` so Express doesn't match "auto-generate" as an `:id`
+- Use `require('./permission-middleware.cjs')` to check admin permissions (only admins should be able to regenerate the tree)
+- Keep all existing seed data in step-61-nav-tree.sql — the auto-generate is a UI-driven alternative, not a replacement for the seed
+
+## Files to modify
+- `server/index.cjs` — add the POST /api/nav/tree/auto-generate endpoint
+- `src/components/NavEditorPanel.tsx` — add Regenerate and Preview buttons

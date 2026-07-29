@@ -1,5 +1,6 @@
 // NavEditorPanel — admin-only nav tree editor (add/remove/reorder nodes)
 // Step 67: Admin panel for editing the navigation tree structure
+// Step 68: Regenerate from DB button — auto-generates tree from DB schema
 import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -19,6 +20,7 @@ import {
   FunctionSquare,
   AlertTriangle,
   Check,
+  RotateCcw,
 } from "lucide-react";
 import type { NavTreeNode } from "./SidebarTree";
 
@@ -283,12 +285,21 @@ function ConfirmDialog({
   onConfirm,
   onCancel,
   loading,
+  confirmLabel = "Delete",
+  loadingLabel = "Deleting...",
+  variant = "danger",
 }: {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
   loading: boolean;
+  confirmLabel?: string;
+  loadingLabel?: string;
+  variant?: "danger" | "default";
 }) {
+  const btnClass = variant === "danger"
+    ? "bg-red-600 text-white hover:bg-red-700"
+    : "bg-primary text-primary-foreground hover:bg-primary/90";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-background border rounded-lg shadow-lg p-4 max-w-sm w-full mx-4">
@@ -306,9 +317,9 @@ function ConfirmDialog({
               <button
                 onClick={onConfirm}
                 disabled={loading}
-                className="h-7 px-3 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className={`h-7 px-3 text-xs font-medium rounded disabled:opacity-50 transition-colors ${btnClass}`}
               >
-                {loading ? "Deleting..." : "Delete"}
+                {loading ? loadingLabel : confirmLabel}
               </button>
             </div>
           </div>
@@ -325,6 +336,8 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -440,6 +453,34 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
     [flatItems, headers, onRefresh]
   );
 
+  // ── Regenerate from DB ─────────────────────────────
+  const handleRegenerate = useCallback(async () => {
+    setRegenerating(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch("/api/nav/tree/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ keep_existing: false }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Regenerate failed" }));
+        throw new Error(err.error || "Regenerate failed");
+      }
+      const result = await res.json();
+      setShowRegenConfirm(false);
+      flashSuccess(
+        `Tree regenerated: ${result.groups} groups, ${result.tables} tables, ${result.forms} forms, ${result.reports} reports`
+      );
+      onRefresh();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Regenerate failed");
+    } finally {
+      setRegenerating(false);
+    }
+  }, [headers, onRefresh, flashSuccess]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -506,6 +547,19 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
         </div>
       )}
 
+      {/* Regenerate button */}
+      <div className="px-3 py-1.5 border-b shrink-0">
+        <button
+          onClick={() => setShowRegenConfirm(true)}
+          disabled={regenerating}
+          className="w-full h-7 text-xs flex items-center justify-center gap-1.5 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-amber-500/50 hover:text-amber-600 transition-colors disabled:opacity-50"
+          title="Scan the database schema and regenerate the entire navigation tree"
+        >
+          <RotateCcw className="h-3 w-3" />
+          {regenerating ? "Regenerating..." : "Regenerate from DB"}
+        </button>
+      </div>
+
       {/* Node list */}
       <div className="flex-1 overflow-y-auto py-1">
         {flatItems.length === 0 && (
@@ -531,6 +585,19 @@ export default function NavEditorPanel({ tree, onClose, onRefresh, headers }: Na
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
           loading={deleting}
+        />
+      )}
+
+      {/* Regenerate confirmation */}
+      {showRegenConfirm && (
+        <ConfirmDialog
+          message={`Regenerate the entire navigation tree from the database schema? This will replace all existing nodes with a fresh auto-generated tree. Custom changes will be lost.`}
+          onConfirm={handleRegenerate}
+          onCancel={() => setShowRegenConfirm(false)}
+          loading={regenerating}
+          confirmLabel="Regenerate"
+          loadingLabel="Regenerating..."
+          variant="default"
         />
       )}
     </div>
