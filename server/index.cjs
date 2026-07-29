@@ -2988,6 +2988,227 @@ app.get("/api/audit/triggers", async (_req, res) => {
   }
 });
 
+// ─── Visual Forms (visual editor) ──────────────────────
+
+/**
+ * GET /api/visual-forms — list all visual form definitions
+ *
+ * Returns metadata for all forms created in the visual editor.
+ * Does NOT include the full sections JSONB — use GET /api/visual-forms/:name for that.
+ *
+ * Query params:
+ *   ?company_id=1  — company scope (default: 1)
+ */
+app.get("/api/visual-forms", async (req, res) => {
+  try {
+    const companyId = parseInt(req.query.company_id || "1", 10);
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_visual_forms($1)`,
+      [companyId]
+    );
+    // Convert to camelCase for the frontend
+    const result = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      caption: r.caption,
+      recordSource: r.record_source,
+      version: r.version,
+      updatedAt: r.updated_at,
+      updatedBy: r.updated_by,
+    }));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/visual-forms/:name — get a single visual form definition
+ *
+ * Returns the full form definition (sections, controls, editor settings, etc.)
+ * with camelCase keys for the frontend.
+ */
+app.get("/api/visual-forms/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const companyId = parseInt(req.query.company_id || "1", 10);
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_get_visual_form($1, $2)`,
+      [name, companyId]
+    );
+    if (!rows || rows.length === 0 || !rows[0].fn_get_visual_form) {
+      return res.status(404).json({ error: "Visual form not found" });
+    }
+    res.json(rows[0].fn_get_visual_form);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/visual-forms — create a new visual form
+ *
+ * Body:
+ *   { name: string, caption?: string, recordSource?: string }
+ *
+ * The form is created with default empty sections (header, detail, footer).
+ */
+app.post("/api/visual-forms", async (req, res) => {
+  try {
+    const { name, caption, recordSource } = req.body;
+    const companyId = parseInt(req.query.company_id || "1", 10);
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "name is required" });
+    }
+
+    // Create default empty sections
+    const defaultSections = JSON.stringify({
+      header: { controls: [] },
+      detail: { controls: [] },
+      footer: { controls: [] },
+    });
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_save_visual_form(
+        $1, $2, $3,
+        true, true, true, true, false, false,
+        NULL, NULL, $4::jsonb,
+        NULL, NULL, NULL,
+        NULL, $5, $6
+      )`,
+      [
+        name.trim(),
+        caption || name.trim(),
+        recordSource || null,
+        defaultSections,
+        companyId,
+        req.headers["x-user-name"] || null,
+      ]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(500).json({ error: "Failed to create visual form" });
+    }
+
+    res.status(201).json({ name: name.trim(), ...rows[0].fn_save_visual_form });
+  } catch (err) {
+    // Check for unique constraint violation
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "A form with this name already exists" });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/visual-forms/:name — update a visual form definition
+ *
+ * Body:
+ *   {
+ *     definition: { ... full form definition ... },
+ *     version: number
+ *   }
+ *
+ * The `version` field is used for optimistic concurrency control.
+ * If the version doesn't match the current DB version, the update is rejected
+ * with a 409 Conflict.
+ */
+app.put("/api/visual-forms/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { definition, version } = req.body;
+    const companyId = parseInt(req.query.company_id || "1", 10);
+
+    if (!definition) {
+      return res.status(400).json({ error: "definition is required" });
+    }
+
+    // Build sections JSON from the form definition
+    const sections = JSON.stringify({
+      header: definition.header || { controls: [] },
+      detail: definition.detail || { controls: [] },
+      footer: definition.footer || { controls: [] },
+    });
+
+    const editorSettings = definition.editorSettings
+      ? JSON.stringify(definition.editorSettings)
+      : null;
+    const events = definition.events ? JSON.stringify(definition.events) : null;
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_save_visual_form(
+        $1, $2, $3,
+        $4, $5, $6, $7, $8, $9,
+        $10, $11, $12::jsonb,
+        $13::jsonb, $14::jsonb, $15,
+        $16, $17, $18
+      )`,
+      [
+        name,
+        definition.caption || null,
+        definition.recordSource || null,
+        definition.allowEdits !== false,
+        definition.allowAdditions !== false,
+        definition.allowDeletions !== false,
+        definition.navigationButtons !== false,
+        !!definition.modal,
+        !!definition.popup,
+        definition.filter || null,
+        definition.orderBy || null,
+        sections,
+        editorSettings,
+        events,
+        definition.module || null,
+        version || null,
+        companyId,
+        req.headers["x-user-name"] || null,
+      ]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(500).json({ error: "Failed to update visual form" });
+    }
+
+    const result = rows[0].fn_save_visual_form;
+    if (result.error) {
+      return res.status(409).json({ error: result.error });
+    }
+
+    res.json({ name, ...result });
+  } catch (err) {
+    // Check for version conflict error
+    if (err.message && err.message.includes("Version conflict")) {
+      return res.status(409).json({ error: err.message });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/visual-forms/:name — delete a visual form
+ */
+app.delete("/api/visual-forms/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+    const companyId = parseInt(req.query.company_id || "1", 10);
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_delete_visual_form($1, $2)`,
+      [name, companyId]
+    );
+
+    const deleted = rows && rows[0] && rows[0].fn_delete_visual_form;
+    if (!deleted) {
+      return res.status(404).json({ error: "Visual form not found" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Event Engine — hierarchical dispatch chain ──────
 
 const { mountEventEngine } = require("./event-engine.cjs");
