@@ -1,0 +1,128 @@
+Implement Step 66: Navigation Tree 6 — Status badges (pending orders, low stock indicators)
+
+## Context
+The Roastery ERP project has a navigation tree with the following already implemented:
+- Step 61: `nav_tree` table + API endpoints (includes `badge_field` column)
+- Step 62: `<SidebarTree>` component replacing hardcoded sidebar (in `src/components/SidebarTree.tsx`)
+- Step 63: Collapsible groups + fuzzy search
+- Step 64: Role-based visibility filtering (server-side)
+- Step 65: Count badges (live record counts next to each node)
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+
+## Existing Code Structure
+
+### Backend
+- `server/index.cjs` — Express API server. Has `GET /api/nav/tree/counts` returning `{target_name: count}` via `shared.fn_nav_tree_counts()`
+- `server/sql/step-65-nav-counts.sql` — The `fn_nav_tree_counts()` function uses `pg_stat_user_tables.n_live_tup` for fast approximate counts of ALL tables
+- The `nav_tree` table has a `badge_field` VARCHAR(50) column already defined (from Step 61)
+
+### Frontend
+- `src/components/SidebarTree.tsx` — Main sidebar component. Renders `TreeNodeRow` and `NavGroup` components. Already accepts `counts?: Record<string, number>` prop and renders count badges.
+- `src/App.tsx` — Fetches counts from `/api/nav/tree/counts?company_id=1` and passes to SidebarTree via `counts={counts}`
+
+### nav_tree table schema (relevant columns)
+```sql
+CREATE TABLE shared.nav_tree (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id   UUID REFERENCES nav_tree(id),
+  type        TEXT NOT NULL,
+  table_id    TEXT,                          -- references the ERP table name
+  caption     TEXT NOT NULL,
+  badge_field TEXT,                          -- already exists! Defines badge type
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  visible     BOOLEAN NOT NULL DEFAULT true,
+  ...
+);
+```
+
+## What to Build
+
+### Step 66: Status Badges (pending orders, low stock indicators)
+
+Add status badges to the nav tree. Unlike count badges (which show total record counts), status badges show items that need attention — with color-coded severity indicators.
+
+### Backend
+
+1. Create `server/sql/step-66-status-badges.sql` — a new SQL migration that adds:
+
+   a. **`shared.fn_nav_tree_status_badges(p_company_id INTEGER DEFAULT 1)`** — Returns status badge info for nav tree nodes that have a `badge_field` set. The function should:
+      - Read the nav_tree nodes and their `badge_field` values
+      - Support these built-in badge types:
+        | badge_field | Query | Severity | Example |
+        |-------------|-------|----------|---------|
+        | `pending_orders` | `SELECT COUNT(*) FROM db_fcc_erp.orders WHERE status = 'pending'` | danger | 🔴 [12] |
+        | `low_stock` | `SELECT COUNT(*) FROM db_fcc_erp.products WHERE stock <= reorder_level` | warning | 🟡 [5] |
+        | `unfilled_orders` | `SELECT COUNT(*) FROM db_fcc_erp.orders WHERE filled = false` | danger | 🔴 [3] |
+        | `overdue_orders` | `SELECT COUNT(*) FROM db_fcc_erp.orders WHERE due_date < NOW() AND status != 'completed'` | danger | 🔴 [7] |
+      - For nodes WITHOUT a badge_field, return no status badge (null)
+      - Return: `(node_id UUID, badge_field TEXT, badge_count BIGINT, severity TEXT)`
+      - Use `EXECUTE` for dynamic SQL per badge_field type
+      - Return 0 for counts when no matching records (don't show badge for 0)
+
+   b. **Register the API endpoint** in `server/index.cjs`:
+      ```
+      GET /api/nav/tree/status-badges?company_id=1
+      Response: { [nodeId: string]: { count: number, severity: 'danger' | 'warning' | null } }
+      ```
+      - MUST be defined BEFORE the `/api/nav/tree/:id` route (like the counts endpoint)
+      - Cache results for 30 seconds in-memory (simple module-level cache with timestamp)
+
+### Frontend
+
+2. **Update `src/components/SidebarTree.tsx`** to accept and render status badges:
+
+   a. Add a new prop: `statusBadges?: Record<string, { count: number; severity: 'danger' | 'warning' | null }>`
+   
+   b. In `TreeNodeRow`:
+      - After the count badge, if there's a status badge for this node, render a colored indicator:
+        - danger severity: 🔴 `[N]` in red
+        - warning severity: 🟡 `[N]` in yellow
+        - Don't show if count is 0
+      - Use Tailwind classes: `bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400` for danger
+      - And `bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400` for warning
+   
+   c. In `NavGroup`:
+      - Aggregate status badges from children and show a summary indicator
+      - If any child has danger status, show 🔴 on the group header
+      - If any child has warning status (no danger), show 🟡 on the group header
+
+3. **Update `src/App.tsx`** to fetch status badges:
+   - Add a new state: `const [statusBadges, setStatusBadges] = useState<Record<string, { count: number; severity: string }>>({});`
+   - Add a new useEffect that polls `/api/nav/tree/status-badges?company_id=1` every 60 seconds
+   - Pass `statusBadges={statusBadges}` to the SidebarTree component
+
+### Spec Reference
+From `Roastery ERP - SPEC - Navigation Tree.md`:
+
+**Section 8 - Badge System:**
+| Badge Type | Example | Query |
+|------------|---------|-------|
+| Record count | `[156]` | `SELECT COUNT(*) FROM products` |
+| Pending items | 🔴 `[12]` | `SELECT COUNT(*) FROM orders WHERE status = 'pending'` |
+| Low stock | 🟡 `[5]` | `SELECT COUNT(*) FROM products WHERE stock <= reorder_level` |
+| Custom | Custom SQL expression | Defined in node config |
+
+Badges poll every 60s or update on relevant form saves.
+
+### Important Notes
+- The `badge_field` column already exists on `nav_tree` — DO NOT add it
+- The `SidebarTree` component already handles count badges in `TreeNodeRow` and `NavGroup` — integrate status badges alongside them
+- Keep the existing count badge functionality working
+- Keep role-based visibility filtering from Step 64 working
+- Keep fuzzy search from Step 63 working
+- Run `npx vitest run` after implementing to make sure all tests still pass
+- Run `npx playwright test` after to make sure all E2E tests still pass
+- Do NOT break existing functionality
+
+### File Tree Context
+```
+src/components/
+├── SidebarTree.tsx           # Main sidebar — already has count badges, add statusBadges prop
+server/
+├── index.cjs                 # Express API server — add /api/nav/tree/status-badges endpoint
+├── sql/
+│   └── step-66-status-badges.sql  # NEW — SQL migration for status badge function
+src/
+├── App.tsx                   # Root component — add statusBadges state and fetch
+```

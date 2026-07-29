@@ -358,6 +358,7 @@ function TableBrowser({ table }: { table: string }) {
 export default function App() {
   const [tree, setTree] = useState<NavTreeNode[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [statusBadges, setStatusBadges] = useState<Record<string, { key: string; label: string; count: number; severity: string }[]>>({});
   const [active, setActive] = useState<ActiveView>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -382,6 +383,14 @@ export default function App() {
       .then((r) => r.json())
       .then(setCounts)
       .catch(() => setCounts({}));
+  }, [headers]);
+
+  // Fetch status badges (pending orders, low stock indicators, etc.)
+  useEffect(() => {
+    fetch("/api/nav/tree/status-badges?company_id=1", { headers })
+      .then((r) => r.json())
+      .then(setStatusBadges)
+      .catch(() => setStatusBadges({}));
   }, [headers]);
 
   // Load saved appearance settings
@@ -473,6 +482,7 @@ export default function App() {
           onOpenSettings={openSettings}
           settingsOpen={settingsOpen}
           counts={counts}
+          statusBadges={statusBadges}
         />
         {/* User switcher */}
         <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">
@@ -506,6 +516,7 @@ export default function App() {
             onOpenSettings={openSettings}
             settingsOpen={settingsOpen}
             counts={counts}
+            statusBadges={statusBadges}
           />
           {/* Mobile user switcher */}
           <div className="shrink-0 border-t px-2 py-1.5 flex items-center gap-2 bg-muted/10">

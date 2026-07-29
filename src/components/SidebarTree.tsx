@@ -40,6 +40,15 @@ interface NavTreeNode {
   path: string[];
 }
 
+export interface StatusBadge {
+  key: string;
+  label: string;
+  count: number;
+  severity: "info" | "warning" | "danger" | "muted";
+}
+
+export type StatusBadges = Record<string, StatusBadge[]>;
+
 type ActiveView =
   | { type: "table"; name: string }
   | { type: "form"; name: string }
@@ -57,6 +66,7 @@ interface SidebarTreeProps {
   onOpenSettings: () => void;
   settingsOpen: boolean;
   counts?: Record<string, number>;
+  statusBadges?: StatusBadges;
 }
 
 // ─── Count formatting ────────────────────────────────
@@ -67,6 +77,22 @@ function formatCount(n: number): string {
   if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
   return String(n);
 }
+
+// ─── Severity color mapping ────────────────────────────
+
+const SEVERITY_STYLES: Record<string, string> = {
+  danger: "bg-red-500/10 text-red-500",
+  warning: "bg-amber-500/10 text-amber-500",
+  info: "bg-blue-500/10 text-blue-500",
+  muted: "bg-muted-foreground/10 text-muted-foreground",
+};
+
+const SEVERITY_DOTS: Record<string, string> = {
+  danger: "bg-red-500",
+  warning: "bg-amber-500",
+  info: "bg-blue-500",
+  muted: "bg-muted-foreground/40",
+};
 
 // ─── Fuzzy match ──────────────────────────────────────────
 
@@ -228,6 +254,7 @@ function TreeNodeRow({
   depth,
   searchQuery,
   counts,
+  statusBadges,
 }: {
   node: TreeNode;
   active: ActiveView;
@@ -235,6 +262,7 @@ function TreeNodeRow({
   depth: number;
   searchQuery: string;
   counts?: Record<string, number>;
+  statusBadges?: StatusBadges;
 }) {
   const Icon = resolveIcon(node.icon);
 
@@ -279,6 +307,26 @@ function TreeNodeRow({
         />
       )}
       <HighlightedLabel text={node.label} query={searchQuery} />
+      {/* Status badges (colored severity indicators) */}
+      {node.target_name &&
+        statusBadges?.[node.target_name]?.map((badge) => (
+          <span
+            key={badge.key}
+            className={cn(
+              "ml-1 text-[10px] px-1 py-0.5 rounded tabular-nums flex items-center gap-1 shrink-0",
+              SEVERITY_STYLES[badge.severity] ?? "bg-muted-foreground/10 text-muted-foreground"
+            )}
+            title={`${badge.label}: ${badge.count.toLocaleString()}`}
+          >
+            <span
+              className={cn(
+                "inline-block w-1.5 h-1.5 rounded-full",
+                SEVERITY_DOTS[badge.severity] ?? "bg-muted-foreground/40"
+              )}
+            />
+            {formatCount(badge.count)}
+          </span>
+        ))}
       {displayBadge && (
         <span
           className={cn(
@@ -304,6 +352,7 @@ function NavGroup({
   defaultOpen,
   searchQuery,
   counts,
+  statusBadges,
 }: {
   node: TreeNode;
   active: ActiveView;
@@ -311,6 +360,7 @@ function NavGroup({
   defaultOpen: boolean;
   searchQuery: string;
   counts?: Record<string, number>;
+  statusBadges?: StatusBadges;
 }) {
   // When a search is active, force groups open; otherwise use user toggle state
   const [userOpen, setUserOpen] = useState(defaultOpen);
@@ -339,6 +389,35 @@ function NavGroup({
     return total;
   }, [node.children, counts]);
 
+  // Aggregate status badge counts from all descendant table/form/report nodes
+  const aggStatusBadges = useMemo(() => {
+    if (!statusBadges) return null;
+    const totals: { label: string; count: number; severity: string }[] = [];
+    const seen = new Set<string>();
+    function walk(nodes: TreeNode[]) {
+      for (const n of nodes) {
+        if (n.target_name && statusBadges[n.target_name]) {
+          for (const badge of statusBadges[n.target_name]) {
+            const key = `${badge.severity}-${badge.key}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              totals.push({ label: badge.label, count: 0, severity: badge.severity });
+            }
+            const entry = totals.find((t) => t.severity === badge.severity && t.label === badge.label);
+            if (entry) entry.count += badge.count;
+          }
+        }
+        walk(n.children);
+      }
+    }
+    walk(node.children);
+    // Return only the highest severity badge (danger > warning > info > muted)
+    if (totals.length === 0) return null;
+    const severityRank = { danger: 0, warning: 1, info: 2, muted: 3 };
+    totals.sort((a, b) => (severityRank[a.severity] ?? 99) - (severityRank[b.severity] ?? 99));
+    return totals[0];
+  }, [node.children, statusBadges]);
+
   return (
     <div>
       <button
@@ -354,6 +433,23 @@ function NavGroup({
         )}
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
         <HighlightedLabel text={node.label} query={searchQuery} />
+        {!isSearching && aggStatusBadges && (
+          <span
+            className={cn(
+              "ml-1 text-[10px] px-1 py-0.5 rounded tabular-nums flex items-center gap-1",
+              SEVERITY_STYLES[aggStatusBadges.severity] ?? "text-muted-foreground/60"
+            )}
+            title={`${aggStatusBadges.label}: ${aggStatusBadges.count.toLocaleString()}`}
+          >
+            <span
+              className={cn(
+                "inline-block w-1.5 h-1.5 rounded-full",
+                SEVERITY_DOTS[aggStatusBadges.severity] ?? "bg-muted-foreground/40"
+              )}
+            />
+            {formatCount(aggStatusBadges.count)}
+          </span>
+        )}
         {!isSearching && aggCount != null && (
           <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/60">
             {formatCount(aggCount)}
@@ -376,6 +472,7 @@ function NavGroup({
                   defaultOpen={child.is_expanded ?? false}
                   searchQuery={searchQuery}
                   counts={counts}
+                  statusBadges={statusBadges}
                 />
               );
             }
@@ -388,6 +485,7 @@ function NavGroup({
                 depth={(child.depth ?? 1) - 1}
                 searchQuery={searchQuery}
                 counts={counts}
+                statusBadges={statusBadges}
               />
             );
           })}
@@ -406,6 +504,7 @@ export default function SidebarTree({
   onOpenSettings,
   settingsOpen,
   counts,
+  statusBadges,
 }: SidebarTreeProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -511,6 +610,7 @@ export default function SidebarTree({
                   defaultOpen={node.is_expanded ?? false}
                   searchQuery={searchQuery}
                   counts={counts}
+                  statusBadges={statusBadges}
                 />
               );
             }
@@ -523,6 +623,7 @@ export default function SidebarTree({
                 depth={0}
                 searchQuery={searchQuery}
                 counts={counts}
+                statusBadges={statusBadges}
               />
             );
           })}
@@ -568,4 +669,4 @@ export function extractNavItems(tree: NavTreeNode[]) {
   return { tables, forms, reports };
 }
 
-export type { NavTreeNode, ActiveView };
+export type { NavTreeNode, ActiveView, StatusBadge, StatusBadges };

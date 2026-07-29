@@ -200,6 +200,51 @@ app.get("/api/nav/tree/counts", async (req, res) => {
 });
 
 /**
+ * GET /api/nav/tree/status-badges — conditional status counts
+ *
+ * Returns a grouped map of target_name → status badge array for all
+ * table targets that have meaningful status conditions (unfilled orders,
+ * open work orders, inactive customers, etc).
+ *
+ * Response:
+ *   {
+ *     "orders": [
+ *       { "key": "unfilled", "label": "Unfilled", "count": 33751, "severity": "warning" }
+ *     ],
+ *     "workorders": [
+ *       { "key": "open", "label": "Open", "count": 15, "severity": "info" },
+ *       ...
+ *     ]
+ *   }
+ *
+ * NOTE: Must be defined BEFORE /api/nav/tree/:id so Express matches
+ * the literal "status-badges" path before treating it as a parameter.
+ */
+app.get("/api/nav/tree/status-badges", async (req, res) => {
+  try {
+    const companyId = parseInt(req.query.company_id || "1", 10);
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.fn_nav_tree_status_badges($1)`,
+      [companyId]
+    );
+    // Group by target_name into arrays of status badge objects
+    const badges = {};
+    for (const row of rows) {
+      if (!badges[row.target_name]) badges[row.target_name] = [];
+      badges[row.target_name].push({
+        key: row.status_key,
+        label: row.status_label,
+        count: Number(row.row_count),
+        severity: row.severity,
+      });
+    }
+    res.json(badges);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/nav/tree/:id — get a single nav tree node
  */
 app.get("/api/nav/tree/:id", async (req, res) => {
