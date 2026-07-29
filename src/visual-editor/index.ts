@@ -26,3 +26,12 @@ export type {
 export {
   TOOLBOX_ITEMS,
 } from './types';
+
+export {
+  default as FieldPicker,
+} from './FieldPicker';
+
+export type {
+  FieldPickerItem,
+  FieldPickerProps,
+} from './FieldPicker';
