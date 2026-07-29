@@ -1,6 +1,7 @@
 // Visual Editor — barrel exports
 export type {
   VisualEditorControlType,
+  FormBorderStyle,
   Position,
   Size,
   TextAlignment,
@@ -52,3 +53,12 @@ export {
 export type {
   TabsBandEditorProps,
 } from './TabsBandEditor';
+
+export {
+  default as FormPropertiesPanel,
+} from './FormPropertiesPanel';
+
+export type {
+  FormProperties,
+  FormPropertiesPanelProps,
+} from './FormPropertiesPanel';

@@ -214,11 +214,28 @@ export interface EditorGridSettings {
 
 // ─── Visual Editor Form — full definition ─────────
 
+/** Form border style — controls the window chrome frame */
+export type FormBorderStyle = 'none' | 'thin' | 'sizable' | 'dialog';
+
 export interface VisualEditorForm {
   /** Unique form name (used for navigation routing) */
   name: string;
   /** Human-readable caption */
   caption?: string;
+  /** Form width in twips */
+  width?: number;
+  /** Border style of the form window */
+  borderStyle?: FormBorderStyle;
+  /** Whether to track edit history for the form */
+  historyEnabled?: boolean;
+  /** Whether to show the record selector bar */
+  recordSelectors?: boolean;
+  /** Scroll bar style for the form */
+  scrollBars?: 'none' | 'vertical' | 'horizontal' | 'both';
+  /** Whether to show a close button in the title bar */
+  closeButton?: boolean;
+  /** Whether to show min/max buttons in the title bar */
+  minMaxButtons?: boolean;
   /** The table or SQL query that provides the form's data */
   recordSource?: string;
   /** Whether the form allows editing */
