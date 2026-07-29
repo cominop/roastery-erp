@@ -44,3 +44,11 @@ export type {
   ColumnLayoutConfigProps,
   LayoutPanel,
 } from './ColumnLayoutConfig';
+
+export {
+  default as TabsBandEditor,
+} from './TabsBandEditor';
+
+export type {
+  TabsBandEditorProps,
+} from './TabsBandEditor';

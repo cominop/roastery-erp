@@ -1,6 +1,7 @@
 // LookupField unit tests
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import LookupField from '../LookupField';
 import type { FieldDefinition } from '../schema/controlSchema';
 
@@ -248,6 +249,8 @@ describe('LookupField', () => {
       fields: ['id', 'companyname', 'city'],
     });
 
+    const user = userEvent.setup();
+
     render(
       <div>
         <LookupField
@@ -271,7 +274,7 @@ describe('LookupField', () => {
     );
 
     // Click outside
-    fireEvent.mouseDown(screen.getByTestId('outside'));
+    await user.click(screen.getByTestId('outside'));
     await waitFor(() => {
       expect(
         screen.queryByText('Alpha Corp - Vancouver'),
