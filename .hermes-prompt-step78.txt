@@ -1,0 +1,98 @@
+Implement Step 78: LivePreview pane (side-by-side form preview from current definition)
+
+## Context
+You are working on the Roastery ERP Visual Editor (Track G). Steps 70-77 are complete. The codebase lives at /home/fcc-student/Desktop/_DEV/roastery-ui/.
+
+## What exists already
+- `src/visual-editor/types.ts` — VisualEditorForm, VisualEditorControl, VisualEditorSection, VisualStyle, etc.
+- `src/visual-editor/index.ts` — barrel exports for all existing components
+- `src/visual-editor/FieldPicker.tsx` — two-list field selector
+- `src/visual-editor/ColumnLayoutConfig.tsx` — grid column/label config
+- `src/visual-editor/TabsBandEditor.tsx` — tab+band hierarchy editor
+- `src/visual-editor/FormPropertiesPanel.tsx` — form-level settings sidebar
+- `src/visual-editor/TableFieldPicker.tsx` — view-form column config
+- `src/visual-editor/TableOptionsPanel.tsx` — view-form options
+- `src/visual-editor/FieldEditorDialog.tsx` — field create/edit modal
+- `src/visual-editor/TemplateLibrary.tsx` — template save/load/apply
+- `src/visual-editor/templateRegistry.ts` — template registry functions
+- `src/components/FormRenderer.tsx` — production form renderer (reads shared.objects format, uses Control type — NOT VisualEditorForm)
+- `src/controls/` — various control renderers (TextBoxControl, LabelControl, etc.)
+
+## What to build
+
+Create `src/visual-editor/LivePreview.tsx` — a side-by-side pane that renders a real React preview of the form being built from the current `VisualEditorForm` definition.
+
+## Requirements
+
+1. **Component**: `LivePreview` at `src/visual-editor/LivePreview.tsx`
+
+2. **Props interface**:
+```typescript
+interface LivePreviewProps {
+  form: VisualEditorForm;           // the form being edited
+  availableFields: FieldDefinition[]; // all fields for the table (same type as TemplateLibrary's FieldDefinition)
+  /** Width of the preview pane in the editor layout */
+  previewWidth?: number;            // default 400px
+}
+```
+
+3. **Layout**: Renders inside a bordered panel with:
+   - A thin header bar: "🔍 Live Preview" label on the left, a tiny refresh indicator (pulsing dot or spinner when updating, grey check when stable)
+   - The form preview below the header, with a subtle background (grid pattern or very light gray) to distinguish it from the editor canvas
+   - The preview should scroll independently (overflow-y-auto)
+   - A help tooltip or info icon in the header that says "Preview updates as you edit the form layout"
+
+4. **For Edit Forms** (`form.type === 'edit'` or implied by sections having controls):
+   - Render a simulated form surface at approximately the configured width (form.width || 800px, capped at preview pane width)
+   - Show sections (header / detail / footer) as distinct blocks with section labels in small muted text
+   - Inside each section, render controls as simplified placeholders:
+     - **Label controls**: rendered as `<span>` with the caption text
+     - **Text box controls**: rendered as an `<input>` with placeholder text derived from caption or "Value"
+     - **Command button controls**: rendered as a `<button>` with the caption text
+     - **Check box controls**: rendered as a small checkbox + caption
+     - **Combo box controls**: rendered as a styled div with a dropdown arrow icon
+     - **Tab controls**: rendered as a tab bar (simple horizontal row of tab names, first tab content visible)
+     - **Subform controls**: rendered as a simplified table placeholder with the sourceObject name and "N rows" text
+     - **Line/rectangle controls**: rendered as simple div elements with border
+     - **Image controls**: rendered as a placeholder box with an image icon
+   - Controls should be positioned approximately based on their `left`/`top`/`width`/`height` properties (use a scaling factor since VisualEditorForm uses twips/12ths — divide by 15 to approximate pixels)
+   - Apply style properties where possible: `backColor`, `foreColor`, `fontSize`, `fontBold`, `textAlign`
+   - Controls that have `visible: false` should be hidden
+   - Show a subtle "no controls" placeholder when a section is empty
+
+5. **For View Forms** (forms where the header/detail sections have no controls, or when a `DataSource`-type is indicated):
+   - Render a simple data table with columns derived from the form's recordSource or from availableFields
+   - Show 3-5 placeholder rows with mock data (GeneratedText1, GeneratedText2, etc.)
+   - Column headers from field captions
+   - Show a subtle striped row pattern
+
+6. **Reactivity**: Re-render whenever the `form` prop reference changes. Accept a new form object reference and update without animation or flash.
+
+7. **File conventions** (match existing visual-editor components):
+   - Use lucide-react icons (Eye, RotateCw, Info, ChevronDown, Table, Image, Minus, etc.)
+   - Use the same shadcn-style className conventions (text-[11px], text-[10px], bg-muted, etc.)
+   - Import cn from "@/lib/utils"
+   - Use TypeScript with strict types
+   - Use function component with named export default
+   - Add a JSDoc comment at the top: `/**\n * LivePreview — side-by-side form preview from current definition\n *\n * Step 78: Visual Editor 8 (Phase 8 of the Visual Editor).\n */`
+
+8. **Export**: Add the default export to `src/visual-editor/index.ts`:
+```typescript
+export { default as LivePreview } from './LivePreview';
+export type { LivePreviewProps } from './LivePreview';
+```
+And add `LivePreviewProps` to the type exports in the barrel file.
+
+## Testing
+Create `src/visual-editor/__tests__/LivePreview.test.tsx` with vitest tests that:
+1. Renders a form with 2-3 controls and verifies they appear in the preview
+2. Renders an empty form and verifies "no controls" placeholder
+3. Verifies the header shows "Live Preview"
+4. Verifies hidden controls are not rendered
+5. Uses @testing-library/react and vitest
+
+## Important notes
+- This component does NOT need to use the production FormRenderer. It's a simplified visual preview that renders placeholders, not real data-bound controls.
+- The VisualEditorControl types use `left`, `top`, `width`, `height` in Access twips units (twelfth of an inch, ~1/1440 inch). For preview purposes, divide by 15 to get approximate pixels.
+- Styles should be clean and match the existing visual-editor components' design language (small fonts, subtle borders, muted colors).
+- Do NOT import from `@/controls/` or `@/components/` — this is a standalone preview component.

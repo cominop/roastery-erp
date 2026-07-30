@@ -108,3 +108,13 @@ export type {
   FormTemplateTab,
   FormTemplateBand,
 } from './templateRegistry';
+
+// ─── Step 78: LivePreview ────────────────────────────────
+
+export {
+  default as LivePreview,
+} from './LivePreview';
+
+export type {
+  LivePreviewProps,
+} from './LivePreview';
