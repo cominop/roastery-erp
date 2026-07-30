@@ -118,3 +118,21 @@ export {
 export type {
   LivePreviewProps,
 } from './LivePreview';
+
+// ─── Step 79: EventBindingPanel ──────────────────────────
+
+export {
+  default as EventBindingPanel,
+} from './EventBindingPanel';
+
+export type {
+  EventBindingPanelProps,
+  EventBindingDefinition,
+  EventBindingScope,
+} from './EventBindingPanel';
+
+export {
+  ALL_EVENT_GROUPS,
+  FORM_EVENT_GROUPS,
+  CONTROL_EVENT_GROUPS,
+} from './EventBindingPanel';
