@@ -1,0 +1,78 @@
+IMPLEMENT STEP 82: Metadata Deployment 3 — Import: validate manifest + checksums
+
+PROJECT CONTEXT:
+- Roastery ERP, a React+Express ERP application against PostgreSQL ("polyaccess")
+- Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+- Step 80 created server/metadata-exporter.cjs and exported 7 JSON files to src/metadata/export/definitions/
+- Step 81 created server/metadata-packager.cjs which produces deploy/erp_metadata_YYYY-MM-DD.zip with manifest.json + checksums.sha256
+
+SPEC REFERENCE:
+Full spec at: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Metadata Deployment.md
+
+Step 82 is the THIRD step of Metadata Deployment (Track H, Section 11: Step 3). The goal is to create the import validation script that verifies the integrity of a packaged metadata archive before it can be imported into the database.
+
+WHAT TO BUILD:
+
+1. Create server/metadata-importer.cjs (Node.js script, matching project's .cjs pattern)
+
+The script should perform a 7-stage validation pipeline:
+
+Stage 1 — Extract Archive:
+- Accept --archive flag (path to .zip file; also support positional arg)
+- Extract the archive to a temp directory using `unzip -o`
+- Handle non-existent files gracefully with a clear error
+
+Stage 2 — Validate manifest.json structure:
+- Check all required top-level fields exist: manifest_version, created_at, source, erp_version, exported_by, description, checksums, counts
+- Validate data types (manifest_version must be number, created_at must be valid ISO date, etc.)
+- Validate that all 7 expected checksum keys exist (definitions/forms.json, fields.json, events.json, nav_tree.json, permissions.json, reports.json, settings.json)
+- Validate checksum values match format "sha256:<64-hex>"
+- Warn if manifest_version differs from expected (1)
+
+Stage 3 — Validate version.txt:
+- Check version.txt exists and matches expected schema version "1.0.0"
+- Warn on version mismatch instead of failing (migration may be possible)
+
+Stage 4 — Validate checksums (dual verification):
+- 4a. Compute SHA-256 of every extracted file and compare against manifest.json checksums
+- 4b. Parse checksums.sha256 (standard sha256sum format: "<hex>  <rel-path>") and verify every entry
+- Report every file with its pass/fail status
+- Cross-reference that manifest and checksums.sha256 agree
+
+Stage 5 — Validate file completeness:
+- Check all 7 required definition files are present
+- Report file sizes
+- Note any extra files (templates are valid extras)
+
+Stage 6 — Validate JSON parse:
+- Parse every definition file as JSON
+- Report entry counts
+- Flag invalid JSON files
+
+Stage 7 — Validate record counts:
+- Compare manifest.counts against actual JSON entry counts
+- Warn on mismatches (indicates stale manifest)
+
+Output:
+- Box-drawn header "Roastery ERP — Metadata Importer" and "Step 82: Validate Manifest + Checksums"
+- Numbered stage headers
+- Per-file ✓/✗ indicators with details
+- Summary block with error count and overall pass/fail
+- Exit code 0 on success, 1 on validation failure
+- Clean up temp directory after validation (show in verbose mode)
+
+CLI flags:
+  --archive <path>    Path to the .zip archive (required)
+  --verbose, -v       Show extra info (temp dir cleanup, etc.)
+
+2. Run the script against the existing archive to verify:
+   node server/metadata-importer.cjs --archive deploy/erp_metadata_2026-07-30.zip
+
+3. Verify error cases:
+   - Missing archive → exit code 1 with clear message
+   - No argument → exit code 1 with usage message
+   - Tampered archive → detects checksum mismatches, exit code 1
+
+OUTPUT:
+- server/metadata-importer.cjs — the import validation script
+- Verify all 7 stages pass against deploy/erp_metadata_2026-07-30.zip
