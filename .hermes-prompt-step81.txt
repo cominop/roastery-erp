@@ -1,0 +1,63 @@
+IMPLEMENT STEP 81: Metadata Deployment 2 — Export: zip + manifest + checksums
+
+PROJECT CONTEXT:
+- Roastery ERP, a React+Express ERP application against PostgreSQL ("polyaccess")
+- Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+- Step 80 already created server/metadata-exporter.cjs and exported 7 JSON files to src/metadata/export/definitions/
+
+SPEC REFERENCE:
+Full spec at: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Metadata Deployment.md
+
+Step 81 is the SECOND step of Metadata Deployment (Track H). The goal is to package the exported JSON definition files into a deployable .zip archive with a manifest and checksums for integrity verification.
+
+WHAT TO BUILD:
+
+1. Create server/metadata-packager.cjs (Node.js script, matching project's .cjs pattern)
+
+The script should:
+- Read all JSON definition files from src/metadata/export/definitions/
+- Also look for template files in src/metadata/export/templates/ (empty for now)
+- Compute SHA-256 checksums for every file
+- Create a manifest.json with:
+  - manifest_version: 1
+  - created_at: ISO timestamp
+  - source: "development" (configurable via --source flag)
+  - erp_version: from package.json
+  - exported_by: system USER
+  - description: configurable via --description flag
+  - checksums: map of relative paths to "sha256:hex" values for all definition files
+  - counts: per-file entry counts
+- Create version.txt with schema version "1.0.0"
+- Create checksums.sha256 in standard sha256sum format: "<hex>  <relative-path>"
+- Bundle everything into a .zip archive at deploy/erp_metadata_YYYY-MM-DD.zip
+
+Archive structure:
+  erp_metadata_YYYY-MM-DD.zip
+  ├── manifest.json
+  ├── version.txt
+  ├── definitions/
+  │   ├── forms.json
+  │   ├── fields.json
+  │   ├── events.json
+  │   ├── nav_tree.json
+  │   ├── permissions.json
+  │   ├── reports.json
+  │   └── settings.json
+  ├── templates/               (empty, ready for future .ods templates)
+  └── checksums.sha256
+
+CLI flags:
+  --description "My export"   (default: "Metadata export")
+  --source staging            (default: "development")
+  --output path/to/output.zip (default: deploy/erp_metadata_YYYY-MM-DD.zip)
+
+2. Run the script to verify it works:
+   node server/metadata-packager.cjs --description "Post-Steps-80-81 export"
+
+3. Verify the archive:
+   - unzip -l to check file listing
+   - Extract and run sha256sum -c checksums.sha256 to verify all integrity hashes
+
+OUTPUT:
+- server/metadata-packager.cjs — the packager script
+- deploy/erp_metadata_YYYY-MM-DD.zip — the packaged archive (verified)
