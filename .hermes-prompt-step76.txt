@@ -1,0 +1,157 @@
+Implement Step 76: FieldEditorDialog — Phase 6 of the Visual Editor
+
+## Context
+You are implementing Step 76 of the Roastery ERP project. This is one component in a larger visual editor for building form layouts. Previous steps have built: FieldPicker (two-list field selector), ColumnLayoutConfig, TabsBandEditor, FormPropertiesPanel, TableFieldPicker, and TableOptionsPanel.
+
+All components live in: /home/fcc-student/Desktop/_DEV/roastery-ui/src/visual-editor/
+Tests live in: /home/fcc-student/Desktop/_DEV/roastery-ui/src/visual-editor/__tests__/
+Types are in: /home/fcc-student/Desktop/_DEV/roastery-ui/src/visual-editor/types.ts
+Barrel exports in: /home/fcc-student/Desktop/_DEV/roastery-ui/src/visual-editor/index.ts
+
+## What to Build
+
+### FieldEditorDialog — Modal dialog for creating/editing a field definition
+
+A modal dialog with three tabs:
+
+**Field tab:**
+```
+Caption:   [ Customer Name      ]
+Name:      [ customer_name      ]
+Type:      [ TEXT ▼ ]
+Size:      [ 255 ]
+Default:   [                    ]
+☑ Required
+☐ Read only
+```
+
+**Lookup tab** (visible only when type is LOOKUP):
+```
+Lookup item:  [Customers ▼]
+Lookup field: [last_name ▼]
+Lookup field 2: [first_name ▼]
+Lookup field 3: [phone ▼]
+Master field:  [customer ▼]
+☑ Typeahead
+Lookup value list: [Select static list...]
+```
+
+**Interface tab:**
+```
+Mask:         [ (###) ###-####           ]
+☑ TextArea
+☐ Do not sanitize
+Alignment:    [ Left ▼ ]
+Placeholder:  [ Enter customer name...  ]
+Help:         [ The full legal name     ]
+```
+
+### Files to create:
+1. `src/visual-editor/types-field.ts` — FieldType and FieldDefinition types (extend types.ts)
+2. `src/visual-editor/FieldTypeSelector.tsx` — Dropdown/radio selector for field types
+3. `src/visual-editor/LookupConfig.tsx` — Lookup tab contents
+4. `src/visual-editor/InterfaceConfig.tsx` — Interface tab contents  
+5. `src/visual-editor/FileImageConfig.tsx` — Conditional sub-panel for FILE/IMAGE types
+6. `src/visual-editor/FieldEditorDialog.tsx` — Main modal dialog component
+7. `src/visual-editor/__tests__/FieldEditorDialog.test.tsx` — Tests
+
+### Component Design
+
+The FieldEditorDialog should:
+- Accept `field: FieldDefinition | null` (null = creating new, non-null = editing existing)
+- Accept `onSave: (field: FieldDefinition) => void` and `onCancel: () => void`
+- Accept `tableFields?: string[]` for lookup field dropdown options
+- Accept `open: boolean` to control visibility
+- Use shadcn/radix Dialog component for the modal
+- Use shadcn/radix Tabs component for the three tabs
+- Show FILE/IMAGE config sub-panel on the Interface tab when type is FILE or IMAGE
+- Auto-generate `name` from `caption` when creating (lowercase, spaces→underscores)
+- Validate: caption required, name required (snake_case), type required
+- Show size field only for TEXT type
+- The Lookup tab should only be visible when type is 'LOOKUP'
+
+### Types to define
+
+```typescript
+// In types-field.ts
+export type FieldType =
+  | 'TEXT' | 'INTEGER' | 'FLOAT' | 'CURRENCY'
+  | 'DATE' | 'DATETIME' | 'BOOLEAN' | 'LONGTEXT'
+  | 'FILE' | 'IMAGE' | 'LOOKUP';
+
+export interface FieldDefinition {
+  id: string;
+  caption: string;
+  name: string;
+  type: FieldType;
+  size?: number;
+  defaultValue?: string;
+  required: boolean;
+  readOnly: boolean;
+
+  // Lookup (when type is LOOKUP)
+  lookupItem?: string;
+  lookupField?: string;
+  lookupField2?: string;
+  lookupField3?: string;
+  masterField?: string;
+  typeahead?: boolean;
+  lookupValueList?: string[];
+
+  // Interface overrides
+  mask?: string;
+  textArea?: boolean;
+  doNotSanitize?: boolean;
+  alignment?: 'left' | 'center' | 'right';
+  placeholder?: string;
+  help?: string;
+
+  // File/Image
+  accept?: string[];
+  viewWidth?: number;
+  viewHeight?: number;
+  editWidth?: number;
+  editHeight?: number;
+  captureFromCamera?: boolean;
+}
+```
+
+### Code Patterns to Follow
+
+Use the same visual patterns as existing components:
+- shadcn/radix UI components (Dialog, Tabs, Select, Checkbox, Input, Label)
+- lucide-react icons
+- `cn()` utility from `@/lib/utils`
+- tailwind classes consistent with existing components
+- `useId()` for accessibility
+- Controlled form state (useState for each field)
+
+### Tests to Write
+
+Write comprehensive tests following the pattern in FormPropertiesPanel.test.tsx:
+- Render with default/new field values
+- Edit field tab: change caption, name, type, size, default value, required, readOnly
+- Verify auto-generation of name from caption
+- Lookup tab: only visible when type=LOOKUP, verify all lookup controls
+- Interface tab: all controls visible, alignment radio, placeholder, help, mask
+- File/Image config: only visible for FILE or IMAGE types
+- Save calls onSave with correct data
+- Cancel calls onCancel
+- Dialog opens/closes based on `open` prop
+- Snapshot test
+- Validation: error messages for required fields
+
+### Dependencies
+The project uses:
+- @testing-library/react + @testing-library/user-event + vitest (jsdom env)
+- shadcn/radix UI components (check node_modules for available radix packages)
+- lucide-react icons
+- tailwindcss v4
+- TypeScript (strict mode)
+
+### After creating files:
+1. Export all new types and components from index.ts
+2. Create the test file
+3. Run tests: cd /home/fcc-student/Desktop/_DEV/roastery-ui && npx vitest run src/visual-editor/__tests__/FieldEditorDialog.test.tsx 2>&1
+4. If tests fail, fix the issues
+5. If all pass, commit and push
