@@ -11,8 +11,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_quote_details_subform",
-    "created_at": "2026-07-19T21:11:55.091Z",
-    "updated_at": "2026-07-19T21:11:55.091Z"
+    "created_at": "2026-07-20T01:11:55.091Z",
+    "updated_at": "2026-07-20T01:11:55.091Z"
   },
   {
     "id": "008091d6-d237-4444-afa0-e6096d2aa358",
@@ -26,8 +26,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxOrderPk",
-    "created_at": "2026-07-19T21:11:48.581Z",
-    "updated_at": "2026-07-19T21:11:48.581Z"
+    "created_at": "2026-07-20T01:11:48.581Z",
+    "updated_at": "2026-07-20T01:11:48.581Z"
   },
   {
     "id": "022459e8-99a3-408c-a8af-085f0a6d5a8c",
@@ -41,8 +41,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxAltBrand",
-    "created_at": "2026-07-19T21:11:48.123Z",
-    "updated_at": "2026-07-19T21:11:48.123Z"
+    "created_at": "2026-07-20T01:11:48.123Z",
+    "updated_at": "2026-07-20T01:11:48.123Z"
   },
   {
     "id": "02b80c25-3f87-44d0-b515-9cef869d4757",
@@ -56,8 +56,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_subform.CrtWrkOrdrBttn",
-    "created_at": "2026-07-19T21:11:56.369Z",
-    "updated_at": "2026-07-19T21:11:56.369Z"
+    "created_at": "2026-07-20T01:11:56.369Z",
+    "updated_at": "2026-07-20T01:11:56.369Z"
   },
   {
     "id": "0384199e-3ff3-473b-97a6-52a68f5a30db",
@@ -71,8 +71,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_print_invoice1.Cancel",
-    "created_at": "2026-07-19T21:11:54.018Z",
-    "updated_at": "2026-07-19T21:11:54.018Z"
+    "created_at": "2026-07-20T01:11:54.018Z",
+    "updated_at": "2026-07-20T01:11:54.018Z"
   },
   {
     "id": "03fe485f-82a5-42d0-9db5-532af9ceaabd",
@@ -86,8 +86,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text130",
-    "created_at": "2026-07-19T21:11:47.525Z",
-    "updated_at": "2026-07-19T21:11:47.525Z"
+    "created_at": "2026-07-20T01:11:47.525Z",
+    "updated_at": "2026-07-20T01:11:47.525Z"
   },
   {
     "id": "04000ad4-ff38-411f-95ed-35d7dde9a57f",
@@ -101,8 +101,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text130",
-    "created_at": "2026-07-19T21:11:52.307Z",
-    "updated_at": "2026-07-19T21:11:52.307Z"
+    "created_at": "2026-07-20T01:11:52.307Z",
+    "updated_at": "2026-07-20T01:11:52.307Z"
   },
   {
     "id": "047dfce0-1c85-48fc-855c-4b5c1178bcdf",
@@ -116,8 +116,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Command312",
-    "created_at": "2026-07-19T21:11:48.909Z",
-    "updated_at": "2026-07-19T21:11:48.909Z"
+    "created_at": "2026-07-20T01:11:48.909Z",
+    "updated_at": "2026-07-20T01:11:48.909Z"
   },
   {
     "id": "048b6575-6a48-4b14-907d-b2f5f10420db",
@@ -131,8 +131,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_employeeabsencenotes.CustomerCommentBttn",
-    "created_at": "2026-07-19T21:11:45.429Z",
-    "updated_at": "2026-07-19T21:11:45.429Z"
+    "created_at": "2026-07-20T01:11:45.429Z",
+    "updated_at": "2026-07-20T01:11:45.429Z"
   },
   {
     "id": "04cf6c41-c5e7-47a9-97e1-135c0f78d0fd",
@@ -146,8 +146,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Creditrate",
-    "created_at": "2026-07-19T21:11:46.424Z",
-    "updated_at": "2026-07-19T21:11:46.424Z"
+    "created_at": "2026-07-20T01:11:46.424Z",
+    "updated_at": "2026-07-20T01:11:46.424Z"
   },
   {
     "id": "04e9c3c5-5411-4d86-a9a8-bc58ff553dbb",
@@ -161,8 +161,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.TxtBoxOrders_OrderFilled",
-    "created_at": "2026-07-19T21:11:49.857Z",
-    "updated_at": "2026-07-19T21:11:49.857Z"
+    "created_at": "2026-07-20T01:11:49.857Z",
+    "updated_at": "2026-07-20T01:11:49.857Z"
   },
   {
     "id": "05c35c70-ff34-43a5-b89d-34e2bb3b77fd",
@@ -176,8 +176,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text179",
-    "created_at": "2026-07-19T21:11:47.911Z",
-    "updated_at": "2026-07-19T21:11:47.911Z"
+    "created_at": "2026-07-20T01:11:47.911Z",
+    "updated_at": "2026-07-20T01:11:47.911Z"
   },
   {
     "id": "05c3e896-cdb3-4df2-afba-727352d4f2ac",
@@ -191,8 +191,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.SearchBttn",
-    "created_at": "2026-07-19T21:11:54.680Z",
-    "updated_at": "2026-07-19T21:11:54.680Z"
+    "created_at": "2026-07-20T01:11:54.680Z",
+    "updated_at": "2026-07-20T01:11:54.680Z"
   },
   {
     "id": "05d4194f-3b16-4387-9640-7f92fa0dcef8",
@@ -206,8 +206,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_order_details_subform",
-    "created_at": "2026-07-19T21:11:49.125Z",
-    "updated_at": "2026-07-19T21:11:49.125Z"
+    "created_at": "2026-07-20T01:11:49.125Z",
+    "updated_at": "2026-07-20T01:11:49.125Z"
   },
   {
     "id": "05d69a01-3195-461f-8d27-22af2c6ece44",
@@ -221,8 +221,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.BllEmlBttn",
-    "created_at": "2026-07-19T21:11:49.943Z",
-    "updated_at": "2026-07-19T21:11:49.943Z"
+    "created_at": "2026-07-20T01:11:49.943Z",
+    "updated_at": "2026-07-20T01:11:49.943Z"
   },
   {
     "id": "05f278cf-c8ff-4c93-ac96-2732fa9240fd",
@@ -236,8 +236,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.Amount_Due",
-    "created_at": "2026-07-19T21:11:53.108Z",
-    "updated_at": "2026-07-19T21:11:53.108Z"
+    "created_at": "2026-07-20T01:11:53.108Z",
+    "updated_at": "2026-07-20T01:11:53.108Z"
   },
   {
     "id": "0615a9dc-7a6d-4373-a042-1e6d0c12c854",
@@ -251,8 +251,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders_by_customer",
-    "created_at": "2026-07-19T21:11:50.859Z",
-    "updated_at": "2026-07-19T21:11:50.859Z"
+    "created_at": "2026-07-20T01:11:50.859Z",
+    "updated_at": "2026-07-20T01:11:50.859Z"
   },
   {
     "id": "06c42512-ec0b-4ddf-adb6-de06fa4dc682",
@@ -266,8 +266,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_fcc_erp_development.OpnFtrsTggle",
-    "created_at": "2026-07-19T21:11:45.624Z",
-    "updated_at": "2026-07-19T21:11:45.624Z"
+    "created_at": "2026-07-20T01:11:45.624Z",
+    "updated_at": "2026-07-20T01:11:45.624Z"
   },
   {
     "id": "06eea9d8-2720-4760-941d-9a3365ee74d7",
@@ -281,8 +281,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_payments",
-    "created_at": "2026-07-19T21:11:53.614Z",
-    "updated_at": "2026-07-19T21:11:53.614Z"
+    "created_at": "2026-07-20T01:11:53.614Z",
+    "updated_at": "2026-07-20T01:11:53.614Z"
   },
   {
     "id": "07046a07-e20f-41fa-a36e-0401c946318e",
@@ -296,8 +296,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Command332",
-    "created_at": "2026-07-19T21:11:46.008Z",
-    "updated_at": "2026-07-19T21:11:46.008Z"
+    "created_at": "2026-07-20T01:11:46.008Z",
+    "updated_at": "2026-07-20T01:11:46.008Z"
   },
   {
     "id": "075a612a-e649-4288-b909-33a3ca83890a",
@@ -311,8 +311,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ContactEmailTxtBox",
-    "created_at": "2026-07-19T21:11:46.447Z",
-    "updated_at": "2026-07-19T21:11:46.447Z"
+    "created_at": "2026-07-20T01:11:46.447Z",
+    "updated_at": "2026-07-20T01:11:46.447Z"
   },
   {
     "id": "07db6ac9-0d49-49e6-8bba-b4ddb735eb9d",
@@ -326,8 +326,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitPrice",
-    "created_at": "2026-07-19T21:11:54.583Z",
-    "updated_at": "2026-07-19T21:11:54.583Z"
+    "created_at": "2026-07-20T01:11:54.583Z",
+    "updated_at": "2026-07-20T01:11:54.583Z"
   },
   {
     "id": "07dcd2e1-be58-4529-b563-6afd0f2e02ac",
@@ -341,8 +341,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_ordersproduction",
-    "created_at": "2026-07-19T21:11:53.158Z",
-    "updated_at": "2026-07-19T21:11:53.158Z"
+    "created_at": "2026-07-20T01:11:53.158Z",
+    "updated_at": "2026-07-20T01:11:53.158Z"
   },
   {
     "id": "0969e18e-a9ef-4ad1-8db4-9334515f0ff5",
@@ -356,8 +356,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.PaymentMethodID",
-    "created_at": "2026-07-19T21:11:53.765Z",
-    "updated_at": "2026-07-19T21:11:53.765Z"
+    "created_at": "2026-07-20T01:11:53.765Z",
+    "updated_at": "2026-07-20T01:11:53.765Z"
   },
   {
     "id": "09b0ad2c-359b-40b7-9e7f-0fc3b1bb9ca7",
@@ -371,8 +371,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text159",
-    "created_at": "2026-07-19T21:11:47.732Z",
-    "updated_at": "2026-07-19T21:11:47.732Z"
+    "created_at": "2026-07-20T01:11:47.732Z",
+    "updated_at": "2026-07-20T01:11:47.732Z"
   },
   {
     "id": "0aa57307-43dd-4126-b1e3-d359917021a8",
@@ -386,8 +386,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_switchboard.Form",
-    "created_at": "2026-07-19T21:11:56.313Z",
-    "updated_at": "2026-07-19T21:11:56.313Z"
+    "created_at": "2026-07-20T01:11:56.313Z",
+    "updated_at": "2026-07-20T01:11:56.313Z"
   },
   {
     "id": "0aab0d52-c125-48bc-8456-844e71e8ca65",
@@ -401,8 +401,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.MinimumDelivery",
-    "created_at": "2026-07-19T21:11:46.707Z",
-    "updated_at": "2026-07-19T21:11:46.707Z"
+    "created_at": "2026-07-20T01:11:46.707Z",
+    "updated_at": "2026-07-20T01:11:46.707Z"
   },
   {
     "id": "0acd9b70-ae36-428e-9544-53a704f7d19a",
@@ -416,8 +416,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.DeleteRecordBttn",
-    "created_at": "2026-07-19T21:11:49.755Z",
-    "updated_at": "2026-07-19T21:11:49.755Z"
+    "created_at": "2026-07-20T01:11:49.755Z",
+    "updated_at": "2026-07-20T01:11:49.755Z"
   },
   {
     "id": "0af39d91-6ea5-4157-a997-ee5f8e609922",
@@ -431,8 +431,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FullBizTrmTxtBx",
-    "created_at": "2026-07-19T21:11:46.189Z",
-    "updated_at": "2026-07-19T21:11:46.189Z"
+    "created_at": "2026-07-20T01:11:46.189Z",
+    "updated_at": "2026-07-20T01:11:46.189Z"
   },
   {
     "id": "0afadb0c-5bd3-4e12-b211-7bfc51714dca",
@@ -446,8 +446,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_stopwatch.Form",
-    "created_at": "2026-07-19T21:11:56.151Z",
-    "updated_at": "2026-07-19T21:11:56.151Z"
+    "created_at": "2026-07-20T01:11:56.151Z",
+    "updated_at": "2026-07-20T01:11:56.151Z"
   },
   {
     "id": "0c0c6e2b-643c-4592-9f9d-53e6cab8747e",
@@ -461,8 +461,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_order_details_subform",
-    "created_at": "2026-07-19T21:11:49.161Z",
-    "updated_at": "2026-07-19T21:11:49.161Z"
+    "created_at": "2026-07-20T01:11:49.161Z",
+    "updated_at": "2026-07-20T01:11:49.161Z"
   },
   {
     "id": "0c7040f5-7232-43ec-b7dd-e734c09d96de",
@@ -476,8 +476,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.TypeQuickFindCombo",
-    "created_at": "2026-07-19T21:11:45.492Z",
-    "updated_at": "2026-07-19T21:11:45.492Z"
+    "created_at": "2026-07-20T01:11:45.492Z",
+    "updated_at": "2026-07-20T01:11:45.492Z"
   },
   {
     "id": "0d7662ac-2210-4b51-a1dc-bfe7af07d6f0",
@@ -491,8 +491,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.Command87",
-    "created_at": "2026-07-19T21:11:54.368Z",
-    "updated_at": "2026-07-19T21:11:54.368Z"
+    "created_at": "2026-07-20T01:11:54.368Z",
+    "updated_at": "2026-07-20T01:11:54.368Z"
   },
   {
     "id": "0d780272-de0f-4a63-a94a-d3f24ef5ebba",
@@ -506,8 +506,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_stopwatch",
-    "created_at": "2026-07-19T21:11:56.099Z",
-    "updated_at": "2026-07-19T21:11:56.099Z"
+    "created_at": "2026-07-20T01:11:56.099Z",
+    "updated_at": "2026-07-20T01:11:56.099Z"
   },
   {
     "id": "0dbfb6c0-69d4-49da-975b-0d5b1d27ad49",
@@ -521,8 +521,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadEquip",
-    "created_at": "2026-07-19T21:11:46.643Z",
-    "updated_at": "2026-07-19T21:11:46.643Z"
+    "created_at": "2026-07-20T01:11:46.643Z",
+    "updated_at": "2026-07-20T01:11:46.643Z"
   },
   {
     "id": "0de61288-4165-4980-9d45-6566fa336adb",
@@ -536,8 +536,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.CreateDir",
-    "created_at": "2026-07-19T21:11:46.352Z",
-    "updated_at": "2026-07-19T21:11:46.352Z"
+    "created_at": "2026-07-20T01:11:46.352Z",
+    "updated_at": "2026-07-20T01:11:46.352Z"
   },
   {
     "id": "0f05545f-e7ee-4c3f-8223-fa230e8167bf",
@@ -551,8 +551,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.AccntHLDChkbx",
-    "created_at": "2026-07-19T21:11:50.936Z",
-    "updated_at": "2026-07-19T21:11:50.936Z"
+    "created_at": "2026-07-20T01:11:50.936Z",
+    "updated_at": "2026-07-20T01:11:50.936Z"
   },
   {
     "id": "0f1f76a6-fc9b-4263-b0c9-f7e896231ca0",
@@ -566,8 +566,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FTOCoffeeTxtBx",
-    "created_at": "2026-07-19T21:11:46.123Z",
-    "updated_at": "2026-07-19T21:11:46.123Z"
+    "created_at": "2026-07-20T01:11:46.123Z",
+    "updated_at": "2026-07-20T01:11:46.123Z"
   },
   {
     "id": "10213178-716c-4bab-9367-fd6e9106e9e2",
@@ -581,8 +581,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitMarkup",
-    "created_at": "2026-07-19T21:11:54.525Z",
-    "updated_at": "2026-07-19T21:11:54.525Z"
+    "created_at": "2026-07-20T01:11:54.525Z",
+    "updated_at": "2026-07-20T01:11:54.525Z"
   },
   {
     "id": "109589ce-fa6b-4716-bd43-4b23175aa0f5",
@@ -596,8 +596,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitMarkup",
-    "created_at": "2026-07-19T21:11:54.471Z",
-    "updated_at": "2026-07-19T21:11:54.471Z"
+    "created_at": "2026-07-20T01:11:54.471Z",
+    "updated_at": "2026-07-20T01:11:54.471Z"
   },
   {
     "id": "114e3e1b-8136-4147-b089-578cdbceac89",
@@ -611,8 +611,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_report_date_range.Preview",
-    "created_at": "2026-07-19T21:11:55.506Z",
-    "updated_at": "2026-07-19T21:11:55.506Z"
+    "created_at": "2026-07-20T01:11:55.506Z",
+    "updated_at": "2026-07-20T01:11:55.506Z"
   },
   {
     "id": "11524676-adf9-4506-8055-2102ffba8699",
@@ -626,8 +626,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesopens.NextImplication",
-    "created_at": "2026-07-19T21:11:55.748Z",
-    "updated_at": "2026-07-19T21:11:55.748Z"
+    "created_at": "2026-07-20T01:11:55.748Z",
+    "updated_at": "2026-07-20T01:11:55.748Z"
   },
   {
     "id": "11bddf29-8def-492d-bee8-b9ee1a134994",
@@ -641,8 +641,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CasePrice",
-    "created_at": "2026-07-19T21:11:54.294Z",
-    "updated_at": "2026-07-19T21:11:54.294Z"
+    "created_at": "2026-07-20T01:11:54.294Z",
+    "updated_at": "2026-07-20T01:11:54.294Z"
   },
   {
     "id": "12a5bd59-8bdc-4684-84e5-9d3ed3d9cd90",
@@ -656,8 +656,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.Form",
-    "created_at": "2026-07-19T21:11:53.234Z",
-    "updated_at": "2026-07-19T21:11:53.234Z"
+    "created_at": "2026-07-20T01:11:53.234Z",
+    "updated_at": "2026-07-20T01:11:53.234Z"
   },
   {
     "id": "134f3db1-2d17-4384-9f51-835730ff81f6",
@@ -671,8 +671,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.OrderID",
-    "created_at": "2026-07-19T21:11:55.231Z",
-    "updated_at": "2026-07-19T21:11:55.231Z"
+    "created_at": "2026-07-20T01:11:55.231Z",
+    "updated_at": "2026-07-20T01:11:55.231Z"
   },
   {
     "id": "1387c4e1-569b-4447-9a09-25768c0f9b21",
@@ -686,8 +686,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.EmployeeID",
-    "created_at": "2026-07-19T21:11:50.429Z",
-    "updated_at": "2026-07-19T21:11:50.429Z"
+    "created_at": "2026-07-20T01:11:50.429Z",
+    "updated_at": "2026-07-20T01:11:50.429Z"
   },
   {
     "id": "144f0dd6-006d-4528-a6af-34dcd8ae6c97",
@@ -701,8 +701,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_subform.Combo25",
-    "created_at": "2026-07-19T21:11:56.339Z",
-    "updated_at": "2026-07-19T21:11:56.339Z"
+    "created_at": "2026-07-20T01:11:56.339Z",
+    "updated_at": "2026-07-20T01:11:56.339Z"
   },
   {
     "id": "14abe538-a4d6-4752-83c3-7e75378d48d8",
@@ -716,8 +716,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_customer_billingtracking_form",
-    "created_at": "2026-07-19T21:11:45.007Z",
-    "updated_at": "2026-07-19T21:11:45.007Z"
+    "created_at": "2026-07-20T01:11:45.007Z",
+    "updated_at": "2026-07-20T01:11:45.007Z"
   },
   {
     "id": "14e3e02c-7e82-460b-b53a-8124be484e62",
@@ -731,8 +731,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_shipping_methods",
-    "created_at": "2026-07-19T21:11:56.045Z",
-    "updated_at": "2026-07-19T21:11:56.045Z"
+    "created_at": "2026-07-20T01:11:56.045Z",
+    "updated_at": "2026-07-20T01:11:56.045Z"
   },
   {
     "id": "160b8cc8-658a-42b4-8a39-1269092e1e03",
@@ -746,8 +746,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FollowUp",
-    "created_at": "2026-07-19T21:11:47.440Z",
-    "updated_at": "2026-07-19T21:11:47.440Z"
+    "created_at": "2026-07-20T01:11:47.440Z",
+    "updated_at": "2026-07-20T01:11:47.440Z"
   },
   {
     "id": "1621950b-da28-48d2-bd3d-5209f2420ed0",
@@ -761,8 +761,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.Form",
-    "created_at": "2026-07-19T21:11:53.738Z",
-    "updated_at": "2026-07-19T21:11:53.738Z"
+    "created_at": "2026-07-20T01:11:53.738Z",
+    "updated_at": "2026-07-20T01:11:53.738Z"
   },
   {
     "id": "165d38db-3419-478c-9d43-333bbfa658fa",
@@ -776,8 +776,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CompanyName",
-    "created_at": "2026-07-19T21:11:51.169Z",
-    "updated_at": "2026-07-19T21:11:51.169Z"
+    "created_at": "2026-07-20T01:11:51.169Z",
+    "updated_at": "2026-07-20T01:11:51.169Z"
   },
   {
     "id": "16a9e9fb-60e3-49e5-aba0-b0db58e8cbb1",
@@ -791,8 +791,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.StatusComboBx",
-    "created_at": "2026-07-19T21:11:47.031Z",
-    "updated_at": "2026-07-19T21:11:47.031Z"
+    "created_at": "2026-07-20T01:11:47.031Z",
+    "updated_at": "2026-07-20T01:11:47.031Z"
   },
   {
     "id": "1704e879-b17f-47fe-9304-eb460ed4dd81",
@@ -806,8 +806,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.CnfrmEmlBttn",
-    "created_at": "2026-07-19T21:11:49.219Z",
-    "updated_at": "2026-07-19T21:11:49.219Z"
+    "created_at": "2026-07-20T01:11:49.219Z",
+    "updated_at": "2026-07-20T01:11:49.219Z"
   },
   {
     "id": "1729082b-2341-4e41-bca3-af8733ddb2ef",
@@ -821,8 +821,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text128",
-    "created_at": "2026-07-19T21:11:52.283Z",
-    "updated_at": "2026-07-19T21:11:52.283Z"
+    "created_at": "2026-07-20T01:11:52.283Z",
+    "updated_at": "2026-07-20T01:11:52.283Z"
   },
   {
     "id": "1869cab1-7594-4b1d-8a5b-08b2e759bf39",
@@ -836,8 +836,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salessituation.NextImplication",
-    "created_at": "2026-07-19T21:11:55.910Z",
-    "updated_at": "2026-07-19T21:11:55.910Z"
+    "created_at": "2026-07-20T01:11:55.910Z",
+    "updated_at": "2026-07-20T01:11:55.910Z"
   },
   {
     "id": "19960c01-ae27-49e2-8144-b8c501cd9129",
@@ -851,8 +851,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxCConFILE",
-    "created_at": "2026-07-19T21:11:48.226Z",
-    "updated_at": "2026-07-19T21:11:48.226Z"
+    "created_at": "2026-07-20T01:11:48.226Z",
+    "updated_at": "2026-07-20T01:11:48.226Z"
   },
   {
     "id": "19e13cf5-cbf4-42a5-993d-246c48cd0779",
@@ -866,8 +866,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxEFT",
-    "created_at": "2026-07-19T21:11:48.340Z",
-    "updated_at": "2026-07-19T21:11:48.340Z"
+    "created_at": "2026-07-20T01:11:48.340Z",
+    "updated_at": "2026-07-20T01:11:48.340Z"
   },
   {
     "id": "1a50775b-5099-4d33-955a-759edaf47c18",
@@ -881,8 +881,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_parts.Form",
-    "created_at": "2026-07-19T21:11:53.507Z",
-    "updated_at": "2026-07-19T21:11:53.507Z"
+    "created_at": "2026-07-20T01:11:53.507Z",
+    "updated_at": "2026-07-20T01:11:53.507Z"
   },
   {
     "id": "1aa29ed2-2f83-45db-b781-585c66639b22",
@@ -896,8 +896,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.PaymentMethodID",
-    "created_at": "2026-07-19T21:11:53.791Z",
-    "updated_at": "2026-07-19T21:11:53.791Z"
+    "created_at": "2026-07-20T01:11:53.791Z",
+    "updated_at": "2026-07-20T01:11:53.791Z"
   },
   {
     "id": "1bb4ef65-0ce1-4ef7-a3cd-d54621ea4237",
@@ -911,8 +911,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ToBeClosedCmbBx",
-    "created_at": "2026-07-19T21:11:48.019Z",
-    "updated_at": "2026-07-19T21:11:48.019Z"
+    "created_at": "2026-07-20T01:11:48.019Z",
+    "updated_at": "2026-07-20T01:11:48.019Z"
   },
   {
     "id": "1bd5a4c1-5ec1-40e8-98f0-c85d95631b64",
@@ -926,8 +926,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.OrdrExptnBttn",
-    "created_at": "2026-07-19T21:11:49.781Z",
-    "updated_at": "2026-07-19T21:11:49.781Z"
+    "created_at": "2026-07-20T01:11:49.781Z",
+    "updated_at": "2026-07-20T01:11:49.781Z"
   },
   {
     "id": "1d183ff8-4bb5-4550-ae9d-55126ff65824",
@@ -941,8 +941,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_switchboard",
-    "created_at": "2026-07-19T21:11:56.232Z",
-    "updated_at": "2026-07-19T21:11:56.232Z"
+    "created_at": "2026-07-20T01:11:56.232Z",
+    "updated_at": "2026-07-20T01:11:56.232Z"
   },
   {
     "id": "1d30cb79-742f-4ccd-8efe-bdc69f9ea552",
@@ -956,8 +956,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitPerCase",
-    "created_at": "2026-07-19T21:11:54.555Z",
-    "updated_at": "2026-07-19T21:11:54.555Z"
+    "created_at": "2026-07-20T01:11:54.555Z",
+    "updated_at": "2026-07-20T01:11:54.555Z"
   },
   {
     "id": "1d995d5b-f43e-4737-905e-ae1c57e9e176",
@@ -971,8 +971,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text130",
-    "created_at": "2026-07-19T21:11:52.337Z",
-    "updated_at": "2026-07-19T21:11:52.337Z"
+    "created_at": "2026-07-20T01:11:52.337Z",
+    "updated_at": "2026-07-20T01:11:52.337Z"
   },
   {
     "id": "1ddb5fb9-0c25-42ba-841f-2353eb89d6bb",
@@ -986,8 +986,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SuggestTitleBttn",
-    "created_at": "2026-07-19T21:11:47.056Z",
-    "updated_at": "2026-07-19T21:11:47.056Z"
+    "created_at": "2026-07-20T01:11:47.056Z",
+    "updated_at": "2026-07-20T01:11:47.056Z"
   },
   {
     "id": "1e2a58e9-9848-44ec-9cdc-4dcf38b008e1",
@@ -1001,8 +1001,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text132",
-    "created_at": "2026-07-19T21:11:52.383Z",
-    "updated_at": "2026-07-19T21:11:52.383Z"
+    "created_at": "2026-07-20T01:11:52.383Z",
+    "updated_at": "2026-07-20T01:11:52.383Z"
   },
   {
     "id": "1efc2326-3e7c-4587-914d-8c3927fa8cb5",
@@ -1016,8 +1016,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.TxtBxOrderPk",
-    "created_at": "2026-07-19T21:11:52.807Z",
-    "updated_at": "2026-07-19T21:11:52.807Z"
+    "created_at": "2026-07-20T01:11:52.807Z",
+    "updated_at": "2026-07-20T01:11:52.807Z"
   },
   {
     "id": "1f8d350a-c13f-41f0-a930-f472b41a0a09",
@@ -1031,8 +1031,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Country",
-    "created_at": "2026-07-19T21:11:51.362Z",
-    "updated_at": "2026-07-19T21:11:51.362Z"
+    "created_at": "2026-07-20T01:11:51.362Z",
+    "updated_at": "2026-07-20T01:11:51.362Z"
   },
   {
     "id": "2073f34f-93e3-4e88-b445-edad6f8cc785",
@@ -1046,8 +1046,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TermsBttn",
-    "created_at": "2026-07-19T21:11:48.887Z",
-    "updated_at": "2026-07-19T21:11:48.887Z"
+    "created_at": "2026-07-20T01:11:48.887Z",
+    "updated_at": "2026-07-20T01:11:48.887Z"
   },
   {
     "id": "20bdf2ab-2428-4580-9224-0b735a8788e0",
@@ -1061,8 +1061,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text177",
-    "created_at": "2026-07-19T21:11:52.626Z",
-    "updated_at": "2026-07-19T21:11:52.626Z"
+    "created_at": "2026-07-20T01:11:52.626Z",
+    "updated_at": "2026-07-20T01:11:52.626Z"
   },
   {
     "id": "20e55e09-d6eb-4023-a89c-345082a203b8",
@@ -1076,8 +1076,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Command222",
-    "created_at": "2026-07-19T21:11:51.105Z",
-    "updated_at": "2026-07-19T21:11:51.105Z"
+    "created_at": "2026-07-20T01:11:51.105Z",
+    "updated_at": "2026-07-20T01:11:51.105Z"
   },
   {
     "id": "21838484-317d-4652-a127-1530b5eed056",
@@ -1091,8 +1091,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.CustBgTxtBx",
-    "created_at": "2026-07-19T21:11:45.958Z",
-    "updated_at": "2026-07-19T21:11:45.958Z"
+    "created_at": "2026-07-20T01:11:45.958Z",
+    "updated_at": "2026-07-20T01:11:45.958Z"
   },
   {
     "id": "218d12c1-b8c6-4e8c-a855-b6e4bca9f8d7",
@@ -1106,8 +1106,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.AltBrandTxtBx",
-    "created_at": "2026-07-19T21:11:51.022Z",
-    "updated_at": "2026-07-19T21:11:51.022Z"
+    "created_at": "2026-07-20T01:11:51.022Z",
+    "updated_at": "2026-07-20T01:11:51.022Z"
   },
   {
     "id": "21d1519d-9408-4eb5-b27d-5b0fad593d11",
@@ -1121,8 +1121,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CustomerCommentBttn",
-    "created_at": "2026-07-19T21:11:50.910Z",
-    "updated_at": "2026-07-19T21:11:50.910Z"
+    "created_at": "2026-07-20T01:11:50.910Z",
+    "updated_at": "2026-07-20T01:11:50.910Z"
   },
   {
     "id": "2247b2db-f68a-46fc-9b53-1a3c122dbdde",
@@ -1136,8 +1136,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.TxtBxMinDel",
-    "created_at": "2026-07-19T21:11:52.752Z",
-    "updated_at": "2026-07-19T21:11:52.752Z"
+    "created_at": "2026-07-20T01:11:52.752Z",
+    "updated_at": "2026-07-20T01:11:52.752Z"
   },
   {
     "id": "22f00c74-ab8a-439e-aae5-07a76f91607c",
@@ -1151,8 +1151,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_marketingsites.SiteLaunch",
-    "created_at": "2026-07-19T21:11:48.988Z",
-    "updated_at": "2026-07-19T21:11:48.988Z"
+    "created_at": "2026-07-20T01:11:48.988Z",
+    "updated_at": "2026-07-20T01:11:48.988Z"
   },
   {
     "id": "23703799-17b0-4627-9a58-af04537769aa",
@@ -1166,8 +1166,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.Form",
-    "created_at": "2026-07-19T21:11:53.713Z",
-    "updated_at": "2026-07-19T21:11:53.713Z"
+    "created_at": "2026-07-20T01:11:53.713Z",
+    "updated_at": "2026-07-20T01:11:53.713Z"
   },
   {
     "id": "2442962a-26d3-4c7f-8dd7-da32c7a549f6",
@@ -1181,8 +1181,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text136",
-    "created_at": "2026-07-19T21:11:47.623Z",
-    "updated_at": "2026-07-19T21:11:47.623Z"
+    "created_at": "2026-07-20T01:11:47.623Z",
+    "updated_at": "2026-07-20T01:11:47.623Z"
   },
   {
     "id": "2467d86f-bfbb-4a7f-8fa3-6cca9c6f16fe",
@@ -1196,8 +1196,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.CustBgTxtBx",
-    "created_at": "2026-07-19T21:11:45.978Z",
-    "updated_at": "2026-07-19T21:11:45.978Z"
+    "created_at": "2026-07-20T01:11:45.978Z",
+    "updated_at": "2026-07-20T01:11:45.978Z"
   },
   {
     "id": "24e08a93-3480-49fb-8588-54ef810d0ab6",
@@ -1211,8 +1211,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxAgntRt",
-    "created_at": "2026-07-19T21:11:48.097Z",
-    "updated_at": "2026-07-19T21:11:48.097Z"
+    "created_at": "2026-07-20T01:11:48.097Z",
+    "updated_at": "2026-07-20T01:11:48.097Z"
   },
   {
     "id": "25b27752-c1ef-4b42-92a6-5f9de0a9105c",
@@ -1226,8 +1226,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_fcc_erp_development.TxtBxFEAT_ADD_DATE",
-    "created_at": "2026-07-19T21:11:45.648Z",
-    "updated_at": "2026-07-19T21:11:45.648Z"
+    "created_at": "2026-07-20T01:11:45.648Z",
+    "updated_at": "2026-07-20T01:11:45.648Z"
   },
   {
     "id": "25cb6c75-a3df-4250-8a3f-6b3ad202d09f",
@@ -1241,8 +1241,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Fundraising_Terms",
-    "created_at": "2026-07-19T21:11:46.308Z",
-    "updated_at": "2026-07-19T21:11:46.308Z"
+    "created_at": "2026-07-20T01:11:46.308Z",
+    "updated_at": "2026-07-20T01:11:46.308Z"
   },
   {
     "id": "2644a86c-d08a-47dc-be04-134ac622bb31",
@@ -1256,8 +1256,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_deficiencylog.LogViewBttn",
-    "created_at": "2026-07-19T21:11:45.368Z",
-    "updated_at": "2026-07-19T21:11:45.368Z"
+    "created_at": "2026-07-20T01:11:45.368Z",
+    "updated_at": "2026-07-20T01:11:45.368Z"
   },
   {
     "id": "26be41dc-fdf3-4e88-a63c-ac0ab53ab574",
@@ -1271,8 +1271,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.ShippingOptions",
-    "created_at": "2026-07-19T21:11:50.615Z",
-    "updated_at": "2026-07-19T21:11:50.615Z"
+    "created_at": "2026-07-20T01:11:50.615Z",
+    "updated_at": "2026-07-20T01:11:50.615Z"
   },
   {
     "id": "26cca6c6-ee8a-4c91-b519-76aaf78668c5",
@@ -1286,8 +1286,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.OrderExptnBttn",
-    "created_at": "2026-07-19T21:11:50.537Z",
-    "updated_at": "2026-07-19T21:11:50.537Z"
+    "created_at": "2026-07-20T01:11:50.537Z",
+    "updated_at": "2026-07-20T01:11:50.537Z"
   },
   {
     "id": "28357c77-ec61-4ead-9b23-570c7929b808",
@@ -1301,8 +1301,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxOrderFfllFee",
-    "created_at": "2026-07-19T21:11:48.555Z",
-    "updated_at": "2026-07-19T21:11:48.555Z"
+    "created_at": "2026-07-20T01:11:48.555Z",
+    "updated_at": "2026-07-20T01:11:48.555Z"
   },
   {
     "id": "284727e5-61ab-4f67-beac-aef20bec797a",
@@ -1316,8 +1316,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Command87",
-    "created_at": "2026-07-19T21:11:51.336Z",
-    "updated_at": "2026-07-19T21:11:51.336Z"
+    "created_at": "2026-07-20T01:11:51.336Z",
+    "updated_at": "2026-07-20T01:11:51.336Z"
   },
   {
     "id": "28bf47bd-8fb8-4896-a6a4-824435e00044",
@@ -1331,8 +1331,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.ActvCstmr",
-    "created_at": "2026-07-19T21:11:50.998Z",
-    "updated_at": "2026-07-19T21:11:50.998Z"
+    "created_at": "2026-07-20T01:11:50.998Z",
+    "updated_at": "2026-07-20T01:11:50.998Z"
   },
   {
     "id": "29ef3682-6a02-48c5-aa87-06071659ebe0",
@@ -1346,8 +1346,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.ToggleSubform",
-    "created_at": "2026-07-19T21:11:57.079Z",
-    "updated_at": "2026-07-19T21:11:57.079Z"
+    "created_at": "2026-07-20T01:11:57.079Z",
+    "updated_at": "2026-07-20T01:11:57.079Z"
   },
   {
     "id": "2ae02957-26ee-448f-acd6-85a69a7c8930",
@@ -1361,8 +1361,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.Form",
-    "created_at": "2026-07-19T21:11:50.377Z",
-    "updated_at": "2026-07-19T21:11:50.377Z"
+    "created_at": "2026-07-20T01:11:50.377Z",
+    "updated_at": "2026-07-20T01:11:50.377Z"
   },
   {
     "id": "2b18b30f-34d3-4d0e-b369-d885fe528313",
@@ -1376,8 +1376,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text161",
-    "created_at": "2026-07-19T21:11:47.759Z",
-    "updated_at": "2026-07-19T21:11:47.759Z"
+    "created_at": "2026-07-20T01:11:47.759Z",
+    "updated_at": "2026-07-20T01:11:47.759Z"
   },
   {
     "id": "2b70d1a0-36fd-43ab-8469-389de224b70c",
@@ -1391,8 +1391,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.StateOrProvince",
-    "created_at": "2026-07-19T21:11:47.005Z",
-    "updated_at": "2026-07-19T21:11:47.005Z"
+    "created_at": "2026-07-20T01:11:47.005Z",
+    "updated_at": "2026-07-20T01:11:47.005Z"
   },
   {
     "id": "2c16466a-12dd-4309-8ace-7748bc1c24ba",
@@ -1406,8 +1406,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorders",
-    "created_at": "2026-07-19T21:11:56.851Z",
-    "updated_at": "2026-07-19T21:11:56.851Z"
+    "created_at": "2026-07-20T01:11:56.851Z",
+    "updated_at": "2026-07-20T01:11:56.851Z"
   },
   {
     "id": "2c250fcb-e860-4173-bdc0-a28c0daae823",
@@ -1421,8 +1421,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CaseCost",
-    "created_at": "2026-07-19T21:11:54.172Z",
-    "updated_at": "2026-07-19T21:11:54.172Z"
+    "created_at": "2026-07-20T01:11:54.172Z",
+    "updated_at": "2026-07-20T01:11:54.172Z"
   },
   {
     "id": "2cb9b9ad-b57a-4ca4-aac9-45b210d87c41",
@@ -1436,8 +1436,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.Form",
-    "created_at": "2026-07-19T21:11:56.903Z",
-    "updated_at": "2026-07-19T21:11:56.903Z"
+    "created_at": "2026-07-20T01:11:56.903Z",
+    "updated_at": "2026-07-20T01:11:56.903Z"
   },
   {
     "id": "2d0dc051-7340-440c-a45b-9ec0591742cb",
@@ -1451,8 +1451,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.PriceListBttn",
-    "created_at": "2026-07-19T21:11:54.631Z",
-    "updated_at": "2026-07-19T21:11:54.631Z"
+    "created_at": "2026-07-20T01:11:54.631Z",
+    "updated_at": "2026-07-20T01:11:54.631Z"
   },
   {
     "id": "2e5c71b0-0691-4511-8992-67aeac730a97",
@@ -1466,8 +1466,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_customer_billingtracking_form",
-    "created_at": "2026-07-19T21:11:45.033Z",
-    "updated_at": "2026-07-19T21:11:45.033Z"
+    "created_at": "2026-07-20T01:11:45.033Z",
+    "updated_at": "2026-07-20T01:11:45.033Z"
   },
   {
     "id": "2f6a641b-1bb9-4cc6-b0c1-26d09d5b1f81",
@@ -1481,8 +1481,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.SHIP_FUEL_SRCHGTxtbx",
-    "created_at": "2026-07-19T21:11:52.186Z",
-    "updated_at": "2026-07-19T21:11:52.186Z"
+    "created_at": "2026-07-20T01:11:52.186Z",
+    "updated_at": "2026-07-20T01:11:52.186Z"
   },
   {
     "id": "2f938bd2-bf0d-41e3-be69-72ac8796b0a4",
@@ -1496,8 +1496,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.Workorder_Labor",
-    "created_at": "2026-07-19T21:11:57.015Z",
-    "updated_at": "2026-07-19T21:11:57.015Z"
+    "created_at": "2026-07-20T01:11:57.015Z",
+    "updated_at": "2026-07-20T01:11:57.015Z"
   },
   {
     "id": "3031ccd3-7d4c-436c-826e-1002fa7ef902",
@@ -1511,8 +1511,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordercomplete_form.PuRqstBttn",
-    "created_at": "2026-07-19T21:11:49.623Z",
-    "updated_at": "2026-07-19T21:11:49.623Z"
+    "created_at": "2026-07-20T01:11:49.623Z",
+    "updated_at": "2026-07-20T01:11:49.623Z"
   },
   {
     "id": "30c32242-e76d-4b48-b912-5ad6098aeb09",
@@ -1526,8 +1526,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesproblemimplications.PreviousProblem",
-    "created_at": "2026-07-19T21:11:55.776Z",
-    "updated_at": "2026-07-19T21:11:55.776Z"
+    "created_at": "2026-07-20T01:11:55.776Z",
+    "updated_at": "2026-07-20T01:11:55.776Z"
   },
   {
     "id": "30de51c4-613b-4086-b043-0c58e89d425a",
@@ -1541,8 +1541,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.PriceListBttn",
-    "created_at": "2026-07-19T21:11:47.163Z",
-    "updated_at": "2026-07-19T21:11:47.163Z"
+    "created_at": "2026-07-20T01:11:47.163Z",
+    "updated_at": "2026-07-20T01:11:47.163Z"
   },
   {
     "id": "30e2bcd6-0199-4579-b18d-0e4682b989d0",
@@ -1556,8 +1556,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBPAD",
-    "created_at": "2026-07-19T21:11:48.070Z",
-    "updated_at": "2026-07-19T21:11:48.070Z"
+    "created_at": "2026-07-20T01:11:48.070Z",
+    "updated_at": "2026-07-20T01:11:48.070Z"
   },
   {
     "id": "313bb244-c893-4d5a-b4dc-88417db76192",
@@ -1571,8 +1571,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_subform.DateRequired",
-    "created_at": "2026-07-19T21:11:56.427Z",
-    "updated_at": "2026-07-19T21:11:56.427Z"
+    "created_at": "2026-07-20T01:11:56.427Z",
+    "updated_at": "2026-07-20T01:11:56.427Z"
   },
   {
     "id": "327abff4-f0f7-46ba-a02c-b3acb905cfbf",
@@ -1586,8 +1586,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesimplication_subform.PreviousImplication",
-    "created_at": "2026-07-19T21:11:55.619Z",
-    "updated_at": "2026-07-19T21:11:55.619Z"
+    "created_at": "2026-07-20T01:11:55.619Z",
+    "updated_at": "2026-07-20T01:11:55.619Z"
   },
   {
     "id": "32f6790b-664f-4c27-b329-ee8779121132",
@@ -1601,8 +1601,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.TxtBxShipCountry",
-    "created_at": "2026-07-19T21:11:50.671Z",
-    "updated_at": "2026-07-19T21:11:50.671Z"
+    "created_at": "2026-07-20T01:11:50.671Z",
+    "updated_at": "2026-07-20T01:11:50.671Z"
   },
   {
     "id": "33168f40-e275-4d9a-96d5-21f9b3e14013",
@@ -1616,8 +1616,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Command303",
-    "created_at": "2026-07-19T21:11:46.233Z",
-    "updated_at": "2026-07-19T21:11:46.233Z"
+    "created_at": "2026-07-20T01:11:46.233Z",
+    "updated_at": "2026-07-20T01:11:46.233Z"
   },
   {
     "id": "3378f7f4-2d95-425e-bfad-d9d01dbf02d2",
@@ -1631,8 +1631,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorders_by_customer",
-    "created_at": "2026-07-19T21:11:57.110Z",
-    "updated_at": "2026-07-19T21:11:57.110Z"
+    "created_at": "2026-07-20T01:11:57.110Z",
+    "updated_at": "2026-07-20T01:11:57.110Z"
   },
   {
     "id": "33ca2f85-b35b-458b-b8a0-d5dc1cec9cf6",
@@ -1646,8 +1646,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_labor.EmployeeID",
-    "created_at": "2026-07-19T21:11:56.547Z",
-    "updated_at": "2026-07-19T21:11:56.547Z"
+    "created_at": "2026-07-20T01:11:56.547Z",
+    "updated_at": "2026-07-20T01:11:56.547Z"
   },
   {
     "id": "3542bfa6-ae71-423a-bab2-f3d2bba74477",
@@ -1661,8 +1661,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.InsertDateBttn",
-    "created_at": "2026-07-19T21:11:46.579Z",
-    "updated_at": "2026-07-19T21:11:46.579Z"
+    "created_at": "2026-07-20T01:11:46.579Z",
+    "updated_at": "2026-07-20T01:11:46.579Z"
   },
   {
     "id": "355e4f18-9bda-4965-83cf-e2201a86d2e3",
@@ -1676,8 +1676,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.EmployeeID",
-    "created_at": "2026-07-19T21:11:53.308Z",
-    "updated_at": "2026-07-19T21:11:53.308Z"
+    "created_at": "2026-07-20T01:11:53.308Z",
+    "updated_at": "2026-07-20T01:11:53.308Z"
   },
   {
     "id": "35fdbd22-24a4-4d42-bb9c-c0ba6750b473",
@@ -1691,8 +1691,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxFullBizTrm",
-    "created_at": "2026-07-19T21:11:48.452Z",
-    "updated_at": "2026-07-19T21:11:48.452Z"
+    "created_at": "2026-07-20T01:11:48.452Z",
+    "updated_at": "2026-07-20T01:11:48.452Z"
   },
   {
     "id": "362c9723-d06d-46aa-aefa-e24adf385bc1",
@@ -1706,8 +1706,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.deleteme",
-    "created_at": "2026-07-19T21:11:52.139Z",
-    "updated_at": "2026-07-19T21:11:52.139Z"
+    "created_at": "2026-07-20T01:11:52.139Z",
+    "updated_at": "2026-07-20T01:11:52.139Z"
   },
   {
     "id": "36df51f2-f346-4512-8584-cca7c87c0ef6",
@@ -1721,8 +1721,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.EmployeeID",
-    "created_at": "2026-07-19T21:11:54.955Z",
-    "updated_at": "2026-07-19T21:11:54.955Z"
+    "created_at": "2026-07-20T01:11:54.955Z",
+    "updated_at": "2026-07-20T01:11:54.955Z"
   },
   {
     "id": "36eb6975-d489-4111-8601-3654ffa94451",
@@ -1736,8 +1736,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.TypeQuickFindCombo",
-    "created_at": "2026-07-19T21:11:45.511Z",
-    "updated_at": "2026-07-19T21:11:45.511Z"
+    "created_at": "2026-07-20T01:11:45.511Z",
+    "updated_at": "2026-07-20T01:11:45.511Z"
   },
   {
     "id": "379b668c-28ef-482f-9aca-174485a391f0",
@@ -1751,8 +1751,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FreeShipping",
-    "created_at": "2026-07-19T21:11:46.557Z",
-    "updated_at": "2026-07-19T21:11:46.557Z"
+    "created_at": "2026-07-20T01:11:46.557Z",
+    "updated_at": "2026-07-20T01:11:46.557Z"
   },
   {
     "id": "38e13422-619a-45f3-aa9f-9a8daaf17339",
@@ -1766,8 +1766,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:55.011Z",
-    "updated_at": "2026-07-19T21:11:55.011Z"
+    "created_at": "2026-07-20T01:11:55.011Z",
+    "updated_at": "2026-07-20T01:11:55.011Z"
   },
   {
     "id": "3923e9e6-5e35-42ac-9b4f-f5727ca2968e",
@@ -1781,8 +1781,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_parts.Form",
-    "created_at": "2026-07-19T21:11:56.676Z",
-    "updated_at": "2026-07-19T21:11:56.676Z"
+    "created_at": "2026-07-20T01:11:56.676Z",
+    "updated_at": "2026-07-20T01:11:56.676Z"
   },
   {
     "id": "3a0f38fd-05ab-4454-a2ac-2d2c400d8349",
@@ -1796,8 +1796,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxFTOCoffee",
-    "created_at": "2026-07-19T21:11:48.423Z",
-    "updated_at": "2026-07-19T21:11:48.423Z"
+    "created_at": "2026-07-20T01:11:48.423Z",
+    "updated_at": "2026-07-20T01:11:48.423Z"
   },
   {
     "id": "3d43567f-aec2-477f-95fb-07cb5a359ff9",
@@ -1811,8 +1811,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach6",
-    "created_at": "2026-07-19T21:11:45.240Z",
-    "updated_at": "2026-07-19T21:11:45.240Z"
+    "created_at": "2026-07-20T01:11:45.240Z",
+    "updated_at": "2026-07-20T01:11:45.240Z"
   },
   {
     "id": "3d4c6d6f-9c1c-4172-8850-41a5956ed606",
@@ -1826,8 +1826,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.RegBillRepBttn",
-    "created_at": "2026-07-19T21:11:50.097Z",
-    "updated_at": "2026-07-19T21:11:50.097Z"
+    "created_at": "2026-07-20T01:11:50.097Z",
+    "updated_at": "2026-07-20T01:11:50.097Z"
   },
   {
     "id": "3df5e6db-b39a-42bd-8ca0-d5766e5a8256",
@@ -1841,8 +1841,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesproblemimplications.NextProblem",
-    "created_at": "2026-07-19T21:11:55.802Z",
-    "updated_at": "2026-07-19T21:11:55.802Z"
+    "created_at": "2026-07-20T01:11:55.802Z",
+    "updated_at": "2026-07-20T01:11:55.802Z"
   },
   {
     "id": "3e0d270c-4d68-49f5-b2b1-d42a15d7efcd",
@@ -1856,8 +1856,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorder_labor",
-    "created_at": "2026-07-19T21:11:56.479Z",
-    "updated_at": "2026-07-19T21:11:56.479Z"
+    "created_at": "2026-07-20T01:11:56.479Z",
+    "updated_at": "2026-07-20T01:11:56.479Z"
   },
   {
     "id": "3fcc7c29-f775-4f3f-a6c0-1e1b1df44bfb",
@@ -1871,8 +1871,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Form",
-    "created_at": "2026-07-19T21:11:51.732Z",
-    "updated_at": "2026-07-19T21:11:51.732Z"
+    "created_at": "2026-07-20T01:11:51.732Z",
+    "updated_at": "2026-07-20T01:11:51.732Z"
   },
   {
     "id": "4003dffa-4134-47be-a9f2-9937d9a23112",
@@ -1886,8 +1886,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:49.398Z",
-    "updated_at": "2026-07-19T21:11:49.398Z"
+    "created_at": "2026-07-20T01:11:49.398Z",
+    "updated_at": "2026-07-20T01:11:49.398Z"
   },
   {
     "id": "407dfb00-b8f2-40e5-a979-45fe683d17b2",
@@ -1901,8 +1901,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.CreditLimit",
-    "created_at": "2026-07-19T21:11:46.373Z",
-    "updated_at": "2026-07-19T21:11:46.373Z"
+    "created_at": "2026-07-20T01:11:46.373Z",
+    "updated_at": "2026-07-20T01:11:46.373Z"
   },
   {
     "id": "407f9040-3ad2-4de1-81fc-9a9e5da85b5f",
@@ -1916,8 +1916,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:55.037Z",
-    "updated_at": "2026-07-19T21:11:55.037Z"
+    "created_at": "2026-07-20T01:11:55.037Z",
+    "updated_at": "2026-07-20T01:11:55.037Z"
   },
   {
     "id": "40979f81-5755-4490-8a8f-f9256327a223",
@@ -1931,8 +1931,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text139",
-    "created_at": "2026-07-19T21:11:47.681Z",
-    "updated_at": "2026-07-19T21:11:47.681Z"
+    "created_at": "2026-07-20T01:11:47.681Z",
+    "updated_at": "2026-07-20T01:11:47.681Z"
   },
   {
     "id": "40dba98b-aa4b-4b9a-ace2-fcf53e80ee6d",
@@ -1946,8 +1946,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_print_invoice.OK",
-    "created_at": "2026-07-19T21:11:53.947Z",
-    "updated_at": "2026-07-19T21:11:53.947Z"
+    "created_at": "2026-07-20T01:11:53.947Z",
+    "updated_at": "2026-07-20T01:11:53.947Z"
   },
   {
     "id": "411d6f75-b4fc-4e54-ad79-1f1dc31727ab",
@@ -1961,8 +1961,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text163",
-    "created_at": "2026-07-19T21:11:52.513Z",
-    "updated_at": "2026-07-19T21:11:52.513Z"
+    "created_at": "2026-07-20T01:11:52.513Z",
+    "updated_at": "2026-07-20T01:11:52.513Z"
   },
   {
     "id": "427b642b-3ed2-47b8-9939-cab370dba286",
@@ -1976,8 +1976,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.UnfilledOrdrsBttn",
-    "created_at": "2026-07-19T21:11:52.840Z",
-    "updated_at": "2026-07-19T21:11:52.840Z"
+    "created_at": "2026-07-20T01:11:52.840Z",
+    "updated_at": "2026-07-20T01:11:52.840Z"
   },
   {
     "id": "42f2a60b-1129-4d31-9344-4151ed546892",
@@ -1991,8 +1991,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_ordersproduction",
-    "created_at": "2026-07-19T21:11:53.186Z",
-    "updated_at": "2026-07-19T21:11:53.186Z"
+    "created_at": "2026-07-20T01:11:53.186Z",
+    "updated_at": "2026-07-20T01:11:53.186Z"
   },
   {
     "id": "4301655a-fc7d-4209-8975-9a4981b6a1a1",
@@ -2006,8 +2006,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_onlineassets_subform.Country",
-    "created_at": "2026-07-19T21:11:49.046Z",
-    "updated_at": "2026-07-19T21:11:49.046Z"
+    "created_at": "2026-07-20T01:11:49.046Z",
+    "updated_at": "2026-07-20T01:11:49.046Z"
   },
   {
     "id": "431ed96f-6429-4aa4-a7a2-617975164d1a",
@@ -2021,8 +2021,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_deliverytools.Suggest_a_trip_route",
-    "created_at": "2026-07-19T21:11:45.411Z",
-    "updated_at": "2026-07-19T21:11:45.411Z"
+    "created_at": "2026-07-20T01:11:45.411Z",
+    "updated_at": "2026-07-20T01:11:45.411Z"
   },
   {
     "id": "4331b0fb-c816-4187-ab79-54811d257af8",
@@ -2036,8 +2036,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_report_date_range1.Form",
-    "created_at": "2026-07-19T21:11:55.567Z",
-    "updated_at": "2026-07-19T21:11:55.567Z"
+    "created_at": "2026-07-20T01:11:55.567Z",
+    "updated_at": "2026-07-20T01:11:55.567Z"
   },
   {
     "id": "43467a19-9d36-4616-bef4-c61159708c8d",
@@ -2051,8 +2051,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.MapBttn",
-    "created_at": "2026-07-19T21:11:52.897Z",
-    "updated_at": "2026-07-19T21:11:52.897Z"
+    "created_at": "2026-07-20T01:11:52.897Z",
+    "updated_at": "2026-07-20T01:11:52.897Z"
   },
   {
     "id": "43661606-002b-4d05-866b-e7c94b157654",
@@ -2066,8 +2066,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.Form",
-    "created_at": "2026-07-19T21:11:53.687Z",
-    "updated_at": "2026-07-19T21:11:53.687Z"
+    "created_at": "2026-07-20T01:11:53.687Z",
+    "updated_at": "2026-07-20T01:11:53.687Z"
   },
   {
     "id": "438ae5dc-77d6-41d1-b68a-c4a6f45bf865",
@@ -2081,8 +2081,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.LastPriceChangeTxtBx",
-    "created_at": "2026-07-19T21:11:51.962Z",
-    "updated_at": "2026-07-19T21:11:51.962Z"
+    "created_at": "2026-07-20T01:11:51.962Z",
+    "updated_at": "2026-07-20T01:11:51.962Z"
   },
   {
     "id": "43fe20dd-df8a-485e-a4b0-7f1eda943c07",
@@ -2096,8 +2096,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Command29",
-    "created_at": "2026-07-19T21:11:49.537Z",
-    "updated_at": "2026-07-19T21:11:49.537Z"
+    "created_at": "2026-07-20T01:11:49.537Z",
+    "updated_at": "2026-07-20T01:11:49.537Z"
   },
   {
     "id": "4411e1fd-0c5d-4609-852c-904716107d3b",
@@ -2111,8 +2111,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.ContactEmailTxtBox",
-    "created_at": "2026-07-19T21:11:51.655Z",
-    "updated_at": "2026-07-19T21:11:51.655Z"
+    "created_at": "2026-07-20T01:11:51.655Z",
+    "updated_at": "2026-07-20T01:11:51.655Z"
   },
   {
     "id": "44ad8fb6-9fef-460f-8dfa-f346c58df151",
@@ -2126,8 +2126,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach0",
-    "created_at": "2026-07-19T21:11:45.099Z",
-    "updated_at": "2026-07-19T21:11:45.099Z"
+    "created_at": "2026-07-20T01:11:45.099Z",
+    "updated_at": "2026-07-20T01:11:45.099Z"
   },
   {
     "id": "45253af8-c1bd-4262-9f72-b550fb091b91",
@@ -2141,8 +2141,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_assets_subform.Combo17",
-    "created_at": "2026-07-19T21:11:44.689Z",
-    "updated_at": "2026-07-19T21:11:44.689Z"
+    "created_at": "2026-07-20T01:11:44.689Z",
+    "updated_at": "2026-07-20T01:11:44.689Z"
   },
   {
     "id": "4565ff62-1595-4ade-ab0b-2be02529d8a2",
@@ -2156,8 +2156,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text136",
-    "created_at": "2026-07-19T21:11:52.406Z",
-    "updated_at": "2026-07-19T21:11:52.406Z"
+    "created_at": "2026-07-20T01:11:52.406Z",
+    "updated_at": "2026-07-20T01:11:52.406Z"
   },
   {
     "id": "45fcf37f-5ad0-4196-a0de-f357c2dee04e",
@@ -2171,8 +2171,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ready_for_pick_up_form.TxtBxOrdrFlld",
-    "created_at": "2026-07-19T21:11:55.421Z",
-    "updated_at": "2026-07-19T21:11:55.421Z"
+    "created_at": "2026-07-20T01:11:55.421Z",
+    "updated_at": "2026-07-20T01:11:55.421Z"
   },
   {
     "id": "46c2c43e-b446-4cd4-98c3-a6fdaf252309",
@@ -2186,8 +2186,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.TypeQuickFindCombo",
-    "created_at": "2026-07-19T21:11:54.418Z",
-    "updated_at": "2026-07-19T21:11:54.418Z"
+    "created_at": "2026-07-20T01:11:54.418Z",
+    "updated_at": "2026-07-20T01:11:54.418Z"
   },
   {
     "id": "4724e8d8-b481-4aa3-905f-6a4917d09406",
@@ -2201,8 +2201,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform1.Calculate_Order_Total",
-    "created_at": "2026-07-19T21:11:50.144Z",
-    "updated_at": "2026-07-19T21:11:50.144Z"
+    "created_at": "2026-07-20T01:11:50.144Z",
+    "updated_at": "2026-07-20T01:11:50.144Z"
   },
   {
     "id": "47728f5c-a466-49bf-b904-e59ef782664e",
@@ -2216,8 +2216,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach2",
-    "created_at": "2026-07-19T21:11:45.139Z",
-    "updated_at": "2026-07-19T21:11:45.139Z"
+    "created_at": "2026-07-20T01:11:45.139Z",
+    "updated_at": "2026-07-20T01:11:45.139Z"
   },
   {
     "id": "4775ecb0-b54c-4ea1-885d-7e4c4918684d",
@@ -2231,8 +2231,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.EquipTxtBx",
-    "created_at": "2026-07-19T21:11:51.488Z",
-    "updated_at": "2026-07-19T21:11:51.488Z"
+    "created_at": "2026-07-20T01:11:51.488Z",
+    "updated_at": "2026-07-20T01:11:51.488Z"
   },
   {
     "id": "47bcb77a-71a8-478f-8c4e-7735036bb4e3",
@@ -2246,8 +2246,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:49.429Z",
-    "updated_at": "2026-07-19T21:11:49.429Z"
+    "created_at": "2026-07-20T01:11:49.429Z",
+    "updated_at": "2026-07-20T01:11:49.429Z"
   },
   {
     "id": "48db2fef-1795-4d55-ac1b-81873a529c65",
@@ -2261,8 +2261,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:49.475Z",
-    "updated_at": "2026-07-19T21:11:49.475Z"
+    "created_at": "2026-07-20T01:11:49.475Z",
+    "updated_at": "2026-07-20T01:11:49.475Z"
   },
   {
     "id": "498a375f-267e-4494-a022-eeaa61e5752d",
@@ -2276,8 +2276,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ReferenceText",
-    "created_at": "2026-07-19T21:11:46.894Z",
-    "updated_at": "2026-07-19T21:11:46.894Z"
+    "created_at": "2026-07-20T01:11:46.894Z",
+    "updated_at": "2026-07-20T01:11:46.894Z"
   },
   {
     "id": "49d0e0f5-eb67-4581-a2a5-67f5d6ba23a2",
@@ -2291,8 +2291,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Command334",
-    "created_at": "2026-07-19T21:11:46.030Z",
-    "updated_at": "2026-07-19T21:11:46.030Z"
+    "created_at": "2026-07-20T01:11:46.030Z",
+    "updated_at": "2026-07-20T01:11:46.030Z"
   },
   {
     "id": "49d105d3-f64f-4c56-9d9f-6351145d75e3",
@@ -2306,8 +2306,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text132",
-    "created_at": "2026-07-19T21:11:47.582Z",
-    "updated_at": "2026-07-19T21:11:47.582Z"
+    "created_at": "2026-07-20T01:11:47.582Z",
+    "updated_at": "2026-07-20T01:11:47.582Z"
   },
   {
     "id": "4b8690b7-b565-4c72-9bcb-e283e017de98",
@@ -2321,8 +2321,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders",
-    "created_at": "2026-07-19T21:11:50.282Z",
-    "updated_at": "2026-07-19T21:11:50.282Z"
+    "created_at": "2026-07-20T01:11:50.282Z",
+    "updated_at": "2026-07-20T01:11:50.282Z"
   },
   {
     "id": "4bfd9d3e-8db3-4362-8de1-7445607264cf",
@@ -2336,8 +2336,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Filter1stBothButton",
-    "created_at": "2026-07-19T21:11:51.580Z",
-    "updated_at": "2026-07-19T21:11:51.580Z"
+    "created_at": "2026-07-20T01:11:51.580Z",
+    "updated_at": "2026-07-20T01:11:51.580Z"
   },
   {
     "id": "4ce976b4-fde5-4af7-bf6f-150aa6cc4ea0",
@@ -2351,8 +2351,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordercomplete_form.TxtBxOrdrFlld",
-    "created_at": "2026-07-19T21:11:49.651Z",
-    "updated_at": "2026-07-19T21:11:49.651Z"
+    "created_at": "2026-07-20T01:11:49.651Z",
+    "updated_at": "2026-07-20T01:11:49.651Z"
   },
   {
     "id": "4d5c04f6-5300-47d3-8e2a-8998c3b0be24",
@@ -2366,8 +2366,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.UnitPrice",
-    "created_at": "2026-07-19T21:11:44.918Z",
-    "updated_at": "2026-07-19T21:11:44.918Z"
+    "created_at": "2026-07-20T01:11:44.918Z",
+    "updated_at": "2026-07-20T01:11:44.918Z"
   },
   {
     "id": "4d5ef2b9-09c4-4d60-845e-03f79813aaf7",
@@ -2381,8 +2381,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxFullBizTrm",
-    "created_at": "2026-07-19T21:11:48.476Z",
-    "updated_at": "2026-07-19T21:11:48.476Z"
+    "created_at": "2026-07-20T01:11:48.476Z",
+    "updated_at": "2026-07-20T01:11:48.476Z"
   },
   {
     "id": "4da02cf3-47aa-45d9-bcc1-5089ddb786db",
@@ -2396,8 +2396,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text177",
-    "created_at": "2026-07-19T21:11:47.863Z",
-    "updated_at": "2026-07-19T21:11:47.863Z"
+    "created_at": "2026-07-20T01:11:47.863Z",
+    "updated_at": "2026-07-20T01:11:47.863Z"
   },
   {
     "id": "4e340cc3-ab90-4683-94da-a504f8df9884",
@@ -2411,8 +2411,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:53.411Z",
-    "updated_at": "2026-07-19T21:11:53.411Z"
+    "created_at": "2026-07-20T01:11:53.411Z",
+    "updated_at": "2026-07-20T01:11:53.411Z"
   },
   {
     "id": "4e72ae4e-3a69-41ef-aa83-203c94c07be5",
@@ -2426,8 +2426,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.OrderFormsShowBttn",
-    "created_at": "2026-07-19T21:11:45.446Z",
-    "updated_at": "2026-07-19T21:11:45.446Z"
+    "created_at": "2026-07-20T01:11:45.446Z",
+    "updated_at": "2026-07-20T01:11:45.446Z"
   },
   {
     "id": "4eb147ed-ed76-4548-9e7b-7fa4b4745868",
@@ -2441,8 +2441,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.PrefCallCombo",
-    "created_at": "2026-07-19T21:11:52.070Z",
-    "updated_at": "2026-07-19T21:11:52.070Z"
+    "created_at": "2026-07-20T01:11:52.070Z",
+    "updated_at": "2026-07-20T01:11:52.070Z"
   },
   {
     "id": "514a781e-00cf-449a-88c0-1608ad314130",
@@ -2456,8 +2456,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.OrderDate",
-    "created_at": "2026-07-19T21:11:53.004Z",
-    "updated_at": "2026-07-19T21:11:53.004Z"
+    "created_at": "2026-07-20T01:11:53.004Z",
+    "updated_at": "2026-07-20T01:11:53.004Z"
   },
   {
     "id": "51546813-7522-4e30-8f39-06fcaabb48f6",
@@ -2471,8 +2471,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_parts.Part_Label",
-    "created_at": "2026-07-19T21:11:53.535Z",
-    "updated_at": "2026-07-19T21:11:53.535Z"
+    "created_at": "2026-07-20T01:11:53.535Z",
+    "updated_at": "2026-07-20T01:11:53.535Z"
   },
   {
     "id": "517e3a27-c764-49d8-9728-a64d932f341a",
@@ -2486,8 +2486,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform1.Command31",
-    "created_at": "2026-07-19T21:11:50.224Z",
-    "updated_at": "2026-07-19T21:11:50.224Z"
+    "created_at": "2026-07-20T01:11:50.224Z",
+    "updated_at": "2026-07-20T01:11:50.224Z"
   },
   {
     "id": "52bff6a1-f198-4a43-a99b-92f65695833a",
@@ -2501,8 +2501,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesproblempayoff.NextProblem",
-    "created_at": "2026-07-19T21:11:55.850Z",
-    "updated_at": "2026-07-19T21:11:55.850Z"
+    "created_at": "2026-07-20T01:11:55.850Z",
+    "updated_at": "2026-07-20T01:11:55.850Z"
   },
   {
     "id": "54c04ddc-429d-42f6-bacc-2311099650bd",
@@ -2516,8 +2516,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CaseMarkup",
-    "created_at": "2026-07-19T21:11:54.217Z",
-    "updated_at": "2026-07-19T21:11:54.217Z"
+    "created_at": "2026-07-20T01:11:54.217Z",
+    "updated_at": "2026-07-20T01:11:54.217Z"
   },
   {
     "id": "5575cff9-975c-47c3-958f-24c9d52a3a54",
@@ -2531,8 +2531,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.Command36",
-    "created_at": "2026-07-19T21:11:50.645Z",
-    "updated_at": "2026-07-19T21:11:50.645Z"
+    "created_at": "2026-07-20T01:11:50.645Z",
+    "updated_at": "2026-07-20T01:11:50.645Z"
   },
   {
     "id": "559adb7b-15e0-4fed-948c-74702b2fa836",
@@ -2546,8 +2546,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Validity",
-    "created_at": "2026-07-19T21:11:48.837Z",
-    "updated_at": "2026-07-19T21:11:48.837Z"
+    "created_at": "2026-07-20T01:11:48.837Z",
+    "updated_at": "2026-07-20T01:11:48.837Z"
   },
   {
     "id": "565aad67-9e26-40d0-b3b7-db57b413c980",
@@ -2561,8 +2561,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.Case_Price",
-    "created_at": "2026-07-19T21:11:54.654Z",
-    "updated_at": "2026-07-19T21:11:54.654Z"
+    "created_at": "2026-07-20T01:11:54.654Z",
+    "updated_at": "2026-07-20T01:11:54.654Z"
   },
   {
     "id": "56aa5f13-799e-4269-be6d-b99a03d823b9",
@@ -2576,8 +2576,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.CallLead",
-    "created_at": "2026-07-19T21:11:47.104Z",
-    "updated_at": "2026-07-19T21:11:47.104Z"
+    "created_at": "2026-07-20T01:11:47.104Z",
+    "updated_at": "2026-07-20T01:11:47.104Z"
   },
   {
     "id": "573db62f-5428-4cfc-bed4-3bbab7b628d9",
@@ -2591,8 +2591,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Ctl1LbGNDOrdrBttn",
-    "created_at": "2026-07-19T21:11:49.240Z",
-    "updated_at": "2026-07-19T21:11:49.240Z"
+    "created_at": "2026-07-20T01:11:49.240Z",
+    "updated_at": "2026-07-20T01:11:49.240Z"
   },
   {
     "id": "57f54d5f-9126-4e48-a7f3-a67f4876f199",
@@ -2606,8 +2606,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.PrcTg",
-    "created_at": "2026-07-19T21:11:45.570Z",
-    "updated_at": "2026-07-19T21:11:45.570Z"
+    "created_at": "2026-07-20T01:11:45.570Z",
+    "updated_at": "2026-07-20T01:11:45.570Z"
   },
   {
     "id": "58a82f1d-c912-4264-9be3-987a85b32dc4",
@@ -2621,8 +2621,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text177",
-    "created_at": "2026-07-19T21:11:52.652Z",
-    "updated_at": "2026-07-19T21:11:52.652Z"
+    "created_at": "2026-07-20T01:11:52.652Z",
+    "updated_at": "2026-07-20T01:11:52.652Z"
   },
   {
     "id": "594cc82d-5655-4995-bb72-f673c9cb2c99",
@@ -2636,8 +2636,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.AltBrandTxtBx",
-    "created_at": "2026-07-19T21:11:45.815Z",
-    "updated_at": "2026-07-19T21:11:45.815Z"
+    "created_at": "2026-07-20T01:11:45.815Z",
+    "updated_at": "2026-07-20T01:11:45.815Z"
   },
   {
     "id": "59bbcc8f-ae00-4d1d-a6da-d2bc6cb77b69",
@@ -2651,8 +2651,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesimplication_subform.NextImplication",
-    "created_at": "2026-07-19T21:11:55.644Z",
-    "updated_at": "2026-07-19T21:11:55.644Z"
+    "created_at": "2026-07-20T01:11:55.644Z",
+    "updated_at": "2026-07-20T01:11:55.644Z"
   },
   {
     "id": "59bf9317-3ea0-4b60-81bc-c492bb0d7d6f",
@@ -2666,8 +2666,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_quote",
-    "created_at": "2026-07-19T21:11:54.792Z",
-    "updated_at": "2026-07-19T21:11:54.792Z"
+    "created_at": "2026-07-20T01:11:54.792Z",
+    "updated_at": "2026-07-20T01:11:54.792Z"
   },
   {
     "id": "5a0f28c4-daf0-4c5f-88a4-14ff353e7bca",
@@ -2681,8 +2681,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CasePrice",
-    "created_at": "2026-07-19T21:11:54.321Z",
-    "updated_at": "2026-07-19T21:11:54.321Z"
+    "created_at": "2026-07-20T01:11:54.321Z",
+    "updated_at": "2026-07-20T01:11:54.321Z"
   },
   {
     "id": "5a26d429-e40f-4b3b-a7a4-cdd5902904bd",
@@ -2696,8 +2696,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FullBizTrmTxtBx",
-    "created_at": "2026-07-19T21:11:51.860Z",
-    "updated_at": "2026-07-19T21:11:51.860Z"
+    "created_at": "2026-07-20T01:11:51.860Z",
+    "updated_at": "2026-07-20T01:11:51.860Z"
   },
   {
     "id": "5abff9e9-4be5-425f-901f-8ecc882d9f98",
@@ -2711,8 +2711,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxNwEquip",
-    "created_at": "2026-07-19T21:11:48.528Z",
-    "updated_at": "2026-07-19T21:11:48.528Z"
+    "created_at": "2026-07-20T01:11:48.528Z",
+    "updated_at": "2026-07-20T01:11:48.528Z"
   },
   {
     "id": "5b76e429-d29b-49b3-b49c-55108cdf4706",
@@ -2726,8 +2726,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.Total_Payments",
-    "created_at": "2026-07-19T21:11:55.347Z",
-    "updated_at": "2026-07-19T21:11:55.347Z"
+    "created_at": "2026-07-20T01:11:55.347Z",
+    "updated_at": "2026-07-20T01:11:55.347Z"
   },
   {
     "id": "5b91e605-d47a-451f-8cdc-7dee2d156f6b",
@@ -2741,8 +2741,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FullBizTrmTxtBx",
-    "created_at": "2026-07-19T21:11:46.162Z",
-    "updated_at": "2026-07-19T21:11:46.162Z"
+    "created_at": "2026-07-20T01:11:46.162Z",
+    "updated_at": "2026-07-20T01:11:46.162Z"
   },
   {
     "id": "5ccab52d-7b8f-4c8a-9381-cdc627de547e",
@@ -2756,8 +2756,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxBsRt",
-    "created_at": "2026-07-19T21:11:48.202Z",
-    "updated_at": "2026-07-19T21:11:48.202Z"
+    "created_at": "2026-07-20T01:11:48.202Z",
+    "updated_at": "2026-07-20T01:11:48.202Z"
   },
   {
     "id": "5d53a49f-8f6c-431d-a0a6-2a249264211b",
@@ -2771,8 +2771,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.EmployeeID",
-    "created_at": "2026-07-19T21:11:54.934Z",
-    "updated_at": "2026-07-19T21:11:54.934Z"
+    "created_at": "2026-07-20T01:11:54.934Z",
+    "updated_at": "2026-07-20T01:11:54.934Z"
   },
   {
     "id": "5e7257bd-8dce-4248-892a-35dec504c52c",
@@ -2786,8 +2786,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_production_report_select_form.TypeQuickFindCombo",
-    "created_at": "2026-07-19T21:11:54.094Z",
-    "updated_at": "2026-07-19T21:11:54.094Z"
+    "created_at": "2026-07-20T01:11:54.094Z",
+    "updated_at": "2026-07-20T01:11:54.094Z"
   },
   {
     "id": "5eaea935-d830-437f-8b43-d2e0a95dde67",
@@ -2801,8 +2801,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_fcc_erp_development.OpnFtrBttn",
-    "created_at": "2026-07-19T21:11:45.606Z",
-    "updated_at": "2026-07-19T21:11:45.606Z"
+    "created_at": "2026-07-20T01:11:45.606Z",
+    "updated_at": "2026-07-20T01:11:45.606Z"
   },
   {
     "id": "5eed0f77-1bf5-4345-b11f-5c3194096660",
@@ -2816,8 +2816,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.Form",
-    "created_at": "2026-07-19T21:11:54.392Z",
-    "updated_at": "2026-07-19T21:11:54.392Z"
+    "created_at": "2026-07-20T01:11:54.392Z",
+    "updated_at": "2026-07-20T01:11:54.392Z"
   },
   {
     "id": "5f24aa0a-b564-44cd-8dcf-49202478b8bd",
@@ -2831,8 +2831,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.Workorder_Parts",
-    "created_at": "2026-07-19T21:11:57.048Z",
-    "updated_at": "2026-07-19T21:11:57.048Z"
+    "created_at": "2026-07-20T01:11:57.048Z",
+    "updated_at": "2026-07-20T01:11:57.048Z"
   },
   {
     "id": "6106d779-8863-4a1f-b5bf-5a6ea702564c",
@@ -2846,8 +2846,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.Calculate_Order_Total",
-    "created_at": "2026-07-19T21:11:49.995Z",
-    "updated_at": "2026-07-19T21:11:49.995Z"
+    "created_at": "2026-07-20T01:11:49.995Z",
+    "updated_at": "2026-07-20T01:11:49.995Z"
   },
   {
     "id": "612ac0f6-b197-4a66-b890-d52ed000c700",
@@ -2861,8 +2861,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.EquipListShowBttn",
-    "created_at": "2026-07-19T21:11:45.535Z",
-    "updated_at": "2026-07-19T21:11:45.535Z"
+    "created_at": "2026-07-20T01:11:45.535Z",
+    "updated_at": "2026-07-20T01:11:45.535Z"
   },
   {
     "id": "6226ad76-79dd-4ed8-b18f-b5cf5e8abd5c",
@@ -2876,8 +2876,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.TxtBoxOrders_ShipCountry",
-    "created_at": "2026-07-19T21:11:49.892Z",
-    "updated_at": "2026-07-19T21:11:49.892Z"
+    "created_at": "2026-07-20T01:11:49.892Z",
+    "updated_at": "2026-07-20T01:11:49.892Z"
   },
   {
     "id": "63b6ff33-d6e4-4495-b620-34af5c5dd38a",
@@ -2891,8 +2891,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FTOCoffeeTxtBx",
-    "created_at": "2026-07-19T21:11:46.141Z",
-    "updated_at": "2026-07-19T21:11:46.141Z"
+    "created_at": "2026-07-20T01:11:46.141Z",
+    "updated_at": "2026-07-20T01:11:46.141Z"
   },
   {
     "id": "63fb08fc-b5b9-416e-a44c-897eb5a9fdf4",
@@ -2906,8 +2906,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxNwEquip",
-    "created_at": "2026-07-19T21:11:48.505Z",
-    "updated_at": "2026-07-19T21:11:48.505Z"
+    "created_at": "2026-07-20T01:11:48.505Z",
+    "updated_at": "2026-07-20T01:11:48.505Z"
   },
   {
     "id": "66fcc9ad-e458-40fe-bbc3-4613e6039429",
@@ -2921,8 +2921,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:55.191Z",
-    "updated_at": "2026-07-19T21:11:55.191Z"
+    "created_at": "2026-07-20T01:11:55.191Z",
+    "updated_at": "2026-07-20T01:11:55.191Z"
   },
   {
     "id": "6788384e-3385-4882-9263-dce73742382a",
@@ -2936,8 +2936,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_stopwatch.btnReset",
-    "created_at": "2026-07-19T21:11:56.127Z",
-    "updated_at": "2026-07-19T21:11:56.127Z"
+    "created_at": "2026-07-20T01:11:56.127Z",
+    "updated_at": "2026-07-20T01:11:56.127Z"
   },
   {
     "id": "689c89d1-00fd-4f9c-91be-2357f0f8727e",
@@ -2951,8 +2951,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.TxtBoxOrderDate",
-    "created_at": "2026-07-19T21:11:49.836Z",
-    "updated_at": "2026-07-19T21:11:49.836Z"
+    "created_at": "2026-07-20T01:11:49.836Z",
+    "updated_at": "2026-07-20T01:11:49.836Z"
   },
   {
     "id": "68d8a561-42aa-4cdc-a60a-3c81c006c490",
@@ -2966,8 +2966,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.Form",
-    "created_at": "2026-07-19T21:11:56.879Z",
-    "updated_at": "2026-07-19T21:11:56.879Z"
+    "created_at": "2026-07-20T01:11:56.879Z",
+    "updated_at": "2026-07-20T01:11:56.879Z"
   },
   {
     "id": "694989b0-04db-4632-b6c4-9307e599e2b5",
@@ -2981,8 +2981,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxPPD",
-    "created_at": "2026-07-19T21:11:48.691Z",
-    "updated_at": "2026-07-19T21:11:48.691Z"
+    "created_at": "2026-07-20T01:11:48.691Z",
+    "updated_at": "2026-07-20T01:11:48.691Z"
   },
   {
     "id": "69c49563-96f2-4084-9229-9c34eea8807d",
@@ -2996,8 +2996,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform1.CnfrmEmlBttn2",
-    "created_at": "2026-07-19T21:11:50.174Z",
-    "updated_at": "2026-07-19T21:11:50.174Z"
+    "created_at": "2026-07-20T01:11:50.174Z",
+    "updated_at": "2026-07-20T01:11:50.174Z"
   },
   {
     "id": "6ca97be5-65b1-4def-aa9f-f540bc1043fd",
@@ -3011,8 +3011,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_report_date_range1",
-    "created_at": "2026-07-19T21:11:55.536Z",
-    "updated_at": "2026-07-19T21:11:55.536Z"
+    "created_at": "2026-07-20T01:11:55.536Z",
+    "updated_at": "2026-07-20T01:11:55.536Z"
   },
   {
     "id": "6d14ca8b-5656-48fc-80ea-b488b6cbcd4a",
@@ -3026,8 +3026,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:50.562Z",
-    "updated_at": "2026-07-19T21:11:50.562Z"
+    "created_at": "2026-07-20T01:11:50.562Z",
+    "updated_at": "2026-07-20T01:11:50.562Z"
   },
   {
     "id": "6de074a3-3a69-4afb-b431-b2e4e2290496",
@@ -3041,8 +3041,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxCustBg",
-    "created_at": "2026-07-19T21:11:48.287Z",
-    "updated_at": "2026-07-19T21:11:48.287Z"
+    "created_at": "2026-07-20T01:11:48.287Z",
+    "updated_at": "2026-07-20T01:11:48.287Z"
   },
   {
     "id": "6e44d8cb-faf2-47a3-9dfc-20a12f329b7d",
@@ -3056,8 +3056,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_ordersproduction",
-    "created_at": "2026-07-19T21:11:53.137Z",
-    "updated_at": "2026-07-19T21:11:53.137Z"
+    "created_at": "2026-07-20T01:11:53.137Z",
+    "updated_at": "2026-07-20T01:11:53.137Z"
   },
   {
     "id": "6f4cdf62-7f44-4965-b116-92524c3aee80",
@@ -3071,8 +3071,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxCustBg",
-    "created_at": "2026-07-19T21:11:48.316Z",
-    "updated_at": "2026-07-19T21:11:48.316Z"
+    "created_at": "2026-07-20T01:11:48.316Z",
+    "updated_at": "2026-07-20T01:11:48.316Z"
   },
   {
     "id": "6f8b1147-95e1-49dd-a128-6114b75ee7b8",
@@ -3086,8 +3086,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text165",
-    "created_at": "2026-07-19T21:11:52.539Z",
-    "updated_at": "2026-07-19T21:11:52.539Z"
+    "created_at": "2026-07-20T01:11:52.539Z",
+    "updated_at": "2026-07-20T01:11:52.539Z"
   },
   {
     "id": "6fb9981d-87ee-4b9c-b2fa-a8666f2cfef2",
@@ -3101,8 +3101,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_labor.Form",
-    "created_at": "2026-07-19T21:11:56.507Z",
-    "updated_at": "2026-07-19T21:11:56.507Z"
+    "created_at": "2026-07-20T01:11:56.507Z",
+    "updated_at": "2026-07-20T01:11:56.507Z"
   },
   {
     "id": "6fc5d940-6213-497a-9cb3-4157182f4aa7",
@@ -3116,8 +3116,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_stopwatch.btnStartStop",
-    "created_at": "2026-07-19T21:11:56.183Z",
-    "updated_at": "2026-07-19T21:11:56.183Z"
+    "created_at": "2026-07-20T01:11:56.183Z",
+    "updated_at": "2026-07-20T01:11:56.183Z"
   },
   {
     "id": "6ff85312-bb9b-4017-a114-14b822dac806",
@@ -3131,8 +3131,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_production_report_select_form.OrderFormsShowBttn",
-    "created_at": "2026-07-19T21:11:54.040Z",
-    "updated_at": "2026-07-19T21:11:54.040Z"
+    "created_at": "2026-07-20T01:11:54.040Z",
+    "updated_at": "2026-07-20T01:11:54.040Z"
   },
   {
     "id": "70054578-66ae-40a3-bcfa-7fb58b2cb757",
@@ -3146,8 +3146,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CasePrice",
-    "created_at": "2026-07-19T21:11:54.270Z",
-    "updated_at": "2026-07-19T21:11:54.270Z"
+    "created_at": "2026-07-20T01:11:54.270Z",
+    "updated_at": "2026-07-20T01:11:54.270Z"
   },
   {
     "id": "71804b81-ab73-4520-9cdc-3c44e4097f73",
@@ -3161,8 +3161,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ProposalTitleLabel",
-    "created_at": "2026-07-19T21:11:46.823Z",
-    "updated_at": "2026-07-19T21:11:46.823Z"
+    "created_at": "2026-07-20T01:11:46.823Z",
+    "updated_at": "2026-07-20T01:11:46.823Z"
   },
   {
     "id": "718d7389-148b-49f9-b639-ac88a325caf9",
@@ -3176,8 +3176,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.OrderDate",
-    "created_at": "2026-07-19T21:11:50.512Z",
-    "updated_at": "2026-07-19T21:11:50.512Z"
+    "created_at": "2026-07-20T01:11:50.512Z",
+    "updated_at": "2026-07-20T01:11:50.512Z"
   },
   {
     "id": "72024455-5e92-4b67-a5e0-118be02d2fc4",
@@ -3191,8 +3191,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_onlineassets_subform.StateOrProvince",
-    "created_at": "2026-07-19T21:11:49.101Z",
-    "updated_at": "2026-07-19T21:11:49.101Z"
+    "created_at": "2026-07-20T01:11:49.101Z",
+    "updated_at": "2026-07-20T01:11:49.101Z"
   },
   {
     "id": "72629014-0dea-46f9-a300-4c942f68ad39",
@@ -3206,8 +3206,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_by_customer.Form",
-    "created_at": "2026-07-19T21:11:57.141Z",
-    "updated_at": "2026-07-19T21:11:57.141Z"
+    "created_at": "2026-07-20T01:11:57.141Z",
+    "updated_at": "2026-07-20T01:11:57.141Z"
   },
   {
     "id": "72f4d1cb-f391-4a6e-8435-2cec5b2d9899",
@@ -3221,8 +3221,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CustBgTxtBx",
-    "created_at": "2026-07-19T21:11:51.456Z",
-    "updated_at": "2026-07-19T21:11:51.456Z"
+    "created_at": "2026-07-20T01:11:51.456Z",
+    "updated_at": "2026-07-20T01:11:51.456Z"
   },
   {
     "id": "7502a969-3228-4d51-9ef9-b18438206545",
@@ -3236,8 +3236,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.EquipSalesReport",
-    "created_at": "2026-07-19T21:11:46.104Z",
-    "updated_at": "2026-07-19T21:11:46.104Z"
+    "created_at": "2026-07-20T01:11:46.104Z",
+    "updated_at": "2026-07-20T01:11:46.104Z"
   },
   {
     "id": "757399d3-0880-4b8b-83de-158ce69fba95",
@@ -3251,8 +3251,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.Form",
-    "created_at": "2026-07-19T21:11:53.206Z",
-    "updated_at": "2026-07-19T21:11:53.206Z"
+    "created_at": "2026-07-20T01:11:53.206Z",
+    "updated_at": "2026-07-20T01:11:53.206Z"
   },
   {
     "id": "7576dca0-2302-4a53-bb21-bc547fb5af1b",
@@ -3266,8 +3266,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_leads",
-    "created_at": "2026-07-19T21:11:45.736Z",
-    "updated_at": "2026-07-19T21:11:45.736Z"
+    "created_at": "2026-07-20T01:11:45.736Z",
+    "updated_at": "2026-07-20T01:11:45.736Z"
   },
   {
     "id": "75ba8bd6-7994-4def-8753-756048827e48",
@@ -3281,8 +3281,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders__billingtracking_subform.Form",
-    "created_at": "2026-07-19T21:11:50.778Z",
-    "updated_at": "2026-07-19T21:11:50.778Z"
+    "created_at": "2026-07-20T01:11:50.778Z",
+    "updated_at": "2026-07-20T01:11:50.778Z"
   },
   {
     "id": "77e7f230-b585-44fa-8d6f-541ab0896811",
@@ -3296,8 +3296,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CustBgTxtBx",
-    "created_at": "2026-07-19T21:11:51.521Z",
-    "updated_at": "2026-07-19T21:11:51.521Z"
+    "created_at": "2026-07-20T01:11:51.521Z",
+    "updated_at": "2026-07-20T01:11:51.521Z"
   },
   {
     "id": "787b8165-5350-4e44-89e6-0de85de781b9",
@@ -3311,8 +3311,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxFTOCoffee",
-    "created_at": "2026-07-19T21:11:48.397Z",
-    "updated_at": "2026-07-19T21:11:48.397Z"
+    "created_at": "2026-07-20T01:11:48.397Z",
+    "updated_at": "2026-07-20T01:11:48.397Z"
   },
   {
     "id": "7888dd81-4d99-42c9-aa11-e800b0022470",
@@ -3326,8 +3326,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text177",
-    "created_at": "2026-07-19T21:11:52.595Z",
-    "updated_at": "2026-07-19T21:11:52.595Z"
+    "created_at": "2026-07-20T01:11:52.595Z",
+    "updated_at": "2026-07-20T01:11:52.595Z"
   },
   {
     "id": "79b54fb7-a8dc-4013-8781-696f79419b28",
@@ -3341,8 +3341,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.City",
-    "created_at": "2026-07-19T21:11:45.907Z",
-    "updated_at": "2026-07-19T21:11:45.907Z"
+    "created_at": "2026-07-20T01:11:45.907Z",
+    "updated_at": "2026-07-20T01:11:45.907Z"
   },
   {
     "id": "79c01c39-d4fb-49e7-8b12-af5709e1b940",
@@ -3356,8 +3356,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.DeleteRcrdBttn",
-    "created_at": "2026-07-19T21:11:46.059Z",
-    "updated_at": "2026-07-19T21:11:46.059Z"
+    "created_at": "2026-07-20T01:11:46.059Z",
+    "updated_at": "2026-07-20T01:11:46.059Z"
   },
   {
     "id": "79e3d634-0029-4414-8a01-42e8e794c2f9",
@@ -3371,8 +3371,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.CasePrice",
-    "created_at": "2026-07-19T21:11:44.789Z",
-    "updated_at": "2026-07-19T21:11:44.789Z"
+    "created_at": "2026-07-20T01:11:44.789Z",
+    "updated_at": "2026-07-20T01:11:44.789Z"
   },
   {
     "id": "79f1de8b-89a0-4859-983c-3def9ea15c0d",
@@ -3386,8 +3386,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.OrderDate",
-    "created_at": "2026-07-19T21:11:53.363Z",
-    "updated_at": "2026-07-19T21:11:53.363Z"
+    "created_at": "2026-07-20T01:11:53.363Z",
+    "updated_at": "2026-07-20T01:11:53.363Z"
   },
   {
     "id": "7a2f9fb0-ee89-4b16-a087-3b93e0315e6a",
@@ -3401,8 +3401,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.EquipDeposit",
-    "created_at": "2026-07-19T21:11:46.471Z",
-    "updated_at": "2026-07-19T21:11:46.471Z"
+    "created_at": "2026-07-20T01:11:46.471Z",
+    "updated_at": "2026-07-20T01:11:46.471Z"
   },
   {
     "id": "7a942ce0-61ba-48e3-b1be-3a7733331098",
@@ -3416,8 +3416,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_print_invoice1.OK",
-    "created_at": "2026-07-19T21:11:53.991Z",
-    "updated_at": "2026-07-19T21:11:53.991Z"
+    "created_at": "2026-07-20T01:11:53.991Z",
+    "updated_at": "2026-07-20T01:11:53.991Z"
   },
   {
     "id": "7b7d1a4d-3b70-4043-ab0f-85f88eb24e10",
@@ -3431,8 +3431,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Form",
-    "created_at": "2026-07-19T21:11:51.706Z",
-    "updated_at": "2026-07-19T21:11:51.706Z"
+    "created_at": "2026-07-20T01:11:51.706Z",
+    "updated_at": "2026-07-20T01:11:51.706Z"
   },
   {
     "id": "7ce10ed1-d2c8-4131-80dd-7beeed72d1d8",
@@ -3446,8 +3446,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FTOCoffeeTxtBx",
-    "created_at": "2026-07-19T21:11:51.835Z",
-    "updated_at": "2026-07-19T21:11:51.835Z"
+    "created_at": "2026-07-20T01:11:51.835Z",
+    "updated_at": "2026-07-20T01:11:51.835Z"
   },
   {
     "id": "7e165723-c321-4ab9-98a2-b96df302cc30",
@@ -3461,8 +3461,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ShipDate",
-    "created_at": "2026-07-19T21:11:47.321Z",
-    "updated_at": "2026-07-19T21:11:47.321Z"
+    "created_at": "2026-07-20T01:11:47.321Z",
+    "updated_at": "2026-07-20T01:11:47.321Z"
   },
   {
     "id": "7e875072-d50f-4ed5-b0ca-2f5954c21bc5",
@@ -3476,8 +3476,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.InvoiceCriteriaTxtbx",
-    "created_at": "2026-07-19T21:11:50.076Z",
-    "updated_at": "2026-07-19T21:11:50.076Z"
+    "created_at": "2026-07-20T01:11:50.076Z",
+    "updated_at": "2026-07-20T01:11:50.076Z"
   },
   {
     "id": "7ea61ff6-0853-4e5f-9145-f518ee8c0285",
@@ -3491,8 +3491,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payment_methods.Form",
-    "created_at": "2026-07-19T21:11:53.586Z",
-    "updated_at": "2026-07-19T21:11:53.586Z"
+    "created_at": "2026-07-20T01:11:53.586Z",
+    "updated_at": "2026-07-20T01:11:53.586Z"
   },
   {
     "id": "7eaa723c-bd53-4fae-bdb6-36b0c48106f4",
@@ -3506,8 +3506,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders__billingtracking_subform",
-    "created_at": "2026-07-19T21:11:50.722Z",
-    "updated_at": "2026-07-19T21:11:50.722Z"
+    "created_at": "2026-07-20T01:11:50.722Z",
+    "updated_at": "2026-07-20T01:11:50.722Z"
   },
   {
     "id": "7edc752b-a7ca-4356-bdb9-92eef8bf747d",
@@ -3521,8 +3521,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.PhoneCallButton",
-    "created_at": "2026-07-19T21:11:48.960Z",
-    "updated_at": "2026-07-19T21:11:48.960Z"
+    "created_at": "2026-07-20T01:11:48.960Z",
+    "updated_at": "2026-07-20T01:11:48.960Z"
   },
   {
     "id": "7eddd07c-a990-4561-b53c-3fb438777d65",
@@ -3536,8 +3536,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.BillTrackFrmBttn",
-    "created_at": "2026-07-19T21:11:49.729Z",
-    "updated_at": "2026-07-19T21:11:49.729Z"
+    "created_at": "2026-07-20T01:11:49.729Z",
+    "updated_at": "2026-07-20T01:11:49.729Z"
   },
   {
     "id": "7f6da819-fef0-4666-a5de-ce30d8a03e19",
@@ -3551,8 +3551,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CalledCustomer",
-    "created_at": "2026-07-19T21:11:52.163Z",
-    "updated_at": "2026-07-19T21:11:52.163Z"
+    "created_at": "2026-07-20T01:11:52.163Z",
+    "updated_at": "2026-07-20T01:11:52.163Z"
   },
   {
     "id": "7f8edf71-dbab-4a7f-b444-f30f334a35ba",
@@ -3566,8 +3566,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Command191",
-    "created_at": "2026-07-19T21:11:45.935Z",
-    "updated_at": "2026-07-19T21:11:45.935Z"
+    "created_at": "2026-07-20T01:11:45.935Z",
+    "updated_at": "2026-07-20T01:11:45.935Z"
   },
   {
     "id": "7f911067-e2b2-4cae-9ed4-c37308b785de",
@@ -3581,8 +3581,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Ctl1LbWBOrdrBttn",
-    "created_at": "2026-07-19T21:11:49.267Z",
-    "updated_at": "2026-07-19T21:11:49.267Z"
+    "created_at": "2026-07-20T01:11:49.267Z",
+    "updated_at": "2026-07-20T01:11:49.267Z"
   },
   {
     "id": "8020e018-a862-4855-b277-177a1022b530",
@@ -3596,8 +3596,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text177",
-    "created_at": "2026-07-19T21:11:47.888Z",
-    "updated_at": "2026-07-19T21:11:47.888Z"
+    "created_at": "2026-07-20T01:11:47.888Z",
+    "updated_at": "2026-07-20T01:11:47.888Z"
   },
   {
     "id": "80e347ac-4b31-4702-b4e5-6d61d12478df",
@@ -3611,8 +3611,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders__billingtracking_subform.BilledTo",
-    "created_at": "2026-07-19T21:11:50.748Z",
-    "updated_at": "2026-07-19T21:11:50.748Z"
+    "created_at": "2026-07-20T01:11:50.748Z",
+    "updated_at": "2026-07-20T01:11:50.748Z"
   },
   {
     "id": "814635ec-33f0-4a1c-b289-f561ccf4309a",
@@ -3626,8 +3626,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TakeOrderButton",
-    "created_at": "2026-07-19T21:11:47.081Z",
-    "updated_at": "2026-07-19T21:11:47.081Z"
+    "created_at": "2026-07-20T01:11:47.081Z",
+    "updated_at": "2026-07-20T01:11:47.081Z"
   },
   {
     "id": "82230d0a-b35d-46e5-930a-f8e49f4ca039",
@@ -3641,8 +3641,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxSrvc",
-    "created_at": "2026-07-19T21:11:48.750Z",
-    "updated_at": "2026-07-19T21:11:48.750Z"
+    "created_at": "2026-07-20T01:11:48.750Z",
+    "updated_at": "2026-07-20T01:11:48.750Z"
   },
   {
     "id": "84fd98dc-a475-42a8-a457-e1a1f39329ee",
@@ -3656,8 +3656,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_coffeeproductioncosts.PrcngRprtBttn",
-    "created_at": "2026-07-19T21:11:44.986Z",
-    "updated_at": "2026-07-19T21:11:44.986Z"
+    "created_at": "2026-07-20T01:11:44.986Z",
+    "updated_at": "2026-07-20T01:11:44.986Z"
   },
   {
     "id": "86ebdca5-cb7f-4425-8a04-cbcc42609abb",
@@ -3671,8 +3671,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CreateBillingDir",
-    "created_at": "2026-07-19T21:11:51.273Z",
-    "updated_at": "2026-07-19T21:11:51.273Z"
+    "created_at": "2026-07-20T01:11:51.273Z",
+    "updated_at": "2026-07-20T01:11:51.273Z"
   },
   {
     "id": "870eb018-36e3-4c0e-bad0-b6cf4bcce5d8",
@@ -3686,8 +3686,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FullBizTrmTxtBx",
-    "created_at": "2026-07-19T21:11:51.888Z",
-    "updated_at": "2026-07-19T21:11:51.888Z"
+    "created_at": "2026-07-20T01:11:51.888Z",
+    "updated_at": "2026-07-20T01:11:51.888Z"
   },
   {
     "id": "87c7a841-449a-4b42-a4f0-a2877ecb65d0",
@@ -3701,8 +3701,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FollowUpTxtbx",
-    "created_at": "2026-07-19T21:11:46.491Z",
-    "updated_at": "2026-07-19T21:11:46.491Z"
+    "created_at": "2026-07-20T01:11:46.491Z",
+    "updated_at": "2026-07-20T01:11:46.491Z"
   },
   {
     "id": "8825cc7c-6760-41a9-b552-feb994626983",
@@ -3716,8 +3716,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach5",
-    "created_at": "2026-07-19T21:11:45.207Z",
-    "updated_at": "2026-07-19T21:11:45.207Z"
+    "created_at": "2026-07-20T01:11:45.207Z",
+    "updated_at": "2026-07-20T01:11:45.207Z"
   },
   {
     "id": "891c15ac-d3dd-4d78-b200-401e087d7bcd",
@@ -3731,8 +3731,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxEFT",
-    "created_at": "2026-07-19T21:11:48.373Z",
-    "updated_at": "2026-07-19T21:11:48.373Z"
+    "created_at": "2026-07-20T01:11:48.373Z",
+    "updated_at": "2026-07-20T01:11:48.373Z"
   },
   {
     "id": "89b5b5b9-0a53-4b99-80e7-5837f08783f9",
@@ -3746,8 +3746,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text128",
-    "created_at": "2026-07-19T21:11:47.498Z",
-    "updated_at": "2026-07-19T21:11:47.498Z"
+    "created_at": "2026-07-20T01:11:47.498Z",
+    "updated_at": "2026-07-20T01:11:47.498Z"
   },
   {
     "id": "8b081e5f-be4e-4f0d-81eb-77f9612cd7a4",
@@ -3761,8 +3761,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.AccountWarbChk",
-    "created_at": "2026-07-19T21:11:50.967Z",
-    "updated_at": "2026-07-19T21:11:50.967Z"
+    "created_at": "2026-07-20T01:11:50.967Z",
+    "updated_at": "2026-07-20T01:11:50.967Z"
   },
   {
     "id": "8b4bdbd5-5483-4892-b70c-043d03aa549e",
@@ -3776,8 +3776,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_production_report_select_form.TypeQuickFindCombo",
-    "created_at": "2026-07-19T21:11:54.124Z",
-    "updated_at": "2026-07-19T21:11:54.124Z"
+    "created_at": "2026-07-20T01:11:54.124Z",
+    "updated_at": "2026-07-20T01:11:54.124Z"
   },
   {
     "id": "8bfaa062-b1c2-438d-ad32-cbefe6900605",
@@ -3791,8 +3791,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxBsRt",
-    "created_at": "2026-07-19T21:11:48.173Z",
-    "updated_at": "2026-07-19T21:11:48.173Z"
+    "created_at": "2026-07-20T01:11:48.173Z",
+    "updated_at": "2026-07-20T01:11:48.173Z"
   },
   {
     "id": "8c16cd91-e8f1-42f3-b812-06b5ec5695a5",
@@ -3806,8 +3806,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_payment_methods",
-    "created_at": "2026-07-19T21:11:53.557Z",
-    "updated_at": "2026-07-19T21:11:53.557Z"
+    "created_at": "2026-07-20T01:11:53.557Z",
+    "updated_at": "2026-07-20T01:11:53.557Z"
   },
   {
     "id": "8c95d38c-dea1-4e9a-a6db-7c0589a44bed",
@@ -3821,8 +3821,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Orders",
-    "created_at": "2026-07-19T21:11:52.020Z",
-    "updated_at": "2026-07-19T21:11:52.020Z"
+    "created_at": "2026-07-20T01:11:52.020Z",
+    "updated_at": "2026-07-20T01:11:52.020Z"
   },
   {
     "id": "8e7ae24c-dd10-4b30-bda2-f689214fd612",
@@ -3836,8 +3836,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_setsessiondate.SessDateTxtBx",
-    "created_at": "2026-07-19T21:11:55.991Z",
-    "updated_at": "2026-07-19T21:11:55.991Z"
+    "created_at": "2026-07-20T01:11:55.991Z",
+    "updated_at": "2026-07-20T01:11:55.991Z"
   },
   {
     "id": "8efae16e-a0b8-4949-9af2-7e9edd293b97",
@@ -3851,8 +3851,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text163",
-    "created_at": "2026-07-19T21:11:47.787Z",
-    "updated_at": "2026-07-19T21:11:47.787Z"
+    "created_at": "2026-07-20T01:11:47.787Z",
+    "updated_at": "2026-07-20T01:11:47.787Z"
   },
   {
     "id": "90c498c4-72ca-44cb-994e-6ea049b1c6be",
@@ -3866,8 +3866,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.Form",
-    "created_at": "2026-07-19T21:11:54.908Z",
-    "updated_at": "2026-07-19T21:11:54.908Z"
+    "created_at": "2026-07-20T01:11:54.908Z",
+    "updated_at": "2026-07-20T01:11:54.908Z"
   },
   {
     "id": "91b8aeb9-d67b-44b8-b350-3215f522f604",
@@ -3881,8 +3881,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.Form",
-    "created_at": "2026-07-19T21:11:50.349Z",
-    "updated_at": "2026-07-19T21:11:50.349Z"
+    "created_at": "2026-07-20T01:11:50.349Z",
+    "updated_at": "2026-07-20T01:11:50.349Z"
   },
   {
     "id": "925f58b6-bb22-49f4-90ef-de45ee4204c1",
@@ -3896,8 +3896,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxPickUp",
-    "created_at": "2026-07-19T21:11:48.659Z",
-    "updated_at": "2026-07-19T21:11:48.659Z"
+    "created_at": "2026-07-20T01:11:48.659Z",
+    "updated_at": "2026-07-20T01:11:48.659Z"
   },
   {
     "id": "92fe7f62-4a77-40ac-96fc-6d437e70e736",
@@ -3911,8 +3911,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_production_report_select_form.PriceListShowBttn",
-    "created_at": "2026-07-19T21:11:54.068Z",
-    "updated_at": "2026-07-19T21:11:54.068Z"
+    "created_at": "2026-07-20T01:11:54.068Z",
+    "updated_at": "2026-07-20T01:11:54.068Z"
   },
   {
     "id": "955ef4ec-b822-4e50-a815-de0f8c836e3b",
@@ -3926,8 +3926,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ProposalText",
-    "created_at": "2026-07-19T21:11:46.781Z",
-    "updated_at": "2026-07-19T21:11:46.781Z"
+    "created_at": "2026-07-20T01:11:46.781Z",
+    "updated_at": "2026-07-20T01:11:46.781Z"
   },
   {
     "id": "95b03b25-8f89-418c-9bb5-2a6020c6fc7a",
@@ -3941,8 +3941,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.Form",
-    "created_at": "2026-07-19T21:11:53.257Z",
-    "updated_at": "2026-07-19T21:11:53.257Z"
+    "created_at": "2026-07-20T01:11:53.257Z",
+    "updated_at": "2026-07-20T01:11:53.257Z"
   },
   {
     "id": "95cf2b6e-ebcf-46d3-8e87-bc77e5c28622",
@@ -3956,8 +3956,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitMarkup",
-    "created_at": "2026-07-19T21:11:54.495Z",
-    "updated_at": "2026-07-19T21:11:54.495Z"
+    "created_at": "2026-07-20T01:11:54.495Z",
+    "updated_at": "2026-07-20T01:11:54.495Z"
   },
   {
     "id": "962c1a52-5212-4552-b851-88ec59e2d5c6",
@@ -3971,8 +3971,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ToBeClosed",
-    "created_at": "2026-07-19T21:11:47.966Z",
-    "updated_at": "2026-07-19T21:11:47.966Z"
+    "created_at": "2026-07-20T01:11:47.966Z",
+    "updated_at": "2026-07-20T01:11:47.966Z"
   },
   {
     "id": "96ecf18c-bc16-4b0f-8a0f-af81f3f1bc7a",
@@ -3986,8 +3986,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_products",
-    "created_at": "2026-07-19T21:11:54.148Z",
-    "updated_at": "2026-07-19T21:11:54.148Z"
+    "created_at": "2026-07-20T01:11:54.148Z",
+    "updated_at": "2026-07-20T01:11:54.148Z"
   },
   {
     "id": "98d1b06f-c269-4474-9ef8-222eca0b519e",
@@ -4001,8 +4001,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_parts.PartID",
-    "created_at": "2026-07-19T21:11:56.733Z",
-    "updated_at": "2026-07-19T21:11:56.733Z"
+    "created_at": "2026-07-20T01:11:56.733Z",
+    "updated_at": "2026-07-20T01:11:56.733Z"
   },
   {
     "id": "98eca3da-1162-4a29-992c-203bf4f39300",
@@ -4016,8 +4016,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SrvcTxtBx",
-    "created_at": "2026-07-19T21:11:46.954Z",
-    "updated_at": "2026-07-19T21:11:46.954Z"
+    "created_at": "2026-07-20T01:11:46.954Z",
+    "updated_at": "2026-07-20T01:11:46.954Z"
   },
   {
     "id": "98fe5ee5-7c42-4877-9821-c2dca56df878",
@@ -4031,8 +4031,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CaseMarkup",
-    "created_at": "2026-07-19T21:11:54.240Z",
-    "updated_at": "2026-07-19T21:11:54.240Z"
+    "created_at": "2026-07-20T01:11:54.240Z",
+    "updated_at": "2026-07-20T01:11:54.240Z"
   },
   {
     "id": "990c78da-15e7-4bc0-83e9-393ed6df8ec0",
@@ -4046,8 +4046,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.CaseOrdrBttn",
-    "created_at": "2026-07-19T21:11:49.198Z",
-    "updated_at": "2026-07-19T21:11:49.198Z"
+    "created_at": "2026-07-20T01:11:49.198Z",
+    "updated_at": "2026-07-20T01:11:49.198Z"
   },
   {
     "id": "99c3bd1e-6fbe-4177-9741-f9f39594ceb3",
@@ -4061,8 +4061,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach8",
-    "created_at": "2026-07-19T21:11:45.289Z",
-    "updated_at": "2026-07-19T21:11:45.289Z"
+    "created_at": "2026-07-20T01:11:45.289Z",
+    "updated_at": "2026-07-20T01:11:45.289Z"
   },
   {
     "id": "99e24985-ad95-4a36-93d5-6fe40376f5f3",
@@ -4076,8 +4076,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_switchboard",
-    "created_at": "2026-07-19T21:11:56.204Z",
-    "updated_at": "2026-07-19T21:11:56.204Z"
+    "created_at": "2026-07-20T01:11:56.204Z",
+    "updated_at": "2026-07-20T01:11:56.204Z"
   },
   {
     "id": "99e9e952-39bd-4245-a3a2-a5b54380689d",
@@ -4091,8 +4091,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.ShrHausBttn",
-    "created_at": "2026-07-19T21:11:50.120Z",
-    "updated_at": "2026-07-19T21:11:50.120Z"
+    "created_at": "2026-07-20T01:11:50.120Z",
+    "updated_at": "2026-07-20T01:11:50.120Z"
   },
   {
     "id": "9a850b81-68de-454c-8b96-83a78e41c709",
@@ -4106,8 +4106,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_by_customer.Payments",
-    "created_at": "2026-07-19T21:11:57.200Z",
-    "updated_at": "2026-07-19T21:11:57.200Z"
+    "created_at": "2026-07-20T01:11:57.200Z",
+    "updated_at": "2026-07-20T01:11:57.200Z"
   },
   {
     "id": "9adb5ebd-961e-4f0e-abe8-2d0b8489a6ad",
@@ -4121,8 +4121,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_quote",
-    "created_at": "2026-07-19T21:11:54.767Z",
-    "updated_at": "2026-07-19T21:11:54.767Z"
+    "created_at": "2026-07-20T01:11:54.767Z",
+    "updated_at": "2026-07-20T01:11:54.767Z"
   },
   {
     "id": "9b63c36e-d1f0-45e9-927b-e9e631b603a1",
@@ -4136,8 +4136,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_subform.DatePickedUp",
-    "created_at": "2026-07-19T21:11:56.399Z",
-    "updated_at": "2026-07-19T21:11:56.399Z"
+    "created_at": "2026-07-20T01:11:56.399Z",
+    "updated_at": "2026-07-20T01:11:56.399Z"
   },
   {
     "id": "9b809ca4-f8a1-4edb-b17e-73a55226d1f0",
@@ -4151,8 +4151,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.OrderDate",
-    "created_at": "2026-07-19T21:11:55.261Z",
-    "updated_at": "2026-07-19T21:11:55.261Z"
+    "created_at": "2026-07-20T01:11:55.261Z",
+    "updated_at": "2026-07-20T01:11:55.261Z"
   },
   {
     "id": "9be8c059-f952-4f05-9678-e9c636f69624",
@@ -4166,8 +4166,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_setsessiondate",
-    "created_at": "2026-07-19T21:11:55.940Z",
-    "updated_at": "2026-07-19T21:11:55.940Z"
+    "created_at": "2026-07-20T01:11:55.940Z",
+    "updated_at": "2026-07-20T01:11:55.940Z"
   },
   {
     "id": "9beb8547-b9c6-43cd-9271-013c8f0251be",
@@ -4181,8 +4181,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.Total_Sale",
-    "created_at": "2026-07-19T21:11:53.056Z",
-    "updated_at": "2026-07-19T21:11:53.056Z"
+    "created_at": "2026-07-20T01:11:53.056Z",
+    "updated_at": "2026-07-20T01:11:53.056Z"
   },
   {
     "id": "9c08027e-cab4-48a7-9616-cf7f4287a9ac",
@@ -4196,8 +4196,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.ShipDate",
-    "created_at": "2026-07-19T21:11:55.296Z",
-    "updated_at": "2026-07-19T21:11:55.296Z"
+    "created_at": "2026-07-20T01:11:55.296Z",
+    "updated_at": "2026-07-20T01:11:55.296Z"
   },
   {
     "id": "9c826bc6-57f9-4b79-b193-b4a4707c38ed",
@@ -4211,8 +4211,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text195",
-    "created_at": "2026-07-19T21:11:47.227Z",
-    "updated_at": "2026-07-19T21:11:47.227Z"
+    "created_at": "2026-07-20T01:11:47.227Z",
+    "updated_at": "2026-07-20T01:11:47.227Z"
   },
   {
     "id": "9c9e1a05-5b2e-4151-b99f-effd14f235fc",
@@ -4226,8 +4226,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text234",
-    "created_at": "2026-07-19T21:11:52.729Z",
-    "updated_at": "2026-07-19T21:11:52.729Z"
+    "created_at": "2026-07-20T01:11:52.729Z",
+    "updated_at": "2026-07-20T01:11:52.729Z"
   },
   {
     "id": "9d563293-7314-4a98-9cdf-b5ad7546eda9",
@@ -4241,8 +4241,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_deficiencylog.OpneWorkOrderBttn",
-    "created_at": "2026-07-19T21:11:45.389Z",
-    "updated_at": "2026-07-19T21:11:45.389Z"
+    "created_at": "2026-07-20T01:11:45.389Z",
+    "updated_at": "2026-07-20T01:11:45.389Z"
   },
   {
     "id": "9e7e5688-52fe-4c36-8b62-818e5d8ef2d1",
@@ -4256,8 +4256,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadTea",
-    "created_at": "2026-07-19T21:11:46.686Z",
-    "updated_at": "2026-07-19T21:11:46.686Z"
+    "created_at": "2026-07-20T01:11:46.686Z",
+    "updated_at": "2026-07-20T01:11:46.686Z"
   },
   {
     "id": "9e9c8755-15a0-4263-95dc-bdf6e96fc10c",
@@ -4271,8 +4271,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Check187",
-    "created_at": "2026-07-19T21:11:45.883Z",
-    "updated_at": "2026-07-19T21:11:45.883Z"
+    "created_at": "2026-07-20T01:11:45.883Z",
+    "updated_at": "2026-07-20T01:11:45.883Z"
   },
   {
     "id": "9ec1154a-79d8-4bed-aecc-2cab99df996e",
@@ -4286,8 +4286,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxOrderPk",
-    "created_at": "2026-07-19T21:11:48.608Z",
-    "updated_at": "2026-07-19T21:11:48.608Z"
+    "created_at": "2026-07-20T01:11:48.608Z",
+    "updated_at": "2026-07-20T01:11:48.608Z"
   },
   {
     "id": "9f524aa6-a197-4034-b597-c9c692f47208",
@@ -4301,8 +4301,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_onlineassets_subform.CreationDate",
-    "created_at": "2026-07-19T21:11:49.076Z",
-    "updated_at": "2026-07-19T21:11:49.076Z"
+    "created_at": "2026-07-20T01:11:49.076Z",
+    "updated_at": "2026-07-20T01:11:49.076Z"
   },
   {
     "id": "9f5367bf-83ac-4f71-958e-0d860647b6eb",
@@ -4316,8 +4316,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Ctl45DayOwing",
-    "created_at": "2026-07-19T21:11:51.425Z",
-    "updated_at": "2026-07-19T21:11:51.425Z"
+    "created_at": "2026-07-20T01:11:51.425Z",
+    "updated_at": "2026-07-20T01:11:51.425Z"
   },
   {
     "id": "9f57c1ac-7a8e-4034-9aac-3e2e1c5408dd",
@@ -4331,8 +4331,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.EmployeeID",
-    "created_at": "2026-07-19T21:11:56.986Z",
-    "updated_at": "2026-07-19T21:11:56.986Z"
+    "created_at": "2026-07-20T01:11:56.986Z",
+    "updated_at": "2026-07-20T01:11:56.986Z"
   },
   {
     "id": "9face01d-c66b-4b40-afb2-c45bb52aedf2",
@@ -4346,8 +4346,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Open_Samples_Request",
-    "created_at": "2026-07-19T21:11:47.343Z",
-    "updated_at": "2026-07-19T21:11:47.343Z"
+    "created_at": "2026-07-20T01:11:47.343Z",
+    "updated_at": "2026-07-20T01:11:47.343Z"
   },
   {
     "id": "a0e8dc38-4234-4fce-a56c-a7c15f2f93c0",
@@ -4361,8 +4361,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_print_invoice.Cancel",
-    "created_at": "2026-07-19T21:11:53.968Z",
-    "updated_at": "2026-07-19T21:11:53.968Z"
+    "created_at": "2026-07-20T01:11:53.968Z",
+    "updated_at": "2026-07-20T01:11:53.968Z"
   },
   {
     "id": "a12595cc-ff04-4f2e-8dc8-db09d87c44ba",
@@ -4376,8 +4376,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FTOCoffeeTxtBx",
-    "created_at": "2026-07-19T21:11:51.811Z",
-    "updated_at": "2026-07-19T21:11:51.811Z"
+    "created_at": "2026-07-20T01:11:51.811Z",
+    "updated_at": "2026-07-20T01:11:51.811Z"
   },
   {
     "id": "a1e01808-0f0a-432d-aeff-87776eea508a",
@@ -4391,8 +4391,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Command75",
-    "created_at": "2026-07-19T21:11:51.305Z",
-    "updated_at": "2026-07-19T21:11:51.305Z"
+    "created_at": "2026-07-20T01:11:51.305Z",
+    "updated_at": "2026-07-20T01:11:51.305Z"
   },
   {
     "id": "a27f21d4-7b15-4f8c-bd74-70bc9cf64ee0",
@@ -4406,8 +4406,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.PrdRepBttn",
-    "created_at": "2026-07-19T21:11:44.867Z",
-    "updated_at": "2026-07-19T21:11:44.867Z"
+    "created_at": "2026-07-20T01:11:44.867Z",
+    "updated_at": "2026-07-20T01:11:44.867Z"
   },
   {
     "id": "a287ab9e-5416-47c8-9d53-bdb5c5f4bbeb",
@@ -4421,8 +4421,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.Order_Details_Subform",
-    "created_at": "2026-07-19T21:11:54.986Z",
-    "updated_at": "2026-07-19T21:11:54.986Z"
+    "created_at": "2026-07-20T01:11:54.986Z",
+    "updated_at": "2026-07-20T01:11:54.986Z"
   },
   {
     "id": "a2d1ebd7-43df-4f15-bb0c-db3f9696dcd1",
@@ -4436,8 +4436,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text139",
-    "created_at": "2026-07-19T21:11:52.487Z",
-    "updated_at": "2026-07-19T21:11:52.487Z"
+    "created_at": "2026-07-20T01:11:52.487Z",
+    "updated_at": "2026-07-20T01:11:52.487Z"
   },
   {
     "id": "a2ef7c9d-cec2-410f-bfe3-469b4d33f6eb",
@@ -4451,8 +4451,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_setsessiondate.Form",
-    "created_at": "2026-07-19T21:11:55.966Z",
-    "updated_at": "2026-07-19T21:11:55.966Z"
+    "created_at": "2026-07-20T01:11:55.966Z",
+    "updated_at": "2026-07-20T01:11:55.966Z"
   },
   {
     "id": "a2f422ea-cf32-4238-8077-b06457faee14",
@@ -4466,8 +4466,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.AltBrandTxtBx",
-    "created_at": "2026-07-19T21:11:51.048Z",
-    "updated_at": "2026-07-19T21:11:51.048Z"
+    "created_at": "2026-07-20T01:11:51.048Z",
+    "updated_at": "2026-07-20T01:11:51.048Z"
   },
   {
     "id": "a3752acb-4414-46e5-9438-0aae2e96422f",
@@ -4481,8 +4481,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.Command30",
-    "created_at": "2026-07-19T21:11:50.050Z",
-    "updated_at": "2026-07-19T21:11:50.050Z"
+    "created_at": "2026-07-20T01:11:50.050Z",
+    "updated_at": "2026-07-20T01:11:50.050Z"
   },
   {
     "id": "a3c5cf9a-0bcd-4fae-a2a8-16722d55a1f8",
@@ -4496,8 +4496,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxPPD",
-    "created_at": "2026-07-19T21:11:48.725Z",
-    "updated_at": "2026-07-19T21:11:48.725Z"
+    "created_at": "2026-07-20T01:11:48.725Z",
+    "updated_at": "2026-07-20T01:11:48.725Z"
   },
   {
     "id": "a4414873-423a-46ef-8c63-b2c12009b8ea",
@@ -4511,8 +4511,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesopens.PreviousImplication",
-    "created_at": "2026-07-19T21:11:55.722Z",
-    "updated_at": "2026-07-19T21:11:55.722Z"
+    "created_at": "2026-07-20T01:11:55.722Z",
+    "updated_at": "2026-07-20T01:11:55.722Z"
   },
   {
     "id": "a4ba5f73-706e-4c81-8db4-9b85f2ddc094",
@@ -4526,8 +4526,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.TXTOrderFilled",
-    "created_at": "2026-07-19T21:11:50.695Z",
-    "updated_at": "2026-07-19T21:11:50.695Z"
+    "created_at": "2026-07-20T01:11:50.695Z",
+    "updated_at": "2026-07-20T01:11:50.695Z"
   },
   {
     "id": "a62d6e74-11de-4184-9fac-d9e53d559666",
@@ -4541,8 +4541,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Country",
-    "created_at": "2026-07-19T21:11:46.259Z",
-    "updated_at": "2026-07-19T21:11:46.259Z"
+    "created_at": "2026-07-20T01:11:46.259Z",
+    "updated_at": "2026-07-20T01:11:46.259Z"
   },
   {
     "id": "a65219d3-0e57-4d17-a483-149f11ae4a84",
@@ -4556,8 +4556,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Grind",
-    "created_at": "2026-07-19T21:11:49.345Z",
-    "updated_at": "2026-07-19T21:11:49.345Z"
+    "created_at": "2026-07-20T01:11:49.345Z",
+    "updated_at": "2026-07-20T01:11:49.345Z"
   },
   {
     "id": "a6dc1415-28c4-4c9a-b986-4d63660c9315",
@@ -4571,8 +4571,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_assets_subform.Ctl1yrBttn",
-    "created_at": "2026-07-19T21:11:44.710Z",
-    "updated_at": "2026-07-19T21:11:44.710Z"
+    "created_at": "2026-07-20T01:11:44.710Z",
+    "updated_at": "2026-07-20T01:11:44.710Z"
   },
   {
     "id": "a814680f-1931-4fc0-81f9-5dc86d880cfe",
@@ -4586,8 +4586,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_print_invoice",
-    "created_at": "2026-07-19T21:11:53.895Z",
-    "updated_at": "2026-07-19T21:11:53.895Z"
+    "created_at": "2026-07-20T01:11:53.895Z",
+    "updated_at": "2026-07-20T01:11:53.895Z"
   },
   {
     "id": "a8378ec6-a328-4914-b9cd-2af54a2fb1be",
@@ -4601,8 +4601,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text136",
-    "created_at": "2026-07-19T21:11:52.433Z",
-    "updated_at": "2026-07-19T21:11:52.433Z"
+    "created_at": "2026-07-20T01:11:52.433Z",
+    "updated_at": "2026-07-20T01:11:52.433Z"
   },
   {
     "id": "a8591a8e-1dc2-4b65-843d-6240eaa5c2d2",
@@ -4616,8 +4616,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.Form",
-    "created_at": "2026-07-19T21:11:50.402Z",
-    "updated_at": "2026-07-19T21:11:50.402Z"
+    "created_at": "2026-07-20T01:11:50.402Z",
+    "updated_at": "2026-07-20T01:11:50.402Z"
   },
   {
     "id": "a8a9d26f-e30d-4bd5-96f3-c81fc618fce5",
@@ -4631,8 +4631,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.Command61",
-    "created_at": "2026-07-19T21:11:54.342Z",
-    "updated_at": "2026-07-19T21:11:54.342Z"
+    "created_at": "2026-07-20T01:11:54.342Z",
+    "updated_at": "2026-07-20T01:11:54.342Z"
   },
   {
     "id": "a8af2e8f-7904-40f4-a688-8ce8b8727f80",
@@ -4646,8 +4646,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FilledOrdrsBttn",
-    "created_at": "2026-07-19T21:11:51.554Z",
-    "updated_at": "2026-07-19T21:11:51.554Z"
+    "created_at": "2026-07-20T01:11:51.554Z",
+    "updated_at": "2026-07-20T01:11:51.554Z"
   },
   {
     "id": "a8b564b2-0da2-4cc9-adc8-00aa58aafa0e",
@@ -4661,8 +4661,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_price_list_select_form.OrderFormsShowBttn",
-    "created_at": "2026-07-19T21:11:53.870Z",
-    "updated_at": "2026-07-19T21:11:53.870Z"
+    "created_at": "2026-07-20T01:11:53.870Z",
+    "updated_at": "2026-07-20T01:11:53.870Z"
   },
   {
     "id": "a9731d39-9d69-447f-813c-7518ac960447",
@@ -4676,8 +4676,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_setsessiondate.SetSessDateBttn",
-    "created_at": "2026-07-19T21:11:56.019Z",
-    "updated_at": "2026-07-19T21:11:56.019Z"
+    "created_at": "2026-07-20T01:11:56.019Z",
+    "updated_at": "2026-07-20T01:11:56.019Z"
   },
   {
     "id": "a9de85d2-f089-4bcd-9279-f3ea1ce7d36d",
@@ -4691,8 +4691,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_subform.WrkOrdrBttn",
-    "created_at": "2026-07-19T21:11:56.452Z",
-    "updated_at": "2026-07-19T21:11:56.452Z"
+    "created_at": "2026-07-20T01:11:56.452Z",
+    "updated_at": "2026-07-20T01:11:56.452Z"
   },
   {
     "id": "a9eaa7d4-098e-4909-9c92-f0ab0cd37b41",
@@ -4706,8 +4706,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_print_invoice.Form",
-    "created_at": "2026-07-19T21:11:53.920Z",
-    "updated_at": "2026-07-19T21:11:53.920Z"
+    "created_at": "2026-07-20T01:11:53.920Z",
+    "updated_at": "2026-07-20T01:11:53.920Z"
   },
   {
     "id": "aa0dfad5-fd20-420a-9c16-5c2eba279110",
@@ -4721,8 +4721,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_food_categories",
-    "created_at": "2026-07-19T21:11:45.692Z",
-    "updated_at": "2026-07-19T21:11:45.692Z"
+    "created_at": "2026-07-20T01:11:45.692Z",
+    "updated_at": "2026-07-20T01:11:45.692Z"
   },
   {
     "id": "aa95430d-e3e8-4538-b136-2e83d8b0eb16",
@@ -4736,8 +4736,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Command256",
-    "created_at": "2026-07-19T21:11:51.133Z",
-    "updated_at": "2026-07-19T21:11:51.133Z"
+    "created_at": "2026-07-20T01:11:51.133Z",
+    "updated_at": "2026-07-20T01:11:51.133Z"
   },
   {
     "id": "aad8e26d-2f98-4e9b-af3c-443b01217611",
@@ -4751,8 +4751,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_coffeeproductioncosts.CoffeePricingReport",
-    "created_at": "2026-07-19T21:11:44.961Z",
-    "updated_at": "2026-07-19T21:11:44.961Z"
+    "created_at": "2026-07-20T01:11:44.961Z",
+    "updated_at": "2026-07-20T01:11:44.961Z"
   },
   {
     "id": "ab9b5680-d320-4894-b8d2-8a7d04bceea7",
@@ -4766,8 +4766,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.SrvcTxtBx",
-    "created_at": "2026-07-19T21:11:52.213Z",
-    "updated_at": "2026-07-19T21:11:52.213Z"
+    "created_at": "2026-07-20T01:11:52.213Z",
+    "updated_at": "2026-07-20T01:11:52.213Z"
   },
   {
     "id": "abc505d6-96da-41d5-a051-f864763e50b9",
@@ -4781,8 +4781,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:55.141Z",
-    "updated_at": "2026-07-19T21:11:55.141Z"
+    "created_at": "2026-07-20T01:11:55.141Z",
+    "updated_at": "2026-07-20T01:11:55.141Z"
   },
   {
     "id": "abd4b1e6-d8c5-4536-bcc3-eb7e9272010e",
@@ -4796,8 +4796,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorder_parts",
-    "created_at": "2026-07-19T21:11:56.646Z",
-    "updated_at": "2026-07-19T21:11:56.646Z"
+    "created_at": "2026-07-20T01:11:56.646Z",
+    "updated_at": "2026-07-20T01:11:56.646Z"
   },
   {
     "id": "adbdf8ab-495a-42d1-944a-df7c9a972d71",
@@ -4811,8 +4811,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders_by_customer",
-    "created_at": "2026-07-19T21:11:50.832Z",
-    "updated_at": "2026-07-19T21:11:50.832Z"
+    "created_at": "2026-07-20T01:11:50.832Z",
+    "updated_at": "2026-07-20T01:11:50.832Z"
   },
   {
     "id": "ade0f465-dfaf-4db3-b536-6cc4e55e26c0",
@@ -4826,8 +4826,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform1.Command30",
-    "created_at": "2026-07-19T21:11:50.202Z",
-    "updated_at": "2026-07-19T21:11:50.202Z"
+    "created_at": "2026-07-20T01:11:50.202Z",
+    "updated_at": "2026-07-20T01:11:50.202Z"
   },
   {
     "id": "adf5e50e-9ce6-470a-a6a4-f37ecff1dd9a",
@@ -4841,8 +4841,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesneedpayoff.PreviousImplication",
-    "created_at": "2026-07-19T21:11:55.672Z",
-    "updated_at": "2026-07-19T21:11:55.672Z"
+    "created_at": "2026-07-20T01:11:55.672Z",
+    "updated_at": "2026-07-20T01:11:55.672Z"
   },
   {
     "id": "aeb69980-6ac8-47ba-ad0b-597e15109808",
@@ -4856,8 +4856,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_report_date_range.Form",
-    "created_at": "2026-07-19T21:11:55.478Z",
-    "updated_at": "2026-07-19T21:11:55.478Z"
+    "created_at": "2026-07-20T01:11:55.478Z",
+    "updated_at": "2026-07-20T01:11:55.478Z"
   },
   {
     "id": "aef39886-0d0c-48f3-961e-09a14ea08d08",
@@ -4871,8 +4871,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.TxtBoxOrders_ShipDate",
-    "created_at": "2026-07-19T21:11:49.917Z",
-    "updated_at": "2026-07-19T21:11:49.917Z"
+    "created_at": "2026-07-20T01:11:49.917Z",
+    "updated_at": "2026-07-20T01:11:49.917Z"
   },
   {
     "id": "af188c99-7a72-43b9-a4e3-f970e342de1f",
@@ -4886,8 +4886,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitCost",
-    "created_at": "2026-07-19T21:11:54.439Z",
-    "updated_at": "2026-07-19T21:11:54.439Z"
+    "created_at": "2026-07-20T01:11:54.439Z",
+    "updated_at": "2026-07-20T01:11:54.439Z"
   },
   {
     "id": "af6e095e-9a1b-44b8-9c06-ba2babf087a8",
@@ -4901,8 +4901,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_parts.PartID",
-    "created_at": "2026-07-19T21:11:56.757Z",
-    "updated_at": "2026-07-19T21:11:56.757Z"
+    "created_at": "2026-07-20T01:11:56.757Z",
+    "updated_at": "2026-07-20T01:11:56.757Z"
   },
   {
     "id": "af7491f6-e636-481b-8ba6-6310c79f72a0",
@@ -4916,8 +4916,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.CnfrmEmlBttn2",
-    "created_at": "2026-07-19T21:11:50.021Z",
-    "updated_at": "2026-07-19T21:11:50.021Z"
+    "created_at": "2026-07-20T01:11:50.021Z",
+    "updated_at": "2026-07-20T01:11:50.021Z"
   },
   {
     "id": "af753afa-92ff-49bc-9313-73fe9f122884",
@@ -4931,8 +4931,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.NewCallsCmbBx",
-    "created_at": "2026-07-19T21:11:46.733Z",
-    "updated_at": "2026-07-19T21:11:46.733Z"
+    "created_at": "2026-07-20T01:11:46.733Z",
+    "updated_at": "2026-07-20T01:11:46.733Z"
   },
   {
     "id": "afeb1dbc-b0f8-4883-aebe-3cdb0431cd6a",
@@ -4946,8 +4946,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.ShpLblBttn",
-    "created_at": "2026-07-19T21:11:52.924Z",
-    "updated_at": "2026-07-19T21:11:52.924Z"
+    "created_at": "2026-07-20T01:11:52.924Z",
+    "updated_at": "2026-07-20T01:11:52.924Z"
   },
   {
     "id": "b0316023-8fd5-464a-9ed4-98adc599657a",
@@ -4961,8 +4961,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.EmployeeID",
-    "created_at": "2026-07-19T21:11:56.957Z",
-    "updated_at": "2026-07-19T21:11:56.957Z"
+    "created_at": "2026-07-20T01:11:56.957Z",
+    "updated_at": "2026-07-20T01:11:56.957Z"
   },
   {
     "id": "b0bf2c4f-ec93-4f4e-a6f2-14624c7f5ee2",
@@ -4976,8 +4976,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.AssignPLordrNoBTTN",
-    "created_at": "2026-07-19T21:11:49.703Z",
-    "updated_at": "2026-07-19T21:11:49.703Z"
+    "created_at": "2026-07-20T01:11:49.703Z",
+    "updated_at": "2026-07-20T01:11:49.703Z"
   },
   {
     "id": "b1de8c72-a1e9-44c9-920b-8f10f4a0c710",
@@ -4991,8 +4991,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.Form",
-    "created_at": "2026-07-19T21:11:54.856Z",
-    "updated_at": "2026-07-19T21:11:54.856Z"
+    "created_at": "2026-07-20T01:11:54.856Z",
+    "updated_at": "2026-07-20T01:11:54.856Z"
   },
   {
     "id": "b2f4c6f6-1a18-4007-abed-70385bc184c1",
@@ -5006,8 +5006,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Import_CSV",
-    "created_at": "2026-07-19T21:11:51.938Z",
-    "updated_at": "2026-07-19T21:11:51.938Z"
+    "created_at": "2026-07-20T01:11:51.938Z",
+    "updated_at": "2026-07-20T01:11:51.938Z"
   },
   {
     "id": "b3a937de-c137-4420-a861-5d88ec64296f",
@@ -5021,8 +5021,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Notes",
-    "created_at": "2026-07-19T21:11:51.987Z",
-    "updated_at": "2026-07-19T21:11:51.987Z"
+    "created_at": "2026-07-20T01:11:51.987Z",
+    "updated_at": "2026-07-20T01:11:51.987Z"
   },
   {
     "id": "b3add8de-5687-4648-bf46-7b2c70bba5c0",
@@ -5036,8 +5036,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.Command36",
-    "created_at": "2026-07-19T21:11:53.456Z",
-    "updated_at": "2026-07-19T21:11:53.456Z"
+    "created_at": "2026-07-20T01:11:53.456Z",
+    "updated_at": "2026-07-20T01:11:53.456Z"
   },
   {
     "id": "b402beef-042a-4636-bba6-655d29d95985",
@@ -5051,8 +5051,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorders",
-    "created_at": "2026-07-19T21:11:56.789Z",
-    "updated_at": "2026-07-19T21:11:56.789Z"
+    "created_at": "2026-07-20T01:11:56.789Z",
+    "updated_at": "2026-07-20T01:11:56.789Z"
   },
   {
     "id": "b48ac4e9-5bd9-4d4c-a07d-fa7363441f23",
@@ -5066,8 +5066,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.UnitPriceTxtBx",
-    "created_at": "2026-07-19T21:11:44.939Z",
-    "updated_at": "2026-07-19T21:11:44.939Z"
+    "created_at": "2026-07-20T01:11:44.939Z",
+    "updated_at": "2026-07-20T01:11:44.939Z"
   },
   {
     "id": "b4b65aaf-ccd7-4b7b-8ba0-7bf487e5ff6f",
@@ -5081,8 +5081,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.PriceMkUpBttn",
-    "created_at": "2026-07-19T21:11:54.735Z",
-    "updated_at": "2026-07-19T21:11:54.735Z"
+    "created_at": "2026-07-20T01:11:54.735Z",
+    "updated_at": "2026-07-20T01:11:54.735Z"
   },
   {
     "id": "b4c56357-d673-421b-ba7a-3a1798bdcd20",
@@ -5096,8 +5096,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_payments.PaymentMethodID",
-    "created_at": "2026-07-19T21:11:53.817Z",
-    "updated_at": "2026-07-19T21:11:53.817Z"
+    "created_at": "2026-07-20T01:11:53.817Z",
+    "updated_at": "2026-07-20T01:11:53.817Z"
   },
   {
     "id": "b5b9d0aa-43a9-4b99-a57e-30d3c6d33a34",
@@ -5111,8 +5111,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadonHoldCmbBx",
-    "created_at": "2026-07-19T21:11:46.329Z",
-    "updated_at": "2026-07-19T21:11:46.329Z"
+    "created_at": "2026-07-20T01:11:46.329Z",
+    "updated_at": "2026-07-20T01:11:46.329Z"
   },
   {
     "id": "b68b2b4a-cb23-41f3-94b0-02215fa94369",
@@ -5126,8 +5126,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.DeliveryZoneTxtBx",
-    "created_at": "2026-07-19T21:11:52.699Z",
-    "updated_at": "2026-07-19T21:11:52.699Z"
+    "created_at": "2026-07-20T01:11:52.699Z",
+    "updated_at": "2026-07-20T01:11:52.699Z"
   },
   {
     "id": "b6a14ec4-2770-44ff-b94f-afd94692a7c2",
@@ -5141,8 +5141,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.BidCurrency",
-    "created_at": "2026-07-19T21:11:45.837Z",
-    "updated_at": "2026-07-19T21:11:45.837Z"
+    "created_at": "2026-07-20T01:11:45.837Z",
+    "updated_at": "2026-07-20T01:11:45.837Z"
   },
   {
     "id": "b71aea03-4da0-438b-9f16-42a8337dfd65",
@@ -5156,8 +5156,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.EmployeeID",
-    "created_at": "2026-07-19T21:11:50.454Z",
-    "updated_at": "2026-07-19T21:11:50.454Z"
+    "created_at": "2026-07-20T01:11:50.454Z",
+    "updated_at": "2026-07-20T01:11:50.454Z"
   },
   {
     "id": "b7aa0d79-4f23-453f-a4e3-dbffb2bf3c73",
@@ -5171,8 +5171,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_deficiencylog.Text13",
-    "created_at": "2026-07-19T21:11:45.345Z",
-    "updated_at": "2026-07-19T21:11:45.345Z"
+    "created_at": "2026-07-20T01:11:45.345Z",
+    "updated_at": "2026-07-20T01:11:45.345Z"
   },
   {
     "id": "b8a3ecb0-bd69-4782-aa9e-e83e8135ee5c",
@@ -5186,8 +5186,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_assets_subform.Ctl6moBttn",
-    "created_at": "2026-07-19T21:11:44.734Z",
-    "updated_at": "2026-07-19T21:11:44.734Z"
+    "created_at": "2026-07-20T01:11:44.734Z",
+    "updated_at": "2026-07-20T01:11:44.734Z"
   },
   {
     "id": "b8b4e8dd-b14b-49bf-8a2b-ff1cd38e41b7",
@@ -5201,8 +5201,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxPickUp",
-    "created_at": "2026-07-19T21:11:48.634Z",
-    "updated_at": "2026-07-19T21:11:48.634Z"
+    "created_at": "2026-07-20T01:11:48.634Z",
+    "updated_at": "2026-07-20T01:11:48.634Z"
   },
   {
     "id": "b91e8dec-838b-47db-889b-203e83bf0156",
@@ -5216,8 +5216,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.Order_Details_Subform",
-    "created_at": "2026-07-19T21:11:53.335Z",
-    "updated_at": "2026-07-19T21:11:53.335Z"
+    "created_at": "2026-07-20T01:11:53.335Z",
+    "updated_at": "2026-07-20T01:11:53.335Z"
   },
   {
     "id": "b9b778ca-ee1a-4218-91e5-d96e2c874a92",
@@ -5231,8 +5231,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadCoffee",
-    "created_at": "2026-07-19T21:11:46.625Z",
-    "updated_at": "2026-07-19T21:11:46.625Z"
+    "created_at": "2026-07-20T01:11:46.625Z",
+    "updated_at": "2026-07-20T01:11:46.625Z"
   },
   {
     "id": "b9f0d802-1b33-4c37-8da0-b2f03507434f",
@@ -5246,8 +5246,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_fcc_erp_development.TxtbxFEAT_VERS",
-    "created_at": "2026-07-19T21:11:45.673Z",
-    "updated_at": "2026-07-19T21:11:45.673Z"
+    "created_at": "2026-07-20T01:11:45.673Z",
+    "updated_at": "2026-07-20T01:11:45.673Z"
   },
   {
     "id": "ba3ce519-0c21-44c6-b0e6-f67d67b92109",
@@ -5261,8 +5261,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxUsdEquip",
-    "created_at": "2026-07-19T21:11:48.807Z",
-    "updated_at": "2026-07-19T21:11:48.807Z"
+    "created_at": "2026-07-20T01:11:48.807Z",
+    "updated_at": "2026-07-20T01:11:48.807Z"
   },
   {
     "id": "baa08725-8540-4204-9af4-361559455d2b",
@@ -5276,8 +5276,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.EmailLaunch",
-    "created_at": "2026-07-19T21:11:46.077Z",
-    "updated_at": "2026-07-19T21:11:46.077Z"
+    "created_at": "2026-07-20T01:11:46.077Z",
+    "updated_at": "2026-07-20T01:11:46.077Z"
   },
   {
     "id": "bb08605a-4ce4-4f01-acda-0b33690ff279",
@@ -5291,8 +5291,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders_by_customer",
-    "created_at": "2026-07-19T21:11:50.884Z",
-    "updated_at": "2026-07-19T21:11:50.884Z"
+    "created_at": "2026-07-20T01:11:50.884Z",
+    "updated_at": "2026-07-20T01:11:50.884Z"
   },
   {
     "id": "bb14cb66-61e2-4e5f-b51d-8839ec223ef5",
@@ -5306,8 +5306,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:55.168Z",
-    "updated_at": "2026-07-19T21:11:55.168Z"
+    "created_at": "2026-07-20T01:11:55.168Z",
+    "updated_at": "2026-07-20T01:11:55.168Z"
   },
   {
     "id": "bb30cace-123a-402d-970d-105726512599",
@@ -5321,8 +5321,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salessituation.PreviousImplication",
-    "created_at": "2026-07-19T21:11:55.878Z",
-    "updated_at": "2026-07-19T21:11:55.878Z"
+    "created_at": "2026-07-20T01:11:55.878Z",
+    "updated_at": "2026-07-20T01:11:55.878Z"
   },
   {
     "id": "bb31e5ee-35fb-46ae-8259-581f781efa32",
@@ -5336,8 +5336,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.Total_Payments",
-    "created_at": "2026-07-19T21:11:53.084Z",
-    "updated_at": "2026-07-19T21:11:53.084Z"
+    "created_at": "2026-07-20T01:11:53.084Z",
+    "updated_at": "2026-07-20T01:11:53.084Z"
   },
   {
     "id": "bbe48838-bc83-4f29-98be-1ceb1dcd4083",
@@ -5351,8 +5351,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_shipping_methods.Form",
-    "created_at": "2026-07-19T21:11:56.070Z",
-    "updated_at": "2026-07-19T21:11:56.070Z"
+    "created_at": "2026-07-20T01:11:56.070Z",
+    "updated_at": "2026-07-20T01:11:56.070Z"
   },
   {
     "id": "bc05b515-71fe-4f12-b551-f08ffb6a55c9",
@@ -5366,8 +5366,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text130",
-    "created_at": "2026-07-19T21:11:47.559Z",
-    "updated_at": "2026-07-19T21:11:47.559Z"
+    "created_at": "2026-07-20T01:11:47.559Z",
+    "updated_at": "2026-07-20T01:11:47.559Z"
   },
   {
     "id": "bc393167-ccfd-4f05-8ee0-f9f76c86c24f",
@@ -5381,8 +5381,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.Total_Sale",
-    "created_at": "2026-07-19T21:11:55.323Z",
-    "updated_at": "2026-07-19T21:11:55.323Z"
+    "created_at": "2026-07-20T01:11:55.323Z",
+    "updated_at": "2026-07-20T01:11:55.323Z"
   },
   {
     "id": "bd0b921a-2777-430c-899f-4db42aea5cc2",
@@ -5396,8 +5396,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.PriceListShowBttn",
-    "created_at": "2026-07-19T21:11:45.471Z",
-    "updated_at": "2026-07-19T21:11:45.471Z"
+    "created_at": "2026-07-20T01:11:45.471Z",
+    "updated_at": "2026-07-20T01:11:45.471Z"
   },
   {
     "id": "bd162cef-3c5f-4a68-b3fb-5529e7e9224f",
@@ -5411,8 +5411,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text165",
-    "created_at": "2026-07-19T21:11:47.839Z",
-    "updated_at": "2026-07-19T21:11:47.839Z"
+    "created_at": "2026-07-20T01:11:47.839Z",
+    "updated_at": "2026-07-20T01:11:47.839Z"
   },
   {
     "id": "bd9cc419-a1dc-4334-9009-bbeecdc9bfa0",
@@ -5426,8 +5426,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders",
-    "created_at": "2026-07-19T21:11:50.253Z",
-    "updated_at": "2026-07-19T21:11:50.253Z"
+    "created_at": "2026-07-20T01:11:50.253Z",
+    "updated_at": "2026-07-20T01:11:50.253Z"
   },
   {
     "id": "bde3ce1b-3c52-4580-ab0c-821dbf392609",
@@ -5441,8 +5441,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.CasePriceTxtBx",
-    "created_at": "2026-07-19T21:11:44.819Z",
-    "updated_at": "2026-07-19T21:11:44.819Z"
+    "created_at": "2026-07-20T01:11:44.819Z",
+    "updated_at": "2026-07-20T01:11:44.819Z"
   },
   {
     "id": "be4f5ba9-c16e-4c41-b50e-7f5ae1f8ab75",
@@ -5456,8 +5456,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBPAD",
-    "created_at": "2026-07-19T21:11:48.043Z",
-    "updated_at": "2026-07-19T21:11:48.043Z"
+    "created_at": "2026-07-20T01:11:48.043Z",
+    "updated_at": "2026-07-20T01:11:48.043Z"
   },
   {
     "id": "be735b30-b322-4b9a-8326-2b27e731ad30",
@@ -5471,8 +5471,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Creditnet",
-    "created_at": "2026-07-19T21:11:46.401Z",
-    "updated_at": "2026-07-19T21:11:46.401Z"
+    "created_at": "2026-07-20T01:11:46.401Z",
+    "updated_at": "2026-07-20T01:11:46.401Z"
   },
   {
     "id": "c001e3f0-a7aa-4ecd-9f0b-3743a977cb40",
@@ -5486,8 +5486,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesneedpayoff.NextImplication",
-    "created_at": "2026-07-19T21:11:55.695Z",
-    "updated_at": "2026-07-19T21:11:55.695Z"
+    "created_at": "2026-07-20T01:11:55.695Z",
+    "updated_at": "2026-07-20T01:11:55.695Z"
   },
   {
     "id": "c1173406-a64b-4d44-80f7-83d0ed66ea31",
@@ -5501,8 +5501,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxAltBrand",
-    "created_at": "2026-07-19T21:11:48.148Z",
-    "updated_at": "2026-07-19T21:11:48.148Z"
+    "created_at": "2026-07-20T01:11:48.148Z",
+    "updated_at": "2026-07-20T01:11:48.148Z"
   },
   {
     "id": "c120e902-98ff-4a8b-9558-153abaed0306",
@@ -5516,8 +5516,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.ProductID",
-    "created_at": "2026-07-19T21:11:49.453Z",
-    "updated_at": "2026-07-19T21:11:49.453Z"
+    "created_at": "2026-07-20T01:11:49.453Z",
+    "updated_at": "2026-07-20T01:11:49.453Z"
   },
   {
     "id": "c3bc00ad-e62a-4790-a18e-9f0ce51abc3e",
@@ -5531,8 +5531,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text132",
-    "created_at": "2026-07-19T21:11:47.604Z",
-    "updated_at": "2026-07-19T21:11:47.604Z"
+    "created_at": "2026-07-20T01:11:47.604Z",
+    "updated_at": "2026-07-20T01:11:47.604Z"
   },
   {
     "id": "c5eb30c7-1dde-48a3-843e-fef9d760b5a9",
@@ -5546,8 +5546,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Payments",
-    "created_at": "2026-07-19T21:11:52.043Z",
-    "updated_at": "2026-07-19T21:11:52.043Z"
+    "created_at": "2026-07-20T01:11:52.043Z",
+    "updated_at": "2026-07-20T01:11:52.043Z"
   },
   {
     "id": "c6b05c32-a3c7-4029-8f65-07b614b839ae",
@@ -5561,8 +5561,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_details_subform.Form",
-    "created_at": "2026-07-19T21:11:55.120Z",
-    "updated_at": "2026-07-19T21:11:55.120Z"
+    "created_at": "2026-07-20T01:11:55.120Z",
+    "updated_at": "2026-07-20T01:11:55.120Z"
   },
   {
     "id": "c6c78bf9-cf99-4e8e-948f-efeba9895933",
@@ -5576,8 +5576,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CustomerCalledReset",
-    "created_at": "2026-07-19T21:11:51.625Z",
-    "updated_at": "2026-07-19T21:11:51.625Z"
+    "created_at": "2026-07-20T01:11:51.625Z",
+    "updated_at": "2026-07-20T01:11:51.625Z"
   },
   {
     "id": "c6fe731b-c1c4-4882-89ee-a32b853eb21a",
@@ -5591,8 +5591,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text128",
-    "created_at": "2026-07-19T21:11:47.469Z",
-    "updated_at": "2026-07-19T21:11:47.469Z"
+    "created_at": "2026-07-20T01:11:47.469Z",
+    "updated_at": "2026-07-20T01:11:47.469Z"
   },
   {
     "id": "c8fde587-4d63-409e-91c6-b2ce87bb24b3",
@@ -5606,8 +5606,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text183",
-    "created_at": "2026-07-19T21:11:47.944Z",
-    "updated_at": "2026-07-19T21:11:47.944Z"
+    "created_at": "2026-07-20T01:11:47.944Z",
+    "updated_at": "2026-07-20T01:11:47.944Z"
   },
   {
     "id": "c92be49a-49e4-41f7-b149-70d6b209019c",
@@ -5621,8 +5621,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach9",
-    "created_at": "2026-07-19T21:11:45.306Z",
-    "updated_at": "2026-07-19T21:11:45.306Z"
+    "created_at": "2026-07-20T01:11:45.306Z",
+    "updated_at": "2026-07-20T01:11:45.306Z"
   },
   {
     "id": "c969d1bf-a3e2-437c-a17d-ab606dae9542",
@@ -5636,8 +5636,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.StdOrdrBttn",
-    "created_at": "2026-07-19T21:11:49.503Z",
-    "updated_at": "2026-07-19T21:11:49.503Z"
+    "created_at": "2026-07-20T01:11:49.503Z",
+    "updated_at": "2026-07-20T01:11:49.503Z"
   },
   {
     "id": "c9b682db-4e89-4339-9caa-11a67c18886b",
@@ -5651,8 +5651,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text128",
-    "created_at": "2026-07-19T21:11:52.256Z",
-    "updated_at": "2026-07-19T21:11:52.256Z"
+    "created_at": "2026-07-20T01:11:52.256Z",
+    "updated_at": "2026-07-20T01:11:52.256Z"
   },
   {
     "id": "ca6d1c9b-606c-424e-95a3-60ec95847630",
@@ -5666,8 +5666,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_workorders",
-    "created_at": "2026-07-19T21:11:56.815Z",
-    "updated_at": "2026-07-19T21:11:56.815Z"
+    "created_at": "2026-07-20T01:11:56.815Z",
+    "updated_at": "2026-07-20T01:11:56.815Z"
   },
   {
     "id": "ca7affa8-31c2-4c73-9810-8a7aab62179f",
@@ -5681,8 +5681,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordercomplete_form.BarCodeScanner",
-    "created_at": "2026-07-19T21:11:49.567Z",
-    "updated_at": "2026-07-19T21:11:49.567Z"
+    "created_at": "2026-07-20T01:11:49.567Z",
+    "updated_at": "2026-07-20T01:11:49.567Z"
   },
   {
     "id": "cbe5c7fa-bfcd-4b4d-9551-7b8d870a0414",
@@ -5696,8 +5696,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customerexpandednotes.CustomerCommentBttn",
-    "created_at": "2026-07-19T21:11:45.326Z",
-    "updated_at": "2026-07-19T21:11:45.326Z"
+    "created_at": "2026-07-20T01:11:45.326Z",
+    "updated_at": "2026-07-20T01:11:45.326Z"
   },
   {
     "id": "cc26ca8c-7ffe-474f-a2b3-687cdb835375",
@@ -5711,8 +5711,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.Form",
-    "created_at": "2026-07-19T21:11:54.882Z",
-    "updated_at": "2026-07-19T21:11:54.882Z"
+    "created_at": "2026-07-20T01:11:54.882Z",
+    "updated_at": "2026-07-20T01:11:54.882Z"
   },
   {
     "id": "cc2cd861-4a30-43b8-9a8b-8e0f6f5c6d13",
@@ -5726,8 +5726,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.PremiumTxtBx",
-    "created_at": "2026-07-19T21:11:52.092Z",
-    "updated_at": "2026-07-19T21:11:52.092Z"
+    "created_at": "2026-07-20T01:11:52.092Z",
+    "updated_at": "2026-07-20T01:11:52.092Z"
   },
   {
     "id": "cc69273d-4ee4-4e8c-91d8-d629c29f536f",
@@ -5741,8 +5741,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text132",
-    "created_at": "2026-07-19T21:11:52.357Z",
-    "updated_at": "2026-07-19T21:11:52.357Z"
+    "created_at": "2026-07-20T01:11:52.357Z",
+    "updated_at": "2026-07-20T01:11:52.357Z"
   },
   {
     "id": "cc9f1448-493f-4ae6-8799-b7ccce61aaed",
@@ -5756,8 +5756,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_labor.EmployeeID",
-    "created_at": "2026-07-19T21:11:56.616Z",
-    "updated_at": "2026-07-19T21:11:56.616Z"
+    "created_at": "2026-07-20T01:11:56.616Z",
+    "updated_at": "2026-07-20T01:11:56.616Z"
   },
   {
     "id": "cd590e9a-b381-468b-b029-a249c7503f6f",
@@ -5771,8 +5771,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.Command90",
-    "created_at": "2026-07-19T21:11:54.705Z",
-    "updated_at": "2026-07-19T21:11:54.705Z"
+    "created_at": "2026-07-20T01:11:54.705Z",
+    "updated_at": "2026-07-20T01:11:54.705Z"
   },
   {
     "id": "ceb22a74-07c6-4c08-9720-2b571ebf0e8b",
@@ -5786,8 +5786,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_report_date_range",
-    "created_at": "2026-07-19T21:11:55.447Z",
-    "updated_at": "2026-07-19T21:11:55.447Z"
+    "created_at": "2026-07-20T01:11:55.447Z",
+    "updated_at": "2026-07-20T01:11:55.447Z"
   },
   {
     "id": "cf2be901-ef5e-4824-b785-7693a6017cd0",
@@ -5801,8 +5801,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.PostalCode",
-    "created_at": "2026-07-19T21:11:46.756Z",
-    "updated_at": "2026-07-19T21:11:46.756Z"
+    "created_at": "2026-07-20T01:11:46.756Z",
+    "updated_at": "2026-07-20T01:11:46.756Z"
   },
   {
     "id": "cf64efb8-bdaf-4a79-a5f3-1ffa02c24abe",
@@ -5816,8 +5816,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text139",
-    "created_at": "2026-07-19T21:11:52.462Z",
-    "updated_at": "2026-07-19T21:11:52.462Z"
+    "created_at": "2026-07-20T01:11:52.462Z",
+    "updated_at": "2026-07-20T01:11:52.462Z"
   },
   {
     "id": "cfd8d631-ccb0-427c-b8f9-b6a94b3c1765",
@@ -5831,8 +5831,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_form.ManufacturerQuickFindCombo",
-    "created_at": "2026-07-19T21:11:45.556Z",
-    "updated_at": "2026-07-19T21:11:45.556Z"
+    "created_at": "2026-07-20T01:11:45.556Z",
+    "updated_at": "2026-07-20T01:11:45.556Z"
   },
   {
     "id": "d046df1e-dd8a-4098-884d-5a686031f512",
@@ -5846,8 +5846,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.OrderID",
-    "created_at": "2026-07-19T21:11:52.975Z",
-    "updated_at": "2026-07-19T21:11:52.975Z"
+    "created_at": "2026-07-20T01:11:52.975Z",
+    "updated_at": "2026-07-20T01:11:52.975Z"
   },
   {
     "id": "d0d8ef66-0b0f-48ba-acbf-4be609f96e48",
@@ -5861,8 +5861,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_switchboard.Form",
-    "created_at": "2026-07-19T21:11:56.286Z",
-    "updated_at": "2026-07-19T21:11:56.286Z"
+    "created_at": "2026-07-20T01:11:56.286Z",
+    "updated_at": "2026-07-20T01:11:56.286Z"
   },
   {
     "id": "d1f22986-781a-4ba0-858c-231f8e498111",
@@ -5876,8 +5876,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Proposal",
-    "created_at": "2026-07-19T21:11:47.191Z",
-    "updated_at": "2026-07-19T21:11:47.191Z"
+    "created_at": "2026-07-20T01:11:47.191Z",
+    "updated_at": "2026-07-20T01:11:47.191Z"
   },
   {
     "id": "d32e7ed6-dd7c-4868-8dae-ba262fe72bbc",
@@ -5891,8 +5891,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FollowUpsCmbBx",
-    "created_at": "2026-07-19T21:11:46.284Z",
-    "updated_at": "2026-07-19T21:11:46.284Z"
+    "created_at": "2026-07-20T01:11:46.284Z",
+    "updated_at": "2026-07-20T01:11:46.284Z"
   },
   {
     "id": "d385d23a-81c6-4ad0-b91a-7066b35cea4d",
@@ -5906,8 +5906,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_payments",
-    "created_at": "2026-07-19T21:11:53.663Z",
-    "updated_at": "2026-07-19T21:11:53.663Z"
+    "created_at": "2026-07-20T01:11:53.663Z",
+    "updated_at": "2026-07-20T01:11:53.663Z"
   },
   {
     "id": "d3ea99b3-a988-479b-94fc-e35cc8a84fe4",
@@ -5921,8 +5921,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_payments",
-    "created_at": "2026-07-19T21:11:53.638Z",
-    "updated_at": "2026-07-19T21:11:53.638Z"
+    "created_at": "2026-07-20T01:11:53.638Z",
+    "updated_at": "2026-07-20T01:11:53.638Z"
   },
   {
     "id": "d4f46e49-11f6-4172-9980-67ab0fc014ce",
@@ -5936,8 +5936,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadsFindButton",
-    "created_at": "2026-07-19T21:11:47.130Z",
-    "updated_at": "2026-07-19T21:11:47.130Z"
+    "created_at": "2026-07-20T01:11:47.130Z",
+    "updated_at": "2026-07-20T01:11:47.130Z"
   },
   {
     "id": "d604ba26-0404-48ca-a3b9-0d1e9ef6bcdf",
@@ -5951,8 +5951,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Form",
-    "created_at": "2026-07-19T21:11:46.537Z",
-    "updated_at": "2026-07-19T21:11:46.537Z"
+    "created_at": "2026-07-20T01:11:46.537Z",
+    "updated_at": "2026-07-20T01:11:46.537Z"
   },
   {
     "id": "d61a780f-fbde-4210-ad69-efa32ae1ccb1",
@@ -5966,8 +5966,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.EmailSlctdLdBttn",
-    "created_at": "2026-07-19T21:11:48.935Z",
-    "updated_at": "2026-07-19T21:11:48.935Z"
+    "created_at": "2026-07-20T01:11:48.935Z",
+    "updated_at": "2026-07-20T01:11:48.935Z"
   },
   {
     "id": "d6905698-8360-4334-bb29-8be50fbcdb8d",
@@ -5981,8 +5981,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.HomeRateBttn",
-    "created_at": "2026-07-19T21:11:51.916Z",
-    "updated_at": "2026-07-19T21:11:51.916Z"
+    "created_at": "2026-07-20T01:11:51.916Z",
+    "updated_at": "2026-07-20T01:11:51.916Z"
   },
   {
     "id": "d6c9f9d7-6f37-4a55-a6d0-833a61e4185e",
@@ -5996,8 +5996,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.ShipBttn",
-    "created_at": "2026-07-19T21:11:49.811Z",
-    "updated_at": "2026-07-19T21:11:49.811Z"
+    "created_at": "2026-07-20T01:11:49.811Z",
+    "updated_at": "2026-07-20T01:11:49.811Z"
   },
   {
     "id": "d736355d-46af-4557-95b7-402f4cb147b6",
@@ -6011,8 +6011,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.NewCalls",
-    "created_at": "2026-07-19T21:11:47.369Z",
-    "updated_at": "2026-07-19T21:11:47.369Z"
+    "created_at": "2026-07-20T01:11:47.369Z",
+    "updated_at": "2026-07-20T01:11:47.369Z"
   },
   {
     "id": "d75f6142-6494-480c-8427-dec4b1f5a41f",
@@ -6026,8 +6026,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_price_list_select_form.FndrsngFormsShowBttn",
-    "created_at": "2026-07-19T21:11:53.842Z",
-    "updated_at": "2026-07-19T21:11:53.842Z"
+    "created_at": "2026-07-20T01:11:53.842Z",
+    "updated_at": "2026-07-20T01:11:53.842Z"
   },
   {
     "id": "d76c5bd9-ba9e-4904-b1de-3345767db315",
@@ -6041,8 +6041,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Form",
-    "created_at": "2026-07-19T21:11:49.294Z",
-    "updated_at": "2026-07-19T21:11:49.294Z"
+    "created_at": "2026-07-20T01:11:49.294Z",
+    "updated_at": "2026-07-20T01:11:49.294Z"
   },
   {
     "id": "d8186653-20ef-4fa0-82c5-19297607f5aa",
@@ -6056,8 +6056,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ready_for_pick_up_form.PuRqstBttn",
-    "created_at": "2026-07-19T21:11:55.391Z",
-    "updated_at": "2026-07-19T21:11:55.391Z"
+    "created_at": "2026-07-20T01:11:55.391Z",
+    "updated_at": "2026-07-20T01:11:55.391Z"
   },
   {
     "id": "d9d99819-74e5-4971-bd4d-804e1b59577b",
@@ -6071,8 +6071,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_by_customer.PrintInvoice",
-    "created_at": "2026-07-19T21:11:57.230Z",
-    "updated_at": "2026-07-19T21:11:57.230Z"
+    "created_at": "2026-07-20T01:11:57.230Z",
+    "updated_at": "2026-07-20T01:11:57.230Z"
   },
   {
     "id": "da287882-dadf-4c0a-b101-bbf85c7b3ec6",
@@ -6086,8 +6086,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SrvcTxtBx",
-    "created_at": "2026-07-19T21:11:46.976Z",
-    "updated_at": "2026-07-19T21:11:46.976Z"
+    "created_at": "2026-07-20T01:11:46.976Z",
+    "updated_at": "2026-07-20T01:11:46.976Z"
   },
   {
     "id": "da590e88-aefe-432d-b4d1-59822630bf21",
@@ -6101,8 +6101,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Form",
-    "created_at": "2026-07-19T21:11:49.318Z",
-    "updated_at": "2026-07-19T21:11:49.318Z"
+    "created_at": "2026-07-20T01:11:49.318Z",
+    "updated_at": "2026-07-20T01:11:49.318Z"
   },
   {
     "id": "dae537f0-6b08-4a9f-a0b0-17a45a74a7d5",
@@ -6116,8 +6116,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text139",
-    "created_at": "2026-07-19T21:11:47.709Z",
-    "updated_at": "2026-07-19T21:11:47.709Z"
+    "created_at": "2026-07-20T01:11:47.709Z",
+    "updated_at": "2026-07-20T01:11:47.709Z"
   },
   {
     "id": "db09b710-7b78-49ef-8129-940fb0726617",
@@ -6131,8 +6131,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.CaseCost",
-    "created_at": "2026-07-19T21:11:54.196Z",
-    "updated_at": "2026-07-19T21:11:54.196Z"
+    "created_at": "2026-07-20T01:11:54.196Z",
+    "updated_at": "2026-07-20T01:11:54.196Z"
   },
   {
     "id": "dc3dd92c-abbf-4b5f-a2d8-b2b5b0691ff3",
@@ -6146,8 +6146,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.PreviewInvoice",
-    "created_at": "2026-07-19T21:11:52.116Z",
-    "updated_at": "2026-07-19T21:11:52.116Z"
+    "created_at": "2026-07-20T01:11:52.116Z",
+    "updated_at": "2026-07-20T01:11:52.116Z"
   },
   {
     "id": "dd52cdf1-d5f2-4515-b761-007b6805563e",
@@ -6161,8 +6161,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text177",
-    "created_at": "2026-07-19T21:11:52.566Z",
-    "updated_at": "2026-07-19T21:11:52.566Z"
+    "created_at": "2026-07-20T01:11:52.566Z",
+    "updated_at": "2026-07-20T01:11:52.566Z"
   },
   {
     "id": "dd7ba2e1-945f-46bc-931e-b193e3afd20f",
@@ -6176,8 +6176,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_assets.ReallocateDrpwn",
-    "created_at": "2026-07-19T21:11:44.668Z",
-    "updated_at": "2026-07-19T21:11:44.668Z"
+    "created_at": "2026-07-20T01:11:44.668Z",
+    "updated_at": "2026-07-20T01:11:44.668Z"
   },
   {
     "id": "dd94a198-bdc0-44c3-bdd1-548eec565c7c",
@@ -6191,8 +6191,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customer_billingtracking_form.Form",
-    "created_at": "2026-07-19T21:11:45.052Z",
-    "updated_at": "2026-07-19T21:11:45.052Z"
+    "created_at": "2026-07-20T01:11:45.052Z",
+    "updated_at": "2026-07-20T01:11:45.052Z"
   },
   {
     "id": "de357107-caa9-40d5-99ac-c346f18fb2b0",
@@ -6206,8 +6206,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_switchboard.Command222",
-    "created_at": "2026-07-19T21:11:56.258Z",
-    "updated_at": "2026-07-19T21:11:56.258Z"
+    "created_at": "2026-07-20T01:11:56.258Z",
+    "updated_at": "2026-07-20T01:11:56.258Z"
   },
   {
     "id": "de9708b9-0573-416e-881d-587056c8f711",
@@ -6221,8 +6221,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.shiplabl",
-    "created_at": "2026-07-19T21:11:47.992Z",
-    "updated_at": "2026-07-19T21:11:47.992Z"
+    "created_at": "2026-07-20T01:11:47.992Z",
+    "updated_at": "2026-07-20T01:11:47.992Z"
   },
   {
     "id": "df2172a8-8b36-4e43-af50-172e8bf1fbf7",
@@ -6236,8 +6236,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SalesTermBttn",
-    "created_at": "2026-07-19T21:11:46.909Z",
-    "updated_at": "2026-07-19T21:11:46.909Z"
+    "created_at": "2026-07-20T01:11:46.909Z",
+    "updated_at": "2026-07-20T01:11:46.909Z"
   },
   {
     "id": "df7530f1-60e9-40ae-af05-ff16c6284f4f",
@@ -6251,8 +6251,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_parts",
-    "created_at": "2026-07-19T21:11:53.487Z",
-    "updated_at": "2026-07-19T21:11:53.487Z"
+    "created_at": "2026-07-20T01:11:53.487Z",
+    "updated_at": "2026-07-20T01:11:53.487Z"
   },
   {
     "id": "e0ca6753-133c-468d-8301-42bb13563f18",
@@ -6266,8 +6266,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.AltBrandTxtBx",
-    "created_at": "2026-07-19T21:11:45.787Z",
-    "updated_at": "2026-07-19T21:11:45.787Z"
+    "created_at": "2026-07-20T01:11:45.787Z",
+    "updated_at": "2026-07-20T01:11:45.787Z"
   },
   {
     "id": "e18413de-6ca6-4e0f-97f7-602c460ab07c",
@@ -6281,8 +6281,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_order_details_subform.Packaging",
-    "created_at": "2026-07-19T21:11:49.373Z",
-    "updated_at": "2026-07-19T21:11:49.373Z"
+    "created_at": "2026-07-20T01:11:49.373Z",
+    "updated_at": "2026-07-20T01:11:49.373Z"
   },
   {
     "id": "e330ef60-69b3-463a-b096-ab530ca85013",
@@ -6296,8 +6296,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SetValues",
-    "created_at": "2026-07-19T21:11:46.215Z",
-    "updated_at": "2026-07-19T21:11:46.215Z"
+    "created_at": "2026-07-20T01:11:46.215Z",
+    "updated_at": "2026-07-20T01:11:46.215Z"
   },
   {
     "id": "e34e1f1c-c6f0-4deb-a649-3e3448e20fcb",
@@ -6311,8 +6311,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxSrvc",
-    "created_at": "2026-07-19T21:11:48.776Z",
-    "updated_at": "2026-07-19T21:11:48.776Z"
+    "created_at": "2026-07-20T01:11:48.776Z",
+    "updated_at": "2026-07-20T01:11:48.776Z"
   },
   {
     "id": "e39eeb7b-50c0-49d6-8707-6afec908c525",
@@ -6326,8 +6326,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders_by_customer",
-    "created_at": "2026-07-19T21:11:50.802Z",
-    "updated_at": "2026-07-19T21:11:50.802Z"
+    "created_at": "2026-07-20T01:11:50.802Z",
+    "updated_at": "2026-07-20T01:11:50.802Z"
   },
   {
     "id": "e3d5a7d7-8118-4fbd-9eb9-5129f0b87cc1",
@@ -6341,8 +6341,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.Order_Details_Subform",
-    "created_at": "2026-07-19T21:11:50.481Z",
-    "updated_at": "2026-07-19T21:11:50.481Z"
+    "created_at": "2026-07-20T01:11:50.481Z",
+    "updated_at": "2026-07-20T01:11:50.481Z"
   },
   {
     "id": "e49db1d9-3ef9-4652-b368-a96c04c60eae",
@@ -6356,8 +6356,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.FollwUpSlctCmbx",
-    "created_at": "2026-07-19T21:11:46.519Z",
-    "updated_at": "2026-07-19T21:11:46.519Z"
+    "created_at": "2026-07-20T01:11:46.519Z",
+    "updated_at": "2026-07-20T01:11:46.519Z"
   },
   {
     "id": "e4dbffaf-ea42-4d5f-9ef3-46308283f87d",
@@ -6371,8 +6371,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.WarrantyEquipment",
-    "created_at": "2026-07-19T21:11:48.859Z",
-    "updated_at": "2026-07-19T21:11:48.859Z"
+    "created_at": "2026-07-20T01:11:48.859Z",
+    "updated_at": "2026-07-20T01:11:48.859Z"
   },
   {
     "id": "e59eba63-f3a7-41c7-b94d-1fd802d696cf",
@@ -6386,8 +6386,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordercomplete_form.BarCodeScanner",
-    "created_at": "2026-07-19T21:11:49.596Z",
-    "updated_at": "2026-07-19T21:11:49.596Z"
+    "created_at": "2026-07-20T01:11:49.596Z",
+    "updated_at": "2026-07-20T01:11:49.596Z"
   },
   {
     "id": "e5cca114-bb0c-4c89-9cf6-6721fa36129f",
@@ -6401,8 +6401,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_salesproblempayoff.PreviousProblem",
-    "created_at": "2026-07-19T21:11:55.826Z",
-    "updated_at": "2026-07-19T21:11:55.826Z"
+    "created_at": "2026-07-20T01:11:55.826Z",
+    "updated_at": "2026-07-20T01:11:55.826Z"
   },
   {
     "id": "e5f473b9-8989-4166-8ab6-537725831097",
@@ -6416,8 +6416,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach3",
-    "created_at": "2026-07-19T21:11:45.159Z",
-    "updated_at": "2026-07-19T21:11:45.159Z"
+    "created_at": "2026-07-20T01:11:45.159Z",
+    "updated_at": "2026-07-20T01:11:45.159Z"
   },
   {
     "id": "e6452996-8ee3-4831-83f7-bc959be236fe",
@@ -6431,8 +6431,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Form",
-    "created_at": "2026-07-19T21:11:51.786Z",
-    "updated_at": "2026-07-19T21:11:51.786Z"
+    "created_at": "2026-07-20T01:11:51.786Z",
+    "updated_at": "2026-07-20T01:11:51.786Z"
   },
   {
     "id": "e653493e-fce2-4d49-8bff-0456ab67157a",
@@ -6446,8 +6446,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.BttnCoffeeQuote",
-    "created_at": "2026-07-19T21:11:51.075Z",
-    "updated_at": "2026-07-19T21:11:51.075Z"
+    "created_at": "2026-07-20T01:11:51.075Z",
+    "updated_at": "2026-07-20T01:11:51.075Z"
   },
   {
     "id": "e699675b-c239-4062-b7b5-27f3b32d04ed",
@@ -6461,8 +6461,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.CredtLmt",
-    "created_at": "2026-07-19T21:11:51.388Z",
-    "updated_at": "2026-07-19T21:11:51.388Z"
+    "created_at": "2026-07-20T01:11:51.388Z",
+    "updated_at": "2026-07-20T01:11:51.388Z"
   },
   {
     "id": "e6a4c919-ff62-49a0-88e9-1dc597a7bd70",
@@ -6476,8 +6476,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.SiteLaunch",
-    "created_at": "2026-07-19T21:11:46.934Z",
-    "updated_at": "2026-07-19T21:11:46.934Z"
+    "created_at": "2026-07-20T01:11:46.934Z",
+    "updated_at": "2026-07-20T01:11:46.934Z"
   },
   {
     "id": "e73d85d4-3315-44ea-8c16-0eed48ae836d",
@@ -6491,8 +6491,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote_by_customer_subform.Amount_Due",
-    "created_at": "2026-07-19T21:11:55.368Z",
-    "updated_at": "2026-07-19T21:11:55.368Z"
+    "created_at": "2026-07-20T01:11:55.368Z",
+    "updated_at": "2026-07-20T01:11:55.368Z"
   },
   {
     "id": "e77fe735-10c9-4541-a26e-7bc6f9dd53d7",
@@ -6506,8 +6506,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.QuoteEquipBttn",
-    "created_at": "2026-07-19T21:11:46.846Z",
-    "updated_at": "2026-07-19T21:11:46.846Z"
+    "created_at": "2026-07-20T01:11:46.846Z",
+    "updated_at": "2026-07-20T01:11:46.846Z"
   },
   {
     "id": "e79dca83-dd50-412d-8f41-82db0599573e",
@@ -6521,8 +6521,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders.Form",
-    "created_at": "2026-07-19T21:11:56.930Z",
-    "updated_at": "2026-07-19T21:11:56.930Z"
+    "created_at": "2026-07-20T01:11:56.930Z",
+    "updated_at": "2026-07-20T01:11:56.930Z"
   },
   {
     "id": "e7a4fadc-5643-4b05-bab2-852d5b5bc4b0",
@@ -6536,8 +6536,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_products.UnitPrice",
-    "created_at": "2026-07-19T21:11:54.609Z",
-    "updated_at": "2026-07-19T21:11:54.609Z"
+    "created_at": "2026-07-20T01:11:54.609Z",
+    "updated_at": "2026-07-20T01:11:54.609Z"
   },
   {
     "id": "e83eaf4c-2a89-4f40-b0c8-64de8a6e67e7",
@@ -6551,8 +6551,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:50.589Z",
-    "updated_at": "2026-07-19T21:11:50.589Z"
+    "created_at": "2026-07-20T01:11:50.589Z",
+    "updated_at": "2026-07-20T01:11:50.589Z"
   },
   {
     "id": "e861b253-cf27-4919-b147-8494caf58598",
@@ -6566,8 +6566,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Text179",
-    "created_at": "2026-07-19T21:11:52.674Z",
-    "updated_at": "2026-07-19T21:11:52.674Z"
+    "created_at": "2026-07-20T01:11:52.674Z",
+    "updated_at": "2026-07-20T01:11:52.674Z"
   },
   {
     "id": "e86ddaaa-fea5-4eea-8a1c-a319f4a43077",
@@ -6581,8 +6581,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.TxtBxOrderFfllFee",
-    "created_at": "2026-07-19T21:11:52.776Z",
-    "updated_at": "2026-07-19T21:11:52.776Z"
+    "created_at": "2026-07-20T01:11:52.776Z",
+    "updated_at": "2026-07-20T01:11:52.776Z"
   },
   {
     "id": "e896a31a-7108-424a-b729-e761aa44d6f5",
@@ -6596,8 +6596,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_food_categories.Form",
-    "created_at": "2026-07-19T21:11:45.712Z",
-    "updated_at": "2026-07-19T21:11:45.712Z"
+    "created_at": "2026-07-20T01:11:45.712Z",
+    "updated_at": "2026-07-20T01:11:45.712Z"
   },
   {
     "id": "e9f26102-53b7-4339-8cda-c4fe2b612c69",
@@ -6611,8 +6611,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Quote",
-    "created_at": "2026-07-19T21:11:46.603Z",
-    "updated_at": "2026-07-19T21:11:46.603Z"
+    "created_at": "2026-07-20T01:11:46.603Z",
+    "updated_at": "2026-07-20T01:11:46.603Z"
   },
   {
     "id": "ecb42615-8a0c-4d40-9232-54734da3258b",
@@ -6626,8 +6626,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customer_billingtracking_form.Form",
-    "created_at": "2026-07-19T21:11:45.074Z",
-    "updated_at": "2026-07-19T21:11:45.074Z"
+    "created_at": "2026-07-20T01:11:45.074Z",
+    "updated_at": "2026-07-20T01:11:45.074Z"
   },
   {
     "id": "ed4da0a2-1ea6-464e-bb66-3c68ffdc922b",
@@ -6641,8 +6641,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Command80",
-    "created_at": "2026-07-19T21:11:52.952Z",
-    "updated_at": "2026-07-19T21:11:52.952Z"
+    "created_at": "2026-07-20T01:11:52.952Z",
+    "updated_at": "2026-07-20T01:11:52.952Z"
   },
   {
     "id": "ed5beaa9-7579-4532-bd65-b8560b08a5ec",
@@ -6656,8 +6656,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_quote.ShippingOptions",
-    "created_at": "2026-07-19T21:11:55.066Z",
-    "updated_at": "2026-07-19T21:11:55.066Z"
+    "created_at": "2026-07-20T01:11:55.066Z",
+    "updated_at": "2026-07-20T01:11:55.066Z"
   },
   {
     "id": "ed93bc86-190c-4e88-b78f-709ba689b12c",
@@ -6671,8 +6671,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach1",
-    "created_at": "2026-07-19T21:11:45.121Z",
-    "updated_at": "2026-07-19T21:11:45.121Z"
+    "created_at": "2026-07-20T01:11:45.121Z",
+    "updated_at": "2026-07-20T01:11:45.121Z"
   },
   {
     "id": "edf442e9-78dc-483d-a17b-18a00a3cdc58",
@@ -6686,8 +6686,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ReferenceText",
-    "created_at": "2026-07-19T21:11:46.874Z",
-    "updated_at": "2026-07-19T21:11:46.874Z"
+    "created_at": "2026-07-20T01:11:46.874Z",
+    "updated_at": "2026-07-20T01:11:46.874Z"
   },
   {
     "id": "edf98934-9ea8-42bd-8e5c-cdbd1fbc14bf",
@@ -6701,8 +6701,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_assets_subform.AssetReportBttn",
-    "created_at": "2026-07-19T21:11:44.760Z",
-    "updated_at": "2026-07-19T21:11:44.760Z"
+    "created_at": "2026-07-20T01:11:44.760Z",
+    "updated_at": "2026-07-20T01:11:44.760Z"
   },
   {
     "id": "edffc8ea-ff08-4f8c-9ebf-4532b119e180",
@@ -6716,8 +6716,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_onlineassets_subform.City",
-    "created_at": "2026-07-19T21:11:49.013Z",
-    "updated_at": "2026-07-19T21:11:49.013Z"
+    "created_at": "2026-07-20T01:11:49.013Z",
+    "updated_at": "2026-07-20T01:11:49.013Z"
   },
   {
     "id": "ee01c78c-f0e0-4640-9604-d9773441fd94",
@@ -6731,8 +6731,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.ShippingMethodID",
-    "created_at": "2026-07-19T21:11:53.385Z",
-    "updated_at": "2026-07-19T21:11:53.385Z"
+    "created_at": "2026-07-20T01:11:53.385Z",
+    "updated_at": "2026-07-20T01:11:53.385Z"
   },
   {
     "id": "f00468d9-fd26-4912-8400-637714449a0f",
@@ -6746,8 +6746,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorders_by_customer.Workorders",
-    "created_at": "2026-07-19T21:11:57.171Z",
-    "updated_at": "2026-07-19T21:11:57.171Z"
+    "created_at": "2026-07-20T01:11:57.171Z",
+    "updated_at": "2026-07-20T01:11:57.171Z"
   },
   {
     "id": "f104ee62-4504-461b-a7dd-92c6b0389aa7",
@@ -6761,8 +6761,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LeadOther",
-    "created_at": "2026-07-19T21:11:46.662Z",
-    "updated_at": "2026-07-19T21:11:46.662Z"
+    "created_at": "2026-07-20T01:11:46.662Z",
+    "updated_at": "2026-07-20T01:11:46.662Z"
   },
   {
     "id": "f133f2c7-3b74-4430-ad4a-92d69fc2d6c4",
@@ -6776,8 +6776,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Filter2ndBothButton",
-    "created_at": "2026-07-19T21:11:51.604Z",
-    "updated_at": "2026-07-19T21:11:51.604Z"
+    "created_at": "2026-07-20T01:11:51.604Z",
+    "updated_at": "2026-07-20T01:11:51.604Z"
   },
   {
     "id": "f16045b7-7bdd-4780-b2e8-bd7647774659",
@@ -6791,8 +6791,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.BttnCoffeeQuote",
-    "created_at": "2026-07-19T21:11:45.855Z",
-    "updated_at": "2026-07-19T21:11:45.855Z"
+    "created_at": "2026-07-20T01:11:45.855Z",
+    "updated_at": "2026-07-20T01:11:45.855Z"
   },
   {
     "id": "f248ff17-298b-4736-b957-553f889e7f70",
@@ -6806,8 +6806,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_report_date_range1.Preview",
-    "created_at": "2026-07-19T21:11:55.593Z",
-    "updated_at": "2026-07-19T21:11:55.593Z"
+    "created_at": "2026-07-20T01:11:55.593Z",
+    "updated_at": "2026-07-20T01:11:55.593Z"
   },
   {
     "id": "f33c01ff-d72b-4948-8953-a006bc67607a",
@@ -6821,8 +6821,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer_subform.ShipDate",
-    "created_at": "2026-07-19T21:11:53.029Z",
-    "updated_at": "2026-07-19T21:11:53.029Z"
+    "created_at": "2026-07-20T01:11:53.029Z",
+    "updated_at": "2026-07-20T01:11:53.029Z"
   },
   {
     "id": "f3de07df-8c58-477b-9b16-d951f9abdebc",
@@ -6836,8 +6836,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.TxtBxCConFILE",
-    "created_at": "2026-07-19T21:11:48.255Z",
-    "updated_at": "2026-07-19T21:11:48.255Z"
+    "created_at": "2026-07-20T01:11:48.255Z",
+    "updated_at": "2026-07-20T01:11:48.255Z"
   },
   {
     "id": "f461e291-bad6-4b03-b4e6-c51b7826b259",
@@ -6851,8 +6851,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach4",
-    "created_at": "2026-07-19T21:11:45.186Z",
-    "updated_at": "2026-07-19T21:11:45.186Z"
+    "created_at": "2026-07-20T01:11:45.186Z",
+    "updated_at": "2026-07-20T01:11:45.186Z"
   },
   {
     "id": "f5110a64-7cda-4560-97c5-164650209623",
@@ -6866,8 +6866,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_quote",
-    "created_at": "2026-07-19T21:11:54.830Z",
-    "updated_at": "2026-07-19T21:11:54.830Z"
+    "created_at": "2026-07-20T01:11:54.830Z",
+    "updated_at": "2026-07-20T01:11:54.830Z"
   },
   {
     "id": "f538f2e1-b3b2-4cc7-84a4-b963a64ba829",
@@ -6881,8 +6881,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_detail_subform.BttnCsSelect",
-    "created_at": "2026-07-19T21:11:49.968Z",
-    "updated_at": "2026-07-19T21:11:49.968Z"
+    "created_at": "2026-07-20T01:11:49.968Z",
+    "updated_at": "2026-07-20T01:11:49.968Z"
   },
   {
     "id": "f6be8835-774a-483a-8da9-9ed2e92549e0",
@@ -6896,8 +6896,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.EmployeeID",
-    "created_at": "2026-07-19T21:11:53.284Z",
-    "updated_at": "2026-07-19T21:11:53.284Z"
+    "created_at": "2026-07-20T01:11:53.284Z",
+    "updated_at": "2026-07-20T01:11:53.284Z"
   },
   {
     "id": "f6c4dece-6a6f-4607-98ad-3ce0d321d9e3",
@@ -6911,8 +6911,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.AssessmentOptionGrp",
-    "created_at": "2026-07-19T21:11:45.760Z",
-    "updated_at": "2026-07-19T21:11:45.760Z"
+    "created_at": "2026-07-20T01:11:45.760Z",
+    "updated_at": "2026-07-20T01:11:45.760Z"
   },
   {
     "id": "f6c77db3-c582-471f-97a7-6bab85609625",
@@ -6926,8 +6926,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_parts.PartID",
-    "created_at": "2026-07-19T21:11:56.706Z",
-    "updated_at": "2026-07-19T21:11:56.706Z"
+    "created_at": "2026-07-20T01:11:56.706Z",
+    "updated_at": "2026-07-20T01:11:56.706Z"
   },
   {
     "id": "f6deac05-d1ea-44d1-a1fe-78a31e48c535",
@@ -6941,8 +6941,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.Form",
-    "created_at": "2026-07-19T21:11:51.756Z",
-    "updated_at": "2026-07-19T21:11:51.756Z"
+    "created_at": "2026-07-20T01:11:51.756Z",
+    "updated_at": "2026-07-20T01:11:51.756Z"
   },
   {
     "id": "f75304df-02bc-42c9-bedf-d84b199264c4",
@@ -6956,8 +6956,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_customeremailsubform.Attach7",
-    "created_at": "2026-07-19T21:11:45.266Z",
-    "updated_at": "2026-07-19T21:11:45.266Z"
+    "created_at": "2026-07-20T01:11:45.266Z",
+    "updated_at": "2026-07-20T01:11:45.266Z"
   },
   {
     "id": "f7ccf1ae-0e93-4223-aeb7-c04513c031b0",
@@ -6971,8 +6971,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_equipment_select_subform.ProductName",
-    "created_at": "2026-07-19T21:11:45.587Z",
-    "updated_at": "2026-07-19T21:11:45.587Z"
+    "created_at": "2026-07-20T01:11:45.587Z",
+    "updated_at": "2026-07-20T01:11:45.587Z"
   },
   {
     "id": "f825bd3c-969e-45d3-a994-e5c9abfa8650",
@@ -6986,8 +6986,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.SrvcTxtBx",
-    "created_at": "2026-07-19T21:11:52.231Z",
-    "updated_at": "2026-07-19T21:11:52.231Z"
+    "created_at": "2026-07-20T01:11:52.231Z",
+    "updated_at": "2026-07-20T01:11:52.231Z"
   },
   {
     "id": "f854aead-1b8a-4130-9d47-6c4eda30f881",
@@ -7001,8 +7001,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Form event from form_orders",
-    "created_at": "2026-07-19T21:11:50.320Z",
-    "updated_at": "2026-07-19T21:11:50.320Z"
+    "created_at": "2026-07-20T01:11:50.320Z",
+    "updated_at": "2026-07-20T01:11:50.320Z"
   },
   {
     "id": "f8e9bbb0-96c0-4262-a6f3-c9d27a1cd32f",
@@ -7016,8 +7016,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text136",
-    "created_at": "2026-07-19T21:11:47.654Z",
-    "updated_at": "2026-07-19T21:11:47.654Z"
+    "created_at": "2026-07-20T01:11:47.654Z",
+    "updated_at": "2026-07-20T01:11:47.654Z"
   },
   {
     "id": "f96fca72-8462-44ef-8b62-e9c55fdc91bb",
@@ -7031,8 +7031,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.DiscoTglBttn",
-    "created_at": "2026-07-19T21:11:44.842Z",
-    "updated_at": "2026-07-19T21:11:44.842Z"
+    "created_at": "2026-07-20T01:11:44.842Z",
+    "updated_at": "2026-07-20T01:11:44.842Z"
   },
   {
     "id": "f994660a-c1f6-4922-86a8-be0374505f67",
@@ -7046,8 +7046,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.WebAddress",
-    "created_at": "2026-07-19T21:11:52.872Z",
-    "updated_at": "2026-07-19T21:11:52.872Z"
+    "created_at": "2026-07-20T01:11:52.872Z",
+    "updated_at": "2026-07-20T01:11:52.872Z"
   },
   {
     "id": "fa2d50c6-c2bb-422a-91fe-6371bcc43543",
@@ -7061,8 +7061,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.ProposalText",
-    "created_at": "2026-07-19T21:11:46.803Z",
-    "updated_at": "2026-07-19T21:11:46.803Z"
+    "created_at": "2026-07-20T01:11:46.803Z",
+    "updated_at": "2026-07-20T01:11:46.803Z"
   },
   {
     "id": "fa468c1b-db45-4803-bba6-326db329ca7c",
@@ -7076,8 +7076,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.Text163",
-    "created_at": "2026-07-19T21:11:47.812Z",
-    "updated_at": "2026-07-19T21:11:47.812Z"
+    "created_at": "2026-07-20T01:11:47.812Z",
+    "updated_at": "2026-07-20T01:11:47.812Z"
   },
   {
     "id": "fabb6d28-6956-4ba1-8d04-bae6eefeca8b",
@@ -7091,8 +7091,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orderview_old.BttnUnfldOrds",
-    "created_at": "2026-07-19T21:11:49.675Z",
-    "updated_at": "2026-07-19T21:11:49.675Z"
+    "created_at": "2026-07-20T01:11:49.675Z",
+    "updated_at": "2026-07-20T01:11:49.675Z"
   },
   {
     "id": "fb55f605-74ec-490b-a1cb-576ca985096e",
@@ -7106,8 +7106,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_orders_by_customer.FilterONFEButton",
-    "created_at": "2026-07-19T21:11:51.683Z",
-    "updated_at": "2026-07-19T21:11:51.683Z"
+    "created_at": "2026-07-20T01:11:51.683Z",
+    "updated_at": "2026-07-20T01:11:51.683Z"
   },
   {
     "id": "fc880806-5c0e-4221-8797-c32b0ea7a6a2",
@@ -7121,8 +7121,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_leads.LEadsOnHold",
-    "created_at": "2026-07-19T21:11:47.403Z",
-    "updated_at": "2026-07-19T21:11:47.403Z"
+    "created_at": "2026-07-20T01:11:47.403Z",
+    "updated_at": "2026-07-20T01:11:47.403Z"
   },
   {
     "id": "fda59f28-5447-4412-989c-be1f08570567",
@@ -7136,8 +7136,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_workorder_labor.EmployeeID",
-    "created_at": "2026-07-19T21:11:56.579Z",
-    "updated_at": "2026-07-19T21:11:56.579Z"
+    "created_at": "2026-07-20T01:11:56.579Z",
+    "updated_at": "2026-07-20T01:11:56.579Z"
   },
   {
     "id": "fe7675be-a530-4a3b-866b-becf6c3cf0a2",
@@ -7151,8 +7151,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_bulk_product_form.ProdSrchBttn",
-    "created_at": "2026-07-19T21:11:44.893Z",
-    "updated_at": "2026-07-19T21:11:44.893Z"
+    "created_at": "2026-07-20T01:11:44.893Z",
+    "updated_at": "2026-07-20T01:11:44.893Z"
   },
   {
     "id": "ffe376d7-ac45-4f18-a5c9-d76eecffde7a",
@@ -7166,8 +7166,8 @@
     "enabled": true,
     "sort_order": 0,
     "description": "Control event from form_ordersproduction.ShippingOptions",
-    "created_at": "2026-07-19T21:11:53.432Z",
-    "updated_at": "2026-07-19T21:11:53.432Z"
+    "created_at": "2026-07-20T01:11:53.432Z",
+    "updated_at": "2026-07-20T01:11:53.432Z"
   },
   {
     "id": "e4535a3c-845f-4015-828d-3ce17b938e70",
@@ -7181,8 +7181,8 @@
     "enabled": true,
     "sort_order": 100,
     "description": "Journals group: auto-set date field on insert (pattern detection)",
-    "created_at": "2026-07-20T22:06:01.484Z",
-    "updated_at": "2026-07-20T22:06:01.484Z"
+    "created_at": "2026-07-21T02:06:01.484Z",
+    "updated_at": "2026-07-21T02:06:01.484Z"
   },
   {
     "id": "f8c95ef9-a110-421c-852a-8cb76cc2f088",
@@ -7196,8 +7196,8 @@
     "enabled": true,
     "sort_order": 100,
     "description": "Catalogs group: auto-set created_at (insert) and updated_at (insert/update)",
-    "created_at": "2026-07-20T22:06:01.484Z",
-    "updated_at": "2026-07-20T22:06:01.484Z"
+    "created_at": "2026-07-21T02:06:01.484Z",
+    "updated_at": "2026-07-21T02:06:01.484Z"
   },
   {
     "id": "471aae57-5d32-42de-a5e5-ae574ae768dd",
@@ -7211,7 +7211,7 @@
     "enabled": true,
     "sort_order": 900,
     "description": "Task level: validate required fields for all forms",
-    "created_at": "2026-07-20T22:06:01.484Z",
-    "updated_at": "2026-07-20T22:06:01.484Z"
+    "created_at": "2026-07-21T02:06:01.484Z",
+    "updated_at": "2026-07-21T02:06:01.484Z"
   }
 ]

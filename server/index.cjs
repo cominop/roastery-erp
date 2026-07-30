@@ -3304,6 +3304,85 @@ app.get("/api/metadata/diff", async (req, res) => {
   }
 });
 
+// ─── Metadata Backup API ────────────────────────────────
+
+/**
+ * POST /api/metadata/backup — create a metadata backup
+ *
+ * Body (optional JSON):
+ *   { "reason": "manual" }   — reason for the backup (default: "manual")
+ *
+ * Runs the full export + package pipeline, then records the backup
+ * in shared.metadata_backups. Returns the backup record.
+ */
+app.post("/api/metadata/backup", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const reason = req.body?.reason || "manual";
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const backupScript = path.join(serverDir, "metadata-backup.cjs");
+
+  try {
+    const result = execSync(
+      `node "${backupScript}" --reason "${reason}" --json`,
+      {
+        cwd: projectDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 120000,
+        encoding: "utf-8",
+      }
+    );
+
+    // execSync with encoding returns stdout as string directly
+    const stdout = typeof result === "string" ? result : result.stdout?.toString() || "";
+    const backupData = JSON.parse(stdout);
+    if (backupData.success) {
+      res.status(201).json(backupData.backup);
+    } else {
+      res.status(500).json({ error: backupData.error });
+    }
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Backup failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
+/**
+ * GET /api/metadata/backups — list all metadata backups
+ *
+ * Query params:
+ *   ?limit=20     — max records to return (default: 20)
+ *   ?reason=pre_import — filter by reason
+ *
+ * Returns an array of backup records, newest first.
+ */
+app.get("/api/metadata/backups", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "20", 10);
+    let sql = "SELECT * FROM shared.metadata_backups";
+    const params = [];
+
+    if (req.query.reason) {
+      sql += " WHERE reason = $1";
+      params.push(req.query.reason);
+    }
+
+    sql += " ORDER BY created_at DESC LIMIT " + limit;
+
+    const { rows } = await pool.query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {

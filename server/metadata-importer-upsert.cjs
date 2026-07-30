@@ -27,6 +27,7 @@
  *
  * Usage:
  *   node server/metadata-importer-upsert.cjs --archive deploy/erp_metadata_2026-07-30.zip
+ *   node server/metadata-importer-upsert.cjs --archive deploy/erp_metadata_2026-07-30.zip --backup
  *   node server/metadata-importer-upsert.cjs --archive deploy/erp_metadata_2026-07-30.zip --dry-run
  *   node server/metadata-importer-upsert.cjs --archive deploy/erp_metadata_2026-07-30.zip --skip-validation
  *   node server/metadata-importer-upsert.cjs --archive deploy/erp_metadata_2026-07-30.zip --verbose
@@ -91,6 +92,7 @@ function parseArgs() {
     archivePath: get("--archive") || args[0] || null,
     dryRun: args.includes("--dry-run"),
     skipValidation: args.includes("--skip-validation"),
+    backup: args.includes("--backup"),
     verbose: args.includes("--verbose") || args.includes("-v"),
   };
 }
@@ -832,6 +834,37 @@ async function run() {
         printSummary();
         fs.rmSync(tmpDir, { recursive: true, force: true });
         process.exit(1);
+      }
+    }
+
+    // ── Backup phase (optional) ────────────────────────────
+
+    if (opts.backup && !opts.dryRun) {
+      console.log("\n  ── Creating automatic backup before import ──\n");
+      const backupScript = path.join(__dirname, "metadata-backup.cjs");
+      try {
+        const backupResult = execSync(
+          `node "${backupScript}" --reason pre_import --json`,
+          {
+            cwd: path.resolve(__dirname, ".."),
+            stdio: ["ignore", "pipe", "pipe"],
+            timeout: 120000,
+            encoding: "utf-8",
+          }
+        );
+        // execSync with encoding returns stdout as string directly
+        const backupStdout = typeof backupResult === "string" ? backupResult : backupResult.stdout?.toString() || "";
+        const backupData = JSON.parse(backupStdout);
+        if (backupData.success) {
+          console.log(`  ✓ Backup created: ${backupData.path}`);
+          console.log(`  ✓ Backup ID: ${backupData.id}`);
+        } else {
+          console.error(`  ⚠ Backup warning: ${backupData.error}`);
+          warnings.push(`Backup had issues: ${backupData.error}`);
+        }
+      } catch (err) {
+        console.error(`  ⚠ Backup failed: ${err.message}`);
+        warnings.push(`Backup failed but import continues: ${err.message}`);
       }
     }
 
