@@ -3214,6 +3214,285 @@ app.delete("/api/visual-forms/:name", async (req, res) => {
 const { mountEventEngine } = require("./event-engine.cjs");
 mountEventEngine(app);
 
+// ─── Metadata Export/Import API ─────────────────────────
+
+/**
+ * POST /api/metadata/export — run export + package pipeline
+ *
+ * Body (optional):
+ *   { "description": "Release notes", "source": "staging" }
+ *
+ * Runs the metadata-exporter.cjs then metadata-packager.cjs in sequence,
+ * returning the path to the generated .zip archive.
+ */
+app.post("/api/metadata/export", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const description = req.body?.description || "UI export";
+  const source = req.body?.source || "development";
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const exporterScript = path.join(serverDir, "metadata-exporter.cjs");
+  const packagerScript = path.join(serverDir, "metadata-packager.cjs");
+
+  try {
+    // 1. Run exporter
+    execSync(`node "${exporterScript}"`, {
+      cwd: projectDir,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 120000,
+    });
+
+    // 2. Run packager
+    const result = execSync(
+      `node "${packagerScript}" --description "${description}" --source "${source}"`,
+      {
+        cwd: projectDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 60000,
+        encoding: "utf-8",
+      }
+    );
+
+    const stdout = typeof result === "string" ? result : result.stdout?.toString() || "";
+    // Parse the archive path from packager output
+    const archiveMatch = stdout.match(/Archive:\s+(.+\.zip)/i);
+    const archivePath = archiveMatch ? archiveMatch[1].trim() : null;
+
+    if (archivePath && fs.existsSync(archivePath)) {
+      const stats = fs.statSync(archivePath);
+      res.status(201).json({
+        success: true,
+        archive: {
+          path: archivePath,
+          name: path.basename(archivePath),
+          size_bytes: stats.size,
+          created_at: new Date().toISOString(),
+        },
+      });
+    } else {
+      res.status(500).json({
+        error: "Export completed but archive was not found",
+        stdout: stdout.slice(0, 2000),
+      });
+    }
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Export failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
+/**
+ * GET /api/metadata/archives — list available export archives
+ *
+ * Scans the deploy/ directory for .zip archives matching the
+ * erp_metadata_ pattern. Returns sorted newest first.
+ */
+app.get("/api/metadata/archives", async (req, res) => {
+  const path = require("path");
+  const fs = require("fs");
+
+  const deployDir = path.resolve(__dirname, "..", "deploy");
+  if (!fs.existsSync(deployDir)) {
+    return res.json([]);
+  }
+
+  try {
+    const files = fs.readdirSync(deployDir);
+    const archives = files
+      .filter((f) => f.endsWith(".zip") && (f.startsWith("erp_metadata") || f.startsWith("auto-backup")))
+      .map((f) => {
+        const fullPath = path.join(deployDir, f);
+        const stats = fs.statSync(fullPath);
+        return {
+          name: f,
+          path: fullPath,
+          size_bytes: stats.size,
+          created_at: stats.mtime.toISOString(),
+        };
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    res.json(archives);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/metadata/import/validate — validate an archive before importing
+ *
+ * Body:
+ *   { "archivePath": "/path/to/archive.zip" }
+ *
+ * Runs the metadata-importer.cjs with --archive, returning validation
+ * results. Does NOT modify any data.
+ */
+app.post("/api/metadata/import/validate", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const archivePath = req.body?.archivePath;
+  if (!archivePath) {
+    return res.status(400).json({ error: "archivePath is required" });
+  }
+
+  if (!fs.existsSync(archivePath)) {
+    return res.status(404).json({ error: `Archive not found: ${archivePath}` });
+  }
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const importerScript = path.join(serverDir, "metadata-importer.cjs");
+
+  try {
+    const result = execSync(
+      `node "${importerScript}" --archive "${archivePath}" --verbose 2>&1 || true`,
+      {
+        cwd: projectDir,
+        timeout: 60000,
+        encoding: "utf-8",
+      }
+    );
+
+    const stdout = typeof result === "string" ? result : result.stdout?.toString() || "";
+    const hasErrors = stdout.includes("✗") && (
+      stdout.includes("VALIDATION FAILED") || stdout.includes("error")
+    );
+    const hasWarnings = stdout.includes("⚠") && !hasErrors;
+
+    res.json({
+      success: !hasErrors,
+      hasWarnings,
+      output: stdout,
+      archivePath,
+    });
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Validation failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
+/**
+ * POST /api/metadata/import — run full import pipeline: backup + validate + upsert
+ *
+ * Body:
+ *   { "archivePath": "/path/to/archive.zip", "skipValidation": false }
+ *
+ * First creates a backup, then validates, then upserts the archive data.
+ */
+app.post("/api/metadata/import", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const archivePath = req.body?.archivePath;
+  if (!archivePath) {
+    return res.status(400).json({ error: "archivePath is required" });
+  }
+
+  if (!fs.existsSync(archivePath)) {
+    return res.status(404).json({ error: `Archive not found: ${archivePath}` });
+  }
+
+  const skipValidation = req.body?.skipValidation === true;
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const backupScript = path.join(serverDir, "metadata-backup.cjs");
+  const upsertScript = path.join(serverDir, "metadata-importer-upsert.cjs");
+
+  try {
+    // 1. Create a backup first
+    let backupResult = null;
+    try {
+      const backupStdout = execSync(
+        `node "${backupScript}" --reason "pre_import" --json`,
+        {
+          cwd: projectDir,
+          timeout: 120000,
+          encoding: "utf-8",
+        }
+      );
+      const backupData = JSON.parse(
+        (typeof backupStdout === "string" ? backupStdout : backupStdout.stdout?.toString() || "")
+      );
+      if (backupData.success) {
+        backupResult = backupData.backup;
+      }
+    } catch (backupErr) {
+      // Non-fatal — warn but proceed
+    }
+
+    // 2. Run upsert with optional skip-validation
+    const upsertArgs = [`--archive "${archivePath}"`, "--json"];
+    if (skipValidation) upsertArgs.push("--skip-validation");
+
+    const upsertResult = execSync(
+      `node "${upsertScript}" ${upsertArgs.join(" ")} 2>&1 || true`,
+      {
+        cwd: projectDir,
+        timeout: 180000,
+        encoding: "utf-8",
+      }
+    );
+
+    const stdout = typeof upsertResult === "string" ? upsertResult : upsertResult.stdout?.toString() || "";
+    const hasErrors = stdout.includes("✗") && stdout.includes("IMPORT COMPLETE") === false;
+
+    res.json({
+      success: !hasErrors,
+      backupCreated: !!backupResult,
+      backup: backupResult,
+      output: stdout,
+      archivePath,
+    });
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Import failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
+/**
+ * GET /api/metadata/download — download an archive file
+ *
+ * Query params:
+ *   ?file=<path-to-archive>  — absolute path to the archive file
+ *
+ * Streams the file as a download attachment.
+ */
+app.get("/api/metadata/download", async (req, res) => {
+  const path = require("path");
+  const fs = require("fs");
+
+  const filePath = req.query.file;
+  if (!filePath || typeof filePath !== "string") {
+    return res.status(400).json({ error: "file query parameter is required" });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: `File not found: ${filePath}` });
+  }
+
+  const name = path.basename(filePath);
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+  res.setHeader("Content-Length", fs.statSync(filePath).size);
+  fs.createReadStream(filePath).pipe(res);
+});
+
 // ─── Metadata Diff API ─────────────────────────────────
 
 /**
