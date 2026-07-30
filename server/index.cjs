@@ -3214,6 +3214,96 @@ app.delete("/api/visual-forms/:name", async (req, res) => {
 const { mountEventEngine } = require("./event-engine.cjs");
 mountEventEngine(app);
 
+// ─── Metadata Diff API ─────────────────────────────────
+
+/**
+ * GET /api/metadata/diff — compute before/after diff of metadata
+ *
+ * Queries:
+ *   ?archive=<path-to-archive>  — path to the .zip archive being imported
+ *
+ * Returns the structured diff JSON from python3 server/differ.py.
+ */
+app.get("/api/metadata/diff", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+  const os = require("os");
+
+  const archivePath = req.query.archive;
+  if (!archivePath) {
+    return res.status(400).json({ error: "archive query parameter is required" });
+  }
+
+  if (!fs.existsSync(archivePath)) {
+    return res.status(404).json({ error: `Archive not found: ${archivePath}` });
+  }
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const exporterScript = path.join(serverDir, "metadata-exporter.cjs");
+  const differScript = path.join(serverDir, "differ.py");
+  const exportDefsDir = path.resolve(projectDir, "src", "metadata", "export", "definitions");
+
+  const currentDir = fs.mkdtempSync(path.join(os.tmpdir(), "erp-diff-current-"));
+  const incomingDir = fs.mkdtempSync(path.join(os.tmpdir(), "erp-diff-incoming-"));
+
+  try {
+    // 1. Export current metadata
+    execSync(`node "${exporterScript}"`, {
+      cwd: projectDir,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 60000,
+    });
+
+    // Copy export definitions to temp dir
+    const currentDefsDir = path.join(currentDir, "definitions");
+    fs.mkdirSync(currentDefsDir, { recursive: true });
+    if (fs.existsSync(exportDefsDir)) {
+      const files = fs.readdirSync(exportDefsDir);
+      for (const file of files) {
+        const src = path.join(exportDefsDir, file);
+        const dst = path.join(currentDefsDir, file);
+        fs.copyFileSync(src, dst);
+      }
+    }
+
+    // 2. Extract incoming archive
+    execSync(`unzip -o "${archivePath}" -d "${incomingDir}"`, {
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 30000,
+    });
+
+    // 3. Run the diff
+    const result = execSync(
+      `python3 "${differScript}" --current "${currentDir}" --incoming "${incomingDir}"`,
+      {
+        cwd: projectDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 60000,
+        encoding: "utf-8",
+      }
+    );
+
+    const diffData = JSON.parse(result.stdout);
+    res.json(diffData);
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Diff computation failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  } finally {
+    // Cleanup temp dirs
+    try {
+      fs.rmSync(currentDir, { recursive: true, force: true });
+    } catch {}
+    try {
+      fs.rmSync(incomingDir, { recursive: true, force: true });
+    } catch {}
+  }
+});
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {

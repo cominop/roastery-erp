@@ -1,0 +1,175 @@
+Implement Step 84: Metadata Deployment 5 — Diff Preview (before/after comparison UI)
+
+## Context
+The metadata export/import infrastructure is mostly complete:
+- Step 80: Export (serialise metadata to JSON files) → `server/metadata-exporter.cjs` ✅
+- Step 81: Package (zip + manifest + checksums) → `server/metadata-packager.cjs` ✅
+- Step 82: Import validate (manifest + checksums) → `server/metadata-importer.cjs` ✅
+- Step 83: Import UPSERT → `server/metadata-importer-upsert.cjs` ✅
+- Step 84: **Diff preview (before/after comparison)** ← YOU ARE HERE
+
+The spec document is at: `/home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Metadata Deployment.md`
+
+## What to Build
+
+### 1. `server/differ.py` — Python module to diff two metadata sets
+
+This module compares two extracted metadata directories (current DB state vs. imported archive) and produces a structured diff report.
+
+**Location:** `server/differ.py`
+
+**API** (the module should be importable and callable from the Express server via child_process):
+
+```python
+def diff_metadata(current_dir: str, incoming_dir: str) -> dict:
+    """
+    Compare two metadata export directories.
+    
+    Args:
+        current_dir: Path to the current metadata (exported live from DB)
+        incoming_dir: Path to the incoming metadata (from the archive being imported)
+    
+    Returns:
+        dict with the following structure:
+        {
+            "summary": {
+                "forms": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "fields": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "events": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "nav_tree": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "permissions": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "reports": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0},
+                "settings": {"added": 0, "removed": 0, "changed": 0, "unchanged": 0}
+            },
+            "details": {
+                "forms": [
+                    {
+                        "name": "CustomerForm",
+                        "status": "added|removed|changed|unchanged",
+                        "changes": ["field 'phone' caption changed from 'Phone' to 'Mobile'", ...]
+                    },
+                    ...
+                ]
+            }
+        }
+    """
+```
+
+**How to compare:**
+- For each definition file type (forms.json, fields.json, events.json, etc.), compare the JSON arrays entry-by-entry.
+- Two entries are "unchanged" if their JSON serialization is identical.
+- If they differ, produce a human-readable list of what changed (field-level diff).
+- Use `json.dumps(entry, sort_keys=True, default=str)` for comparison.
+- For the change description, do a simple key-by-key comparison of the two dicts and report which keys differ and what the old/new values are.
+
+**CLI entry point:** The module should also be runnable as a script:
+```bash
+python3 server/differ.py --current /path/to/current --incoming /path/to/incoming --output diff.json
+```
+
+### 2. API endpoint — `GET /api/metadata/diff`
+
+Add a new route to `server/index.cjs`:
+
+```
+GET /api/metadata/diff?archive=<path-to-archive>
+```
+
+This endpoint:
+1. Exports the current metadata to a temp directory (call `node server/metadata-exporter.cjs` or do the export inline)
+2. Extracts the specified archive to a temp directory
+3. Calls `python3 server/differ.py` to compare the two
+4. Returns the diff JSON
+
+Since the existing exporter is a Node.js script, create a Node.js wrapper at `server/metadata-differ.cjs` that:
+1. Exports current metadata to a temp dir
+2. Extracts the archive to a temp dir
+3. Calls `python3 server/differ.py --current <tmp1> --incoming <tmp2>`
+4. Captures the output and returns it
+
+### 3. `src/metadata/components/DiffPreview.tsx` — React component
+
+**Location:** `src/metadata/components/DiffPreview.tsx`
+
+A React component that displays the before/after comparison in a user-friendly format.
+
+**Props:**
+```tsx
+interface DiffPreviewProps {
+  archivePath: string;       // Path to the .zip archive being imported
+  onConfirm?: () => void;    // Called when user confirms the diff looks good
+  onCancel?: () => void;     // Called when user cancels
+}
+```
+
+**Layout:**
+```
+┌─ Diff Preview ──────────────────────────────────┐
+│                                                   │
+│  Summary:                                         │
+│  ┌─────────────────────────────────────────────┐ │
+│  │ Forms:   0 added, 0 removed, 3 changed     │ │
+│  │ Fields:  5 added, 0 removed, 12 changed    │ │
+│  │ Events:  0 added, 0 removed, 1 changed     │ │
+│  │ Nav:     0 added, 0 removed, 0 changed     │ │
+│  │ Perms:   0 added, 0 removed, 0 changed     │ │
+│  │ Reports: 0 added, 0 removed, 0 changed     │ │
+│  └─────────────────────────────────────────────┘ │
+│                                                   │
+│  ┌─ Filter: [All changed items        ▾]       ┐ │
+│  │ ┌─ Forms (3 changed)                    ▾ ──│ │
+│  │ │  ● CustomerForm — caption changed       │ │
+│  │ │    "Client" → "Customer"                │ │
+│  │ │  ● OrderForm — 2 fields changed         │ │
+│  │ │  ● ProductForm — header height changed  │ │
+│  │ └─────────────────────────────────────────│ │
+│  │ ┌─ Fields (17 changed)                   ▾ ──│ │
+│  │ │  ...                                      │ │
+│  │ └─────────────────────────────────────────│ │
+│  └─────────────────────────────────────────────┘ │
+│                                                   │
+│              [Cancel]  [Proceed with Import]      │
+└───────────────────────────────────────────────────┘
+```
+
+**Implementation details:**
+- Use the existing shadcn/ui components: `Card`, `Badge`, `ScrollArea`, `Accordion` (or plain collapsible sections)
+- Fetch the diff from `GET /api/metadata/diff?archive=<path>` on mount
+- Show a loading state while fetching
+- Show an error state if the diff fails
+- Group changes by type (forms, fields, events, etc.) in collapsible sections
+- Each changed item shows a short summary of what changed
+- Use color coding: green for added, red for removed, amber for changed
+- Include a filter dropdown to show: All, Added only, Removed only, Changed only
+- The "Proceed with Import" button calls `onConfirm` (which will be wired up later when the ImportDialog is built in Step 88)
+
+### 4. Test file — `src/metadata/__tests__/DiffPreview.test.tsx`
+
+Write a vitest test file that tests:
+- Loading state renders
+- Error state renders
+- Diff data renders correctly (mock the fetch)
+- Summary counts display correctly
+- Changed items render with before/after values
+- Filter dropdown works (show only added, only removed, only changed)
+
+### Code Style & Patterns
+
+Follow the existing project conventions:
+- TypeScript/React with shadcn/ui components
+- Vitest + @testing-library/react for tests
+- Use `@/` path alias (e.g., `@/components/ui/card`)
+- The project uses `jsdom` test environment (see vitest.config.ts)
+- Server code is CommonJS (.cjs) for Node.js
+- Python code uses `json` module, not `orjson` or other libs
+- API routes in `server/index.cjs` are Express routes
+
+### Verification
+
+After implementing, verify:
+1. `python3 -c "from server.differ import diff_metadata; print('OK')"` works
+2. `python3 server/differ.py --help` works
+3. The Express server starts without errors after adding the route
+4. The React component renders without TypeScript errors
+
+Do NOT modify existing files except `server/index.cjs` (to add the route). Create all new files as specified above.
