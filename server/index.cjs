@@ -3304,6 +3304,154 @@ app.get("/api/metadata/diff", async (req, res) => {
   }
 });
 
+// ─── Metadata Rollback API ──────────────────────────────
+
+/**
+ * POST /api/metadata/rollback/:backupId — rollback metadata from a backup
+ *
+ * Restores metadata from the backup archive identified by backupId.
+ * The backup record is looked up from shared.metadata_backups.
+ * Returns the rollback result.
+ */
+app.post("/api/metadata/rollback/:backupId", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const backupId = req.params.backupId;
+  if (!backupId) {
+    return res.status(400).json({ error: "Missing backupId parameter" });
+  }
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const rollbackScript = path.join(serverDir, "metadata-rollback.cjs");
+
+  try {
+    // First verify the backup exists in the DB
+    const { rows } = await pool.query(
+      "SELECT * FROM shared.metadata_backups WHERE id = $1",
+      [backupId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: `Backup not found: ${backupId}` });
+    }
+
+    const backup = rows[0];
+
+    // Check the backup file exists on disk
+    if (!fs.existsSync(backup.path)) {
+      return res.status(400).json({
+        error: `Backup archive not found on disk: ${backup.path}`,
+        backup,
+      });
+    }
+
+    // Run the rollback script
+    const result = execSync(
+      `node "${rollbackScript}" --backup-id "${backupId}" --json`,
+      {
+        cwd: projectDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 180000,
+        encoding: "utf-8",
+      }
+    );
+
+    const stdout = typeof result === "string" ? result : result.stdout?.toString() || "";
+    const rollbackData = JSON.parse(stdout);
+
+    if (rollbackData.success) {
+      res.json({
+        success: true,
+        message: "Rollback completed successfully",
+        backup: backup,
+      });
+    } else {
+      res.status(500).json({ error: rollbackData.error });
+    }
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Rollback failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
+/**
+ * POST /api/metadata/rollback/preview/:backupId — dry-run rollback
+ *
+ * Validates the backup archive without applying changes.
+ * Returns the manifest info and validation result.
+ */
+app.post("/api/metadata/rollback/preview/:backupId", async (req, res) => {
+  const { execSync } = require("child_process");
+  const path = require("path");
+  const fs = require("fs");
+
+  const backupId = req.params.backupId;
+  if (!backupId) {
+    return res.status(400).json({ error: "Missing backupId parameter" });
+  }
+
+  const serverDir = __dirname;
+  const projectDir = path.resolve(serverDir, "..");
+  const rollbackScript = path.join(serverDir, "metadata-rollback.cjs");
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM shared.metadata_backups WHERE id = $1",
+      [backupId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: `Backup not found: ${backupId}` });
+    }
+
+    const backup = rows[0];
+
+    if (!fs.existsSync(backup.path)) {
+      return res.status(400).json({
+        error: `Backup archive not found on disk: ${backup.path}`,
+        backup,
+      });
+    }
+
+    // Run dry-run validation
+    const result = execSync(
+      `node "${rollbackScript}" --backup-id "${backupId}" --dry-run --json`,
+      {
+        cwd: projectDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 60000,
+        encoding: "utf-8",
+      }
+    );
+
+    const stdout = typeof result === "string" ? result : result.stdout?.toString() || "";
+    const previewData = JSON.parse(stdout);
+
+    if (previewData.success) {
+      res.json({
+        success: true,
+        dryRun: true,
+        backup,
+        manifest: previewData.manifest,
+      });
+    } else {
+      res.status(500).json({ error: previewData.error });
+    }
+  } catch (err) {
+    const stderr = err.stderr ? err.stderr.toString() : "";
+    res.status(500).json({
+      error: `Rollback preview failed: ${err.message}`,
+      stderr: stderr.slice(0, 2000),
+    });
+  }
+});
+
 // ─── Metadata Backup API ────────────────────────────────
 
 /**

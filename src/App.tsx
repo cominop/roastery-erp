@@ -31,6 +31,7 @@ import type { QuickFilterPreset } from "@/filters";
 import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 import AuditLogPage from "@/components/AuditLogPage";
+import MetadataManager from "@/metadata/MetadataManager";
 import { useUser } from "@/hooks/useUser";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -42,6 +43,7 @@ type ActiveView =
   | { type: "permissions" }
   | { type: "calculated-fields" }
   | { type: "audit-log" }
+  | { type: "metadata" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -747,6 +749,9 @@ export default function App() {
         )}
         {active?.type === "audit-log" && (
           <AuditLogPage tables={navData.tables.map(t => t.name)} />
+        )}
+        {active?.type === "metadata" && (
+          <MetadataManager />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
