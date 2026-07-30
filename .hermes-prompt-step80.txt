@@ -1,0 +1,66 @@
+IMPLEMENT STEP 80: Metadata Deployment 1 — Export: serialise all metadata to JSON files
+
+PROJECT CONTEXT:
+- This is Roastery ERP, a React+Express ERP application running against a PostgreSQL database named "polyaccess"
+- Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+- DB connection: pg Pool with default config (database: "polyaccess", local socket)
+- The `pg` module is already installed and used in server/index.cjs
+
+SPEC REFERENCE:
+Full spec at: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Metadata Deployment.md
+
+Step 80 is the FIRST step of Metadata Deployment (Track H). The goal is to create a script that queries ALL metadata from the database and serialises it to individual JSON files.
+
+WHAT TO BUILD:
+
+1. Create server/metadata-exporter.cjs (Node.js script, matching project's .cjs pattern)
+
+This script should:
+- Connect to the polyaccess database using `pg` Pool (same pattern as index.cjs)
+- Query ALL of the following metadata sources:
+  a. Form definitions from shared.visual_forms (all columns, all rows)
+  b. Legacy form definitions from shared.objects WHERE type = 'form'
+  c. Event handlers from shared.event_handlers (all columns, all rows)
+  d. Navigation tree from shared.nav_tree (all columns, all rows)
+  e. Permissions from:
+     - shared.roles (all rows)
+     - shared.user_roles (all rows)
+     - shared.table_permissions (all rows)
+     - shared.field_permissions (all rows)
+     - shared.row_filters (all rows)
+  f. Calculated fields from shared.calculated_fields (all rows)
+  g. Settings/theme from shared.objects WHERE type = 'appearance'
+  h. Report definitions from shared.objects WHERE type = 'report'
+
+- Create the directory structure: src/metadata/export/ (relative to project root)
+- Write each metadata type as a separate JSON file:
+  src/metadata/export/
+    definitions/
+      forms.json
+      fields.json
+      events.json
+      nav_tree.json
+      permissions.json
+      reports.json
+      settings.json
+
+- Each file should be pretty-printed JSON (2-space indent)
+- Handle errors gracefully — log what went wrong but don't crash on a single failed query
+- Print a summary at the end showing counts per file
+
+2. Run the script to verify it works:
+   node server/metadata-exporter.cjs
+
+3. Verify the output files exist and contain valid JSON with non-empty arrays/objects
+
+IMPORTANT NOTES:
+- The `pg` Pool constructor needs no special config — just `{database: "polyaccess"}` works (same as index.cjs line 37-40)
+- Use async/await pattern with Pool.query()
+- Handle the case where tables have no rows — write `[]` for empty arrays
+- The directory src/metadata/export/definitions/ may not exist yet — create it with mkdir -p
+- Write JSON files using fs.writeFileSync or fs.promises
+- Since there's no `psql` binary on this system and no psycopg2 Python library, use Node.js with pg module
+- The script should be idempotent — running it multiple times should overwrite the previous export
+
+OUTPUT:
+After running the script, there should be 7 JSON files in src/metadata/export/definitions/ containing all the metadata from the database.
