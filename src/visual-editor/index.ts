@@ -81,3 +81,30 @@ export type {
   TableOptions,
   TableOptionsPanelProps,
 } from './TableOptionsPanel';
+
+// ─── Step 77: Template Library ─────────────────────────
+
+export {
+  default as TemplateLibrary,
+} from './TemplateLibrary';
+
+export type {
+  TemplateLibraryProps,
+  FieldDefinition,
+} from './TemplateLibrary';
+
+export {
+  getTemplates,
+  getTemplate,
+  registerTemplate,
+  unregisterTemplate,
+  saveUserTemplates,
+  loadUserTemplates,
+  applyTemplateToForm,
+} from './templateRegistry';
+
+export type {
+  FormTemplate,
+  FormTemplateTab,
+  FormTemplateBand,
+} from './templateRegistry';
