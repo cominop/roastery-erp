@@ -1,0 +1,106 @@
+# Step 94: Reports 5 — Band Configuration Editor
+
+## Context
+You are implementing Step 94 of the Roastery ERP project. The reports system already has:
+- A database table `shared.report_definitions` with a `bands` JSONB column
+- A TypeScript schema at `src/reports/schema/reportSchema.ts` with `BandConfig` and `BandRowRange` types
+- Full CRUD API endpoints at `/api/reports` (GET/POST/PUT/DELETE)
+- `ReportListingPage.tsx` — browsing reports grouped by category
+- `ReportParameterForm.tsx` — auto-generated parameter entry dialog
+- `reportsApi.ts` — API client functions
+
+## What to Build
+
+Create `src/reports/components/BandEditor.tsx` — a component for configuring band row ranges for report templates.
+
+### Band Types (from SPEC)
+| Band | Purpose | Appears |
+|------|---------|---------|
+| `title` | Report header | Once at top |
+| `header` | Column headers | Top of each page |
+| `detail` | Data rows | Repeated per record |
+| `summary` | Aggregates | Once after detail rows |
+| `footer` | Page footer | Bottom of each page |
+| `cover` | Cover page | First page only (optional) |
+
+### Existing Types in Schema
+```typescript
+export interface BandConfig {
+  cover?: BandRowRange;
+  title?: BandRowRange;
+  header?: BandRowRange;
+  detail?: BandRowRange;
+  summary?: BandRowRange;
+  footer?: BandRowRange;
+}
+
+export interface BandRowRange {
+  start_row: number;
+  end_row: number;
+}
+```
+
+### Component Requirements
+
+1. **Props:**
+   - `bands: BandConfig` — current band configuration
+   - `onChange: (bands: BandConfig) => void` — called when any band value changes
+   - `disabled?: boolean` — optional, for read-only mode
+
+2. **UI Layout:**
+   - Tabbed or accordion interface with one tab per band type
+   - Tabs: Cover, Title, Header, Detail, Summary, Footer
+   - Each tab shows:
+     - Band name and description (what it does)
+     - `start_row` number input (label: "Start Row", min: 0)
+     - `end_row` number input (label: "End Row", min: 0, must be >= start_row)
+     - `repeatPerPage` checkbox (only for header and footer bands) — add this to the BandRowRange interface in the schema
+   - Visual indication of which bands are configured vs empty
+
+3. **Schema Update:**
+   Add `repeatPerPage?: boolean` to the `BandRowRange` interface in `src/reports/schema/reportSchema.ts`
+
+4. **Add a band description helper:**
+   Show a small description text under each band tab explaining what it does (from the spec table above).
+
+5. **Validation:**
+   - `end_row` must be >= `start_row` (show error styling if not)
+   - Rows must be non-negative
+   - Show a warning if bands overlap (e.g., title end_row overlaps header start_row)
+
+6. **Visual Preview:**
+   Show a simple ASCII/visual representation of how the bands stack up vertically based on the row numbers. E.g.:
+   ```
+   Rows 0-2:   [████ TITLE ████]
+   Row 3:      [HEADER         ]
+   Row 4+:     [DETAIL ▒▒▒▒▒▒▒▒]
+   Row 6:      [SUMMARY        ]
+   Rows 8-9:   [███ FOOTER ████]
+   ```
+
+7. **Integration with existing patterns:**
+   - Use the same UI components as the rest of the app (shadcn/ui: Tabs, Input, Label, Checkbox, Card)
+   - Import from `@/reports/schema/reportSchema`
+   - Use lucide-react icons for band type icons (PanelTop for title, PanelBottom for footer, etc.)
+   - Use `cn()` from `@/lib/utils` for conditional classes
+   - Follow the same patterns as `TabsBandEditor.tsx` and `ReportParameterForm.tsx`
+
+### File to Create
+- `src/reports/components/BandEditor.tsx`
+
+### File to Update
+- `src/reports/schema/reportSchema.ts` — add `repeatPerPage?: boolean` to `BandRowRange`
+
+### Style Guidance
+- Use the app's dark mode compatible shadcn/ui components
+- Use subtle borders and muted colors for the band preview
+- Keep the component compact — it's meant to be embedded in a larger report editor dialog
+- Use the same font sizes (text-xs, text-sm) as the existing report components
+
+### Test
+After creating the component, run `npx vitest run` to ensure existing tests still pass. Do NOT create new tests — just verify existing tests are green.
+
+### Implementation order
+1. Update `BandRowRange` in schema to add `repeatPerPage`
+2. Create `BandEditor.tsx` with all the functionality above
+3. Run `npx vitest run` to verify no regressions

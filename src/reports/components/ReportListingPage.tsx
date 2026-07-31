@@ -18,10 +18,16 @@ import {
   Table2,
   FileSpreadsheet,
   Code,
+  LayoutPanelTop,
+  Loader2,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ReportDefinition } from "@/reports/schema/reportSchema";
+import type { ReportDefinition, BandConfig } from "@/reports/schema/reportSchema";
 import ReportParameterForm from "@/reports/components/ReportParameterForm";
+import BandConfigEditor from "@/reports/components/BandConfigEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // ─── Format icon map ──────────────────────────────────
 
@@ -62,11 +68,13 @@ function CategorySection({
   category,
   reports,
   onRunReport,
+  onEditBands,
   searchQuery,
 }: {
   category: string;
   reports: ReportDefinition[];
   onRunReport: (report: ReportDefinition) => void;
+  onEditBands: (report: ReportDefinition) => void;
   searchQuery: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -155,6 +163,16 @@ function CategorySection({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs gap-1"
+                  onClick={() => onEditBands(report)}
+                  title="Edit band row ranges (cover/title/header/detail/summary/footer)"
+                >
+                  <LayoutPanelTop className="h-3 w-3" />
+                  Bands
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
                   onClick={() => onRunReport(report)}
                 >
                   <Play className="h-3 w-3" />
@@ -193,6 +211,14 @@ export default function ReportListingPage() {
   // Parameter dialog state
   const [selectedReport, setSelectedReport] = useState<ReportDefinition | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Band editor state
+  const [bandEditReport, setBandEditReport] = useState<ReportDefinition | null>(null);
+  const [bandEditOpen, setBandEditOpen] = useState(false);
+  const [bandEditBands, setBandEditBands] = useState<BandConfig | undefined>(undefined);
+  const [bandSaveLoading, setBandSaveLoading] = useState(false);
+  const [bandSaveError, setBandSaveError] = useState<string | null>(null);
+  const [bandSaveSuccess, setBandSaveSuccess] = useState(false);
 
   // Fetch all reports on mount
   useEffect(() => {
@@ -252,12 +278,18 @@ export default function ReportListingPage() {
       setSelectedReport(report);
       setDialogOpen(true);
     } else {
-      // No parameters needed — trigger render directly
-      // For now, open the dialog anyway so the user has a "Run" confirmation
-      // since the render endpoint expects a POST with parameters.
+      // No parameters needed — open with confirmation
       setSelectedReport(report);
       setDialogOpen(true);
     }
+  }, []);
+
+  const handleEditBands = useCallback((report: ReportDefinition) => {
+    setBandEditReport(report);
+    setBandEditBands(report.bands ? { ...report.bands } : undefined);
+    setBandSaveError(null);
+    setBandSaveSuccess(false);
+    setBandEditOpen(true);
   }, []);
 
   const handleRenderComplete = useCallback((_result: { url: string; output: string }) => {
@@ -411,6 +443,7 @@ export default function ReportListingPage() {
                 category={category}
                 reports={catReports}
                 onRunReport={handleRunReport}
+                onEditBands={handleEditBands}
                 searchQuery={searchQuery}
               />
             )
@@ -425,6 +458,119 @@ export default function ReportListingPage() {
           onOpenChange={handleDialogOpenChange}
           onRenderComplete={handleRenderComplete}
         />
+      )}
+
+      {/* Band editor dialog */}
+      {bandEditReport && (
+        <Dialog
+          open={bandEditOpen}
+          onOpenChange={(open) => {
+            setBandEditOpen(open);
+            if (!open) {
+              setTimeout(() => setBandEditReport(null), 200);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LayoutPanelTop className="h-4 w-4" />
+                Band Configuration — {bandEditReport.caption}
+              </DialogTitle>
+              <DialogDescription>
+                Define which row ranges in the template map to each report section.
+                Bands are processed in order: Cover → Title → Header → Detail → Summary → Footer.
+              </DialogDescription>
+            </DialogHeader>
+
+            {bandEditBands !== undefined && (
+              <BandConfigEditor
+                bands={bandEditBands}
+                onChange={(newBands) => {
+                  setBandEditBands(newBands);
+                  setBandSaveError(null);
+                  setBandSaveSuccess(false);
+                }}
+                templateRowCount={bandEditReport.template_file ? undefined : undefined}
+              />
+            )}
+
+            {bandSaveError && (
+              <div className="flex items-center gap-2 text-[11px] text-destructive bg-destructive/5 p-2 rounded">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                {bandSaveError}
+              </div>
+            )}
+
+            {bandSaveSuccess && (
+              <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                Band configuration saved successfully.
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBandEditOpen(false)}
+                disabled={bandSaveLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  if (!bandEditReport || !bandEditBands) return;
+                  setBandSaveLoading(true);
+                  setBandSaveError(null);
+                  setBandSaveSuccess(false);
+                  try {
+                    const res = await fetch(
+                      `/api/reports/${encodeURIComponent(bandEditReport.id)}`,
+                      {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ bands: bandEditBands }),
+                      },
+                    );
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({ error: res.statusText }));
+                      throw new Error(err.error || `HTTP ${res.status}`);
+                    }
+                    const updated = await res.json();
+                    // Update the report in the local list
+                    setReports((prev) =>
+                      prev.map((r) => (r.id === updated.id ? updated : r)),
+                    );
+                    setBandSaveSuccess(true);
+                    setBandSaveLoading(false);
+                    // Auto-close after a short delay
+                    setTimeout(() => setBandEditOpen(false), 1200);
+                  } catch (err) {
+                    setBandSaveError(
+                      err instanceof Error ? err.message : "Failed to save band configuration",
+                    );
+                    setBandSaveLoading(false);
+                  }
+                }}
+                disabled={bandSaveLoading}
+              >
+                {bandSaveLoading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    Save Bands
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
