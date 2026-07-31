@@ -1,0 +1,180 @@
+# Step 95: Reports 6 — Migrate 5 Most-Used Access Reports as Proof of Concept
+
+## Context
+You are implementing Step 95 of the Roastery ERP project. The reports system already has:
+- A **Python rendering engine** at `server/reports/renderer.py` (CLI tool) that can load .ods templates, fill `%(marker)s` cells, clone detail rows, and export to PDF/CSV/XLSX/HTML via LibreOffice headless.
+- Helper modules: `server/reports/band_processor.py`, `server/reports/marker_parser.py`
+- A **database table** `shared.report_definitions` with **12 seed report definitions** (Invoice, Invoice Summary, Credit Note, Customer Statement, Sales by Customer, Inventory List, Stock Valuation, Low Stock Alert, Inventory Movement, Work Order, Roast Log, Batch Yield Report, Production Schedule).
+- A **TypeScript schema** at `src/reports/schema/reportSchema.ts` with `ReportDefinition`, `BandConfig`, `BandRowRange`, `ReportParameter` types.
+- **CRUD API endpoints** at `/api/reports` (GET/POST/PUT/DELETE) in `server/index.cjs` (starting around line 3870).
+- A **render endpoint** at `POST /api/reports/:id/render` (line 4184) that shells out to the Python renderer — but it passes `--output-dir`, `--parameters`, and `--source-table` arguments that the renderer.py CLI doesn't support yet.
+- A **React frontend** at `src/reports/components/ReportListingPage.tsx` — browsing reports grouped by category with a "Run" button.
+- `src/reports/components/ReportParameterForm.tsx` — auto-generated parameter entry dialog.
+- `src/reports/components/BandConfigEditor.tsx` — band row range configuration.
+- `src/reports/api/reportsApi.ts` — API client with `fetchReports`, `fetchReport`, `createReport`, `updateReport`, `deleteReport`, `renderReport`, `fetchLookupData`.
+
+## What to Build
+
+### Goal
+Create the actual .ods template files for the **5 most-used Access reports** and wire up the render pipeline so users can generate real PDF output from the UI.
+
+### The 5 Reports (from seed data in shared.report_definitions)
+
+1. **Invoice** (`invoice`) — `orders` source table, parameter: `order_id` (text)
+   - Bands: title (rows 0-2), header (row 3), detail (row 4), summary (row 6), footer (rows 8-9)
+   - Output formats: pdf, xlsx
+
+2. **Invoice Summary** (`invoice-summary`) — `orders` source table, parameters: `date_from`, `date_to` (date)
+   - Bands: title (rows 0-1), detail (row 2), summary (row 4), footer (row 6)
+   - Output formats: pdf, csv, xlsx
+
+3. **Credit Note** (`credit-note`) — `credit_notes` source table, parameter: `credit_note_id` (text)
+   - Bands: title (rows 0-2), header (row 3), detail (row 4), summary (row 6), footer (rows 8-9)
+   - Output formats: pdf, xlsx
+
+4. **Customer Statement** (`customer-statement`) — `customers` source table, parameters: `customer_id` (lookup → customers), `date_from` (date), `date_to` (date)
+   - Bands: title (rows 0-2), header (row 3), detail (row 4), summary (row 6), footer (row 8)
+   - Output formats: pdf
+
+5. **Inventory List** (`inventory-list`) — `inventory` source table, no parameters
+   - Bands: title (rows 0-1), detail (row 2), footer (row 4)
+   - Output formats: pdf, csv, xlsx
+
+### Files to Create
+
+#### 1. Template .ods files in `server/templates/`
+
+Create 5 LibreOffice Calc (.ods) template files using Python + odfpy. Each template must have:
+- **Band markers** in column A (leftmost column) — the value in the first cell of each band row says `title`, `header`, `detail`, `summary`, `footer`
+- **Cell markers** using `%(variable_name)s` syntax in the relevant cells
+- **Layout** matching the report type (Invoice has company info, customer info, line items table, totals; etc.)
+
+Write a Python script at `server/reports/create_templates.py` that creates all 5 .ods files using the `odf` library. This script should be idempotent (overwrites existing templates).
+
+**Template specifications:**
+
+**Invoice (invoice.ods):**
+```
+Row 0 [title]: A1="FCC ROASTERY" (bold, large), A2="INVOICE", B2="%(invoice_number)s"
+Row 1 [title]: A3="Date:", B3="%(date)s", A3="Customer:", B3="%(customer_name)s" (spread across cells)
+Row 2 [header]: A4="Qty", B4="Product", C4="Unit Price", D4="Total"
+Row 3 [detail]: A5="%(detail_qty)s", B5="%(detail_name)s", C5="%(detail_unit_price)s", D5="%(detail_total)s"
+Row 4 [empty]
+Row 5 [summary]: A7="Subtotal:", D7="%(subtotal)s"
+Row 6 [summary]: A8="Tax:", D8="%(tax)s"
+Row 7 [summary]: A9="Total:", D9="%(total)s" (bold)
+Row 8 [footer]: A11="Thank you for your business"
+Row 9 [footer]: A12="Page %(page_number)s"
+```
+
+**Invoice Summary (invoice-summary.ods):**
+```
+Row 0 [title]: A1="FCC ROASTERY — INVOICE SUMMARY", A2="Period: %(date_from)s to %(date_to)s"
+Row 1 [header]: A3="Invoice #", B3="Customer", C3="Date", D3="Total", E3="Status"
+Row 2 [detail]: A4="%(detail_invoice_number)s", B4="%(detail_customer)s", C4="%(detail_date)s", D4="%(detail_total)s", E4="%(detail_status)s"
+Row 3 [empty]
+Row 4 [summary]: A6="Total Invoices:", B6="%(total_invoices)s", D6="Grand Total:", E6="%(grand_total)s"
+Row 5 [footer]: A8="Page %(page_number)s"
+```
+
+**Credit Note (credit-note.ods):**
+```
+Row 0 [title]: A1="FCC ROASTERY", A2="CREDIT NOTE", B2="%(credit_note_number)s"
+Row 1 [title]: A3="Date:", B3="%(date)s", A3="Customer:", B3="%(customer_name)s"
+Row 2 [header]: A4="Qty", B4="Product", C4="Unit Price", D4="Total"
+Row 3 [detail]: A5="%(detail_qty)s", B5="%(detail_name)s", C5="%(detail_unit_price)s", D5="%(detail_total)s"
+Row 4 [empty]
+Row 5 [summary]: A7="Subtotal:", D7="%(subtotal)s"
+Row 6 [summary]: A8="Credit Total:", D8="%(credit_total)s" (bold)
+Row 7 [footer]: A10="Page %(page_number)s"
+```
+
+**Customer Statement (customer-statement.ods):**
+```
+Row 0 [title]: A1="FCC ROASTERY", A2="CUSTOMER STATEMENT"
+Row 1 [title]: A3="Customer:", B3="%(customer_name)s", A3="Account #:", B3="%(customer_code)s"
+Row 2 [title]: A4="Period:", B4="%(date_from)s to %(date_to)s"
+Row 3 [header]: A5="Date", B5="Document", C5="Description", D5="Debit", E5="Credit", F5="Balance"
+Row 4 [detail]: A6="%(detail_date)s", B6="%(detail_document)s", C6="%(detail_description)s", D6="%(detail_debit)s", E6="%(detail_credit)s", F6="%(detail_balance)s"
+Row 5 [empty]
+Row 6 [summary]: A8="Opening Balance:", F8="%(opening_balance)s"
+Row 7 [summary]: A9="Closing Balance:", F9="%(closing_balance)s" (bold)
+Row 8 [footer]: A11="Page %(page_number)s"
+```
+
+**Inventory List (inventory-list.ods):**
+```
+Row 0 [title]: A1="FCC ROASTERY — INVENTORY LIST"
+Row 1 [title]: A2="Generated: %(date)s"
+Row 2 [header]: A3="SKU", B3="Product Name", C3="Category", D3="Quantity", E3="Unit", F3="Unit Cost", G3="Total Value"
+Row 3 [detail]: A4="%(detail_sku)s", B4="%(detail_name)s", C4="%(detail_category)s", D4="%(detail_qty)s", E4="%(detail_unit)s", F4="%(detail_unit_cost)s", G4="%(detail_total_value)s"
+Row 4 [footer]: A6="Page %(page_number)s"
+```
+
+#### 2. Database/Data Fetch Script
+
+Create `server/reports/data_fetcher.py` — a module that knows how to fetch data for each report type from the PostgreSQL database:
+
+```python
+def fetch_report_data(report_name: str, parameters: dict) -> dict:
+    """Fetch data for a report and return the band data dict.
+    
+    Returns a dict with keys like 'title', 'detail', 'summary' etc.
+    Each value is either a dict of marker->value (for single-value bands)
+    or a list of dicts (for detail bands).
+    """
+```
+
+The function should handle these 5 report types:
+- **invoice**: Fetch order by order_id, get order_details for detail rows, compute subtotal/tax/total
+- **invoice-summary**: Fetch orders within date range, group by customer, compute totals
+- **credit-note**: Fetch credit note by credit_note_id, get credit_note_items for detail rows
+- **customer-statement**: Fetch customer by customer_id, get all transactions within date range, compute running balance
+- **inventory-list**: Fetch all inventory items, compute total value per item
+
+#### 3. Fix the Render API Endpoint
+
+Update `server/index.cjs` (the `POST /api/reports/:id/render` handler, around line 4184) to:
+1. Call `data_fetcher.py` to get the data for the report
+2. Pass the correct arguments to `renderer.py`:
+   - `--template` — path to the .ods template
+   - `--data` — JSON string of the fetched data
+   - `--output` — path for the output file
+   - `--format` — output format (pdf/csv/xlsx)
+   - `--band-config` — JSON string of the band config from the report definition
+
+The current endpoint passes `--output-dir`, `--parameters`, and `--source-table` which are not supported by `renderer.py`. Replace with the correct arguments.
+
+#### 4. Update renderer.py CLI
+
+If needed, update the `renderer.py` CLI to accept the correct arguments. The renderer.py already has a good CLI, but the API calls it with wrong args. Fix the API, not the renderer.
+
+#### 5. Make sure the output directory exists
+
+Create `server/output/` directory if it doesn't exist.
+
+### Implementation Order
+1. Create `server/reports/create_templates.py` — generates all 5 .ods template files
+2. Run the script to create the templates
+3. Create `server/reports/data_fetcher.py` — data fetching for each report
+4. Fix the render API endpoint in `server/index.cjs`
+5. Create `server/output/` directory
+6. Test the render pipeline end-to-end
+
+### Database Schema Reference
+The database has these relevant tables (in the `public` schema):
+- `orders` — id, order_number, customer_id, order_date, status, total_amount, etc.
+- `order_details` — id, order_id, product_id, quantity, unit_price, total_price, etc.
+- `credit_notes` — id, credit_note_number, customer_id, date, total, etc.
+- `credit_note_items` — id, credit_note_id, product_id, quantity, unit_price, total, etc.
+- `customers` — id, name, code, address, phone, email, etc.
+- `inventory` — id, sku, name, category_id, quantity, unit, unit_cost, etc.
+- `inventory_categories` — id, name, etc.
+- `products` — id, name, sku, etc.
+
+### Testing
+After implementing, verify:
+1. The templates exist: `ls server/templates/*.ods`
+2. The Python code is valid: `python3 -m py_compile server/reports/create_templates.py server/reports/data_fetcher.py`
+3. Run `npx vitest run` to ensure no regressions
+4. If possible, test rendering: `python3 server/reports/renderer.py --template server/templates/invoice.ods --data '{"title":{"invoice_number":"INV-001","date":"2026-07-31","customer_name":"Test Customer"},"detail":[{"detail_qty":"2","detail_name":"Product A","detail_unit_price":"$10.00","detail_total":"$20.00"}],"summary":{"subtotal":"$20.00","tax":"$2.00","total":"$22.00"}}' --output /tmp/test-invoice.pdf --format pdf`

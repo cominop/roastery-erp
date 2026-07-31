@@ -46,15 +46,31 @@ import subprocess
 import sys
 from typing import Any
 
+# Fix up sys.path so the module can be run as a script
+if __name__ == "__main__" and __package__ is None:
+    _dir = os.path.dirname(os.path.abspath(__file__))
+    _parent = os.path.dirname(_dir)  # server/
+    sys.path.insert(0, _parent)
+    # Set the package so relative imports work in sibling modules
+    import reports  # noqa: F401 — loads __init__.py, registers the package
+
 from odf.opendocument import load as ods_load
 from odf.table import Table
 
-from .band_processor import (
-    process_detail_band,
-    process_header_footer_band,
-    process_summary_band,
-    process_title_band,
-)
+try:
+    from .band_processor import (  # package-mode import
+        process_detail_band,
+        process_header_footer_band,
+        process_summary_band,
+        process_title_band,
+    )
+except ImportError:
+    from reports.band_processor import (  # script-mode fallback
+        process_detail_band,
+        process_header_footer_band,
+        process_summary_band,
+        process_title_band,
+    )
 
 # ─── LibreOffice conversion ─────────────────────────────────
 

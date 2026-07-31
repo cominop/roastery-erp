@@ -13,7 +13,6 @@ Band config is a dict with ``start_row`` (0-indexed) and optional ``end_row``.
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any
 
 from .marker_parser import find_cells_with_markers, replace_markers, set_cell_text
@@ -45,7 +44,8 @@ def process_detail_band(
     If *end_row* is set, rows from start_row to end_row are treated as the
     template block (useful for multi-row detail cells).
     """
-    from odf.table import TableRow, TableCell
+    from odf.table import TableRow, TableCell, TableColumn
+    from odf.text import P
 
     start = band_config.get("start_row")
     if start is None:
@@ -59,18 +59,17 @@ def process_detail_band(
             f"detail start_row {start} exceeds row count ({len(rows)})"
         )
 
-    # The template row(s) — clone all rows in [start, end]
-    template_rows = rows[start : min(end + 1, len(rows))]
+    # The template row(s)
+    end = min(end, len(rows) - 1)
+    template_rows = rows[start : end + 1]
 
     if not template_rows:
         raise ValueError(f"no template rows found at rows {start}-{end}")
 
     # Insert point: after the last template row
-    # We need to find the actual DOM position
     parent = template_rows[-1].parentNode
 
     def _find_next_sibling(anchor_row) -> Any | None:
-        """Return the next sibling element after anchor_row, or None."""
         siblings = list(parent.childNodes)
         for i, sib in enumerate(siblings):
             if sib is anchor_row and i + 1 < len(siblings):
@@ -79,16 +78,20 @@ def process_detail_band(
 
     insert_before = _find_next_sibling(template_rows[-1])
 
+    # Extract cell text from a template row — returns list of (text, style_name)
+    # We need to store the text + style for each cell
     for record_idx, record in enumerate(records):
         for tpl_row in template_rows:
-            new_row = deepcopy(tpl_row)
-            # Fill markers in the cloned row
-            for cell in new_row.getElementsByType(TableCell):
+            # Build a new row by creating fresh cells (avoid deepcopy recursion)
+            new_row = TableRow()
+            for cell in tpl_row.getElementsByType(TableCell):
                 text = _get_cell_text(cell)
-                if "%(" not in text:  # quick skip — no markers
-                    continue
-                filled = replace_markers(text, record)
-                set_cell_text(cell, filled)
+                if "%(" in text:
+                    text = replace_markers(text, record)
+                new_cell = TableCell()
+                p = P(text=text)
+                new_cell.addElement(p)
+                new_row.addElement(new_cell)
 
             if insert_before is not None:
                 parent.insertBefore(new_row, insert_before)

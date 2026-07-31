@@ -4175,8 +4175,8 @@ app.post("/api/reports/lookup/:table", async (req, res) => {
 /**
  * POST /api/reports/:id/render — render a report with parameters
  *
- * Fetches the report definition, validates parameters, and shells out
- * to the Python rendering engine (server/reports/renderer.py).
+ * Fetches the report definition, queries data via data_fetcher.py, then
+ * shells out to the Python rendering engine (server/reports/renderer.py).
  * Returns a download URL for the generated file.
  *
  * Body: { parameters: Record<string, unknown>, format?: string }
@@ -4219,68 +4219,189 @@ app.post("/api/reports/:id/render", async (req, res) => {
       });
     }
 
-    // Build the Python render command
     const { spawn } = require("child_process");
     const path = require("path");
+    const fs = require("fs");
 
-    const rendererScript = path.resolve(__dirname, "reports/renderer.py");
-    const templateDir = path.resolve(__dirname, "templates");
-    const outputDir = path.resolve(__dirname, "output");
+    const serverDir = __dirname;
+    const templateDir = path.resolve(serverDir, "templates");
+    const outputDir = path.resolve(serverDir, "output");
+    const dataFetcher = path.resolve(serverDir, "reports/data_fetcher.py");
+    const rendererScript = path.resolve(serverDir, "reports/renderer.py");
+
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Strip "templates/" prefix from template_file if present (seed data stores it)
+    let templateFile = report.template_file;
+    if (templateFile.startsWith("templates/")) {
+      templateFile = templateFile.slice("templates/".length);
+    }
+
+    const templatePath = path.resolve(templateDir, templateFile);
+    if (!fs.existsSync(templatePath)) {
+      return res.status(500).json({
+        error: `Template file not found: ${templatePath}`,
+      });
+    }
+
+    // Step 1: Call data_fetcher.py to get report data
+    const reportName = report.name;
+    const paramsJson = JSON.stringify(parameters);
+
+    // Use the project venv Python if available (has odfpy + psycopg2)
+    const pythonBin = path.resolve(serverDir, "..", ".venv", "bin", "python3");
+    const pythonExists = fs.existsSync(pythonBin);
+
+    const dataResult = await new Promise((resolve, reject) => {
+      const child = spawn(pythonExists ? pythonBin : "python3", [dataFetcher, reportName, paramsJson], {
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 30000,
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `Exit code ${code}`));
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+      child.on("error", reject);
+    });
+
+    // Parse the data JSON
+    let reportData;
+    try {
+      reportData = JSON.parse(dataResult);
+    } catch {
+      return res.status(500).json({
+        error: "Failed to parse data_fetcher output",
+        details: dataResult,
+      });
+    }
+
+    // Write data to a temp JSON file for the renderer
+    const dataFilePath = path.resolve(outputDir, `${reportName}_data.json`);
+    fs.writeFileSync(dataFilePath, JSON.stringify(reportData, null, 2), "utf-8");
+
+    // Step 2: Call renderer.py with the data and band config
+    const outputFileName = `${reportName}_${Date.now()}.${format}`;
+    const outputPath = path.resolve(outputDir, outputFileName);
 
     const renderArgs = [
       rendererScript,
-      "--template", path.join(templateDir, report.template_file),
-      "--output-dir", outputDir,
+      "--template", templatePath,
+      "--data", dataFilePath,
+      "--output", outputPath,
       "--format", format,
-      "--parameters", JSON.stringify(parameters),
     ];
 
-    if (report.source_table) {
-      // Pass source query info
-      renderArgs.push("--source-table", report.source_table);
+    // Pass band config if the report has one
+    if (report.bands && Object.keys(report.bands).length > 0) {
+      const bandConfigPath = path.resolve(outputDir, `${reportName}_bands.json`);
+      fs.writeFileSync(bandConfigPath, JSON.stringify(report.bands, null, 2), "utf-8");
+      renderArgs.push("--band-config", bandConfigPath);
     }
 
-    // Call the Python renderer as a child process
-    const pythonBin = process.env.PYTHON || "python3";
-    const child = spawn(pythonBin, renderArgs, {
-      stdio: ["ignore", "pipe", "pipe"],
-      timeout: 60000,
+    const renderResult = await new Promise((resolve, reject) => {
+      const child = spawn(pythonExists ? pythonBin : "python3", renderArgs, {
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 120000,
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `Exit code ${code}`));
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+      child.on("error", reject);
     });
 
-    let stdout = "";
-    let stderr = "";
+    // Clean up temp files
+    try {
+      if (fs.existsSync(dataFilePath)) fs.unlinkSync(dataFilePath);
+      const bandConfigPath = path.resolve(outputDir, `${reportName}_bands.json`);
+      if (fs.existsSync(bandConfigPath)) fs.unlinkSync(bandConfigPath);
+    } catch { /* ignore cleanup errors */ }
 
-    child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
-
-    child.on("close", (code) => {
-      if (code !== 0) {
-        return res.status(500).json({
-          error: `Render process exited with code ${code}`,
-          details: stderr.trim(),
-        });
-      }
-
-      try {
-        const result = JSON.parse(stdout);
-        res.json(result);
-      } catch {
-        // Fallback: return stdout as the output path
-        const outputFile = stdout.trim();
-        res.json({
+    // Verify output exists
+    if (!fs.existsSync(outputPath)) {
+      // Try alternate output — renderer may have used its own naming
+      const base = path.basename(templatePath, ".ods");
+      const altPath = path.resolve(outputDir, `${base}.${format}`);
+      if (fs.existsSync(altPath)) {
+        return res.json({
           success: true,
-          output: outputFile,
-          url: `/api/reports/output/${path.basename(outputFile)}`,
+          output: altPath,
+          url: `/api/reports/output/${path.basename(altPath)}`,
         });
       }
-    });
+      return res.status(500).json({
+        error: "Renderer did not produce output file",
+        details: renderResult,
+      });
+    }
 
-    child.on("error", (err) => {
-      res.status(500).json({ error: `Failed to start renderer: ${err.message}` });
+    res.json({
+      success: true,
+      output: outputPath,
+      url: `/api/reports/output/${path.basename(outputPath)}`,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/**
+ * GET /api/reports/output/:file — serve a rendered report file
+ */
+app.get("/api/reports/output/:file", async (req, res) => {
+  const path = require("path");
+  const fs = require("fs");
+
+  const fileName = req.params.file;
+  // Sanitize: only allow alphanumeric, dash, dot, underscore
+  if (!/^[\w.-]+$/.test(fileName)) {
+    return res.status(400).json({ error: "Invalid file name" });
+  }
+
+  const outputDir = path.resolve(__dirname, "output");
+  const filePath = path.resolve(outputDir, fileName);
+
+  // Ensure the resolved path is within outputDir (path traversal protection)
+  if (!filePath.startsWith(outputDir)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: `File not found: ${fileName}` });
+  }
+
+  // Determine content type based on extension
+  const ext = path.extname(fileName).toLowerCase();
+  const contentTypes = {
+    ".pdf": "application/pdf",
+    ".csv": "text/csv",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".html": "text/html",
+    ".ods": "application/vnd.oasis.opendocument.spreadsheet",
+  };
+  const contentType = contentTypes[ext] || "application/octet-stream";
+
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Content-Length", fs.statSync(filePath).size);
+  fs.createReadStream(filePath).pipe(res);
 });
 
 // ─── Start ────────────────────────────────────────────
