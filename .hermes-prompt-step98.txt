@@ -1,0 +1,219 @@
+# Step 98: Reports 9 — Bulk Migration Tool for Remaining 102 Access Reports
+
+## Context
+You are implementing Step 98 of the Roastery ERP project. The reports system is now fully built:
+
+### Already Implemented
+- **Python rendering engine** at `server/reports/renderer.py` — loads .ods templates, fills `%(marker)s` cells, clones detail rows, exports to PDF/CSV/XLSX/HTML.
+- **Data fetcher** at `server/reports/data_fetcher.py` — fetches DB data for each report type.
+- **Marker parser** at `server/reports/marker_parser.py` — finds and replaces `%(variable)s` markers.
+- **Band processor** at `server/reports/band_processor.py` — clones rows, aggregates summaries.
+- **5 template .ods files** in `server/templates/` (invoice, invoice-summary, credit-note, customer-statement, inventory-list, work-order).
+- **Report definition table** `shared.report_definitions` with CRUD API at `/api/reports`.
+- **Report listing page** at `src/reports/components/ReportListingPage.tsx` with grouped categories.
+- **Parameter form auto-generation** at `src/reports/components/ReportParameterForm.tsx`.
+- **Band configuration editor** at `src/reports/components/BandConfigEditor.tsx`.
+- **CSV/XLSX output** via LibreOffice headless.
+- **Scheduled auto-generation** at `server/cron/report-generator.cjs` with `report_schedule_log` table.
+- **Schedule dialog** at `src/reports/components/ScheduleDialog.tsx`.
+- **TypeScript schema** at `src/reports/schema/reportSchema.ts` — `ReportDefinition`, `ScheduleConfig`, `BandConfig`, `ReportParameter` interfaces.
+- **API functions** at `src/reports/api/reportsApi.ts` — CRUD, render, schedule-log endpoints.
+
+### What Remains
+97 Access reports out of 102 are still not migrated. Step 98 is to build a **bulk migration tool** that:
+1. Reads Access report definitions from a MDB file (exported via mdbtools)
+2. Creates .ods templates automatically for each report
+3. Registers the report definitions in `shared.report_definitions` table
+4. Provides a UI to manage the migration process
+
+## Database Schema Reference
+```sql
+-- Report definitions table
+CREATE TABLE shared.report_definitions (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            VARCHAR(255) NOT NULL,
+    caption         VARCHAR(255),
+    category        VARCHAR(100),
+    template_file   VARCHAR(255),
+    output_formats  TEXT[] DEFAULT '{pdf}',
+    source_table    VARCHAR(255),
+    filterable      BOOLEAN DEFAULT false,
+    parameters      JSONB DEFAULT '[]',
+    bands           JSONB DEFAULT '{}',
+    visible_to_roles TEXT[] DEFAULT '{}',
+    auto_generate   JSONB,
+    enabled         BOOLEAN DEFAULT true,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Schedule log table
+CREATE TABLE shared.report_schedule_log (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id       UUID NOT NULL REFERENCES shared.report_definitions(id),
+    report_name     VARCHAR(255) NOT NULL,
+    scheduled_at    TIMESTAMPTZ NOT NULL,
+    generated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    format          VARCHAR(10) NOT NULL,
+    output_path     TEXT,
+    recipients      TEXT[],
+    status          VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message   TEXT,
+    file_size_bytes BIGINT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+## What to Build
+
+### Goal
+Create a bulk migration tool that automates the conversion of the remaining 97 Access reports to the new report system. The tool should handle both the metadata generation (report definitions) and the template creation (.ods files).
+
+### Implementation Order
+
+#### 1. Create `server/reports/access_migration.py`
+A Python script that:
+- Reads Access report definitions from the existing MDB file (`/home/fcc-student/Desktop/ACCESS_DB/` — find the actual .accdb or .mdb file)
+- Uses `mdbtools` (check if installed, install if needed: `sudo apt-get install mdbtools -y`)
+- Exports the list of Access reports with their metadata (name, query source, parameters)
+- Generates a migration manifest JSON file listing all reports to migrate
+
+The script should:
+```python
+#!/usr/bin/env python3
+"""
+access_migration.py — Bulk migration tool for Access reports.
+
+Usage:
+  python3 server/reports/access_migration.py --scan              # Scan Access DB for report definitions
+  python3 server/reports/access_migration.py --generate-manifest # Generate migration manifest
+  python3 server/reports/access_migration.py --migrate N        # Migrate N reports (batch)
+  python3 server/reports/access_migration.py --migrate-all      # Migrate all remaining reports
+  python3 server/reports/access_migration.py --status            # Show migration status
+
+Output:
+  - server/reports/migration/access-reports.json  # Full scan results
+  - server/reports/migration/manifest.json         # Migration manifest
+  - server/reports/migration/progress.json         # Migration progress tracker
+  - server/sql/step-98-migration.sql               # SQL migration for any new tables
+"""
+```
+
+Key features:
+1. **Scan Access DB**: Use `mdb-tables` and `mdb-schema` to list all tables/queries that are report sources
+2. **Generate manifest**: Create a JSON manifest with one entry per Access report, mapping to:
+   - Report name → report definition name
+   - Source table/query → source_table
+   - Parameters → report parameters array
+   - Category → heuristically determined from name
+3. **Batch migration**: For each report in the manifest:
+   - Create a basic .ods template with %(marker)s placeholders
+   - Register the report definition in the DB
+   - Mark as migrated in the progress tracker
+4. **Status tracking**: Keep a progress.json file showing which reports are migrated, pending, or failed
+
+#### 2. Create `server/templates/bulk/template_generator.py`
+A helper script that generates basic .ods templates for Access reports:
+```python
+"""
+template_generator.py — Auto-generate .ods templates from report metadata.
+
+For each report, creates a minimal .ods with:
+  - Title band (row 0-1): Report name, date
+  - Header band (row 2): Column headers from the query's columns
+  - Detail band (row 3): %(detail_col1)s | %(detail_col2)s | ...
+  - Summary band (row 5): Count/total placeholders
+  - Footer band (row 7): Page number
+"""
+```
+
+Uses `odfpy` (install if needed: `pip install odfpy`) to create the .ods files programmatically.
+
+#### 3. Create `src/reports/components/MigrationDashboard.tsx`
+A React component for managing the migration:
+```tsx
+/**
+ * MigrationDashboard — Bulk migration UI for Access reports.
+ *
+ * Shows:
+ * - Total reports: 102, Migrated: 5, Pending: 97
+ * - Progress bar
+ * - List of pending reports with "Migrate" button
+ * - List of migrated reports with status
+ * - Batch controls: "Migrate Next 10", "Migrate All"
+ * - Log view showing migration results
+ */
+```
+
+The component should:
+- Call GET /api/reports/migration/status for progress data
+- Call POST /api/reports/migration/batch with {count: N} to migrate N reports
+- Show real-time progress updates
+- Display migration logs with success/failure indicators
+- Allow filtering by category, status, or search term
+
+#### 4. Add migration API endpoints to `server/index.cjs`
+```javascript
+// Migration endpoints
+GET  /api/reports/migration/status       — Returns { total: 102, migrated: 5, pending: 97, failed: 0 }
+POST /api/reports/migration/batch        — Body: { count: 10, category?: string } — Migrates next N pending reports
+GET  /api/reports/migration/log          — Returns migration log entries
+POST /api/reports/migration/scan         — Re-scan Access DB and update manifest
+```
+
+#### 5. Add "Migration" button to ReportListingPage
+In `src/reports/components/ReportListingPage.tsx`:
+- Add a "Bulk Migration" button in the header area (near the search bar)
+- When clicked, opens the MigrationDashboard dialog
+- The button should be visible to admin users only
+
+#### 6. Create the SQL migration
+Create `server/sql/step-98-migration.sql`:
+```sql
+-- Migration progress tracking table
+CREATE TABLE IF NOT EXISTS shared.report_migration_log (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_name     VARCHAR(255) NOT NULL,
+    access_name     VARCHAR(255),
+    category        VARCHAR(100),
+    template_file   VARCHAR(255),
+    definition_id   UUID REFERENCES shared.report_definitions(id),
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | migrated | failed | skipped
+    error_message   TEXT,
+    started_at      TIMESTAMPTZ,
+    completed_at    TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_report_migration_status ON shared.report_migration_log (status);
+CREATE INDEX idx_report_migration_category ON shared.report_migration_log (category);
+```
+
+#### 7. Add a migration API function to `src/reports/api/reportsApi.ts`
+```typescript
+export async function fetchMigrationStatus(): Promise<MigrationStatus>;
+export async function triggerMigrationBatch(count: number): Promise<MigrationBatchResult>;
+export async function fetchMigrationLog(): Promise<MigrationLogEntry[]>;
+export async function triggerScan(): Promise<ScanResult>;
+```
+
+### Testing
+After implementing:
+1. Run the SQL migration: `psql -d polyaccess -f server/sql/step-98-migration.sql`
+2. Test the scan: `python3 server/reports/access_migration.py --scan`
+3. Test the manifest generation: `python3 server/reports/access_migration.py --generate-manifest`
+4. Test batch migration: `python3 server/reports/access_migration.py --migrate 5`
+5. Check the migration log: `python3 server/reports/access_migration.py --status`
+6. Verify the UI loads: check the frontend compiles
+7. Run `npx vitest run` to ensure no regressions
+8. Check `npx vite build 2>&1 | tail -5`
+
+### Files to Create/Modify
+
+1. **CREATE** `server/reports/access_migration.py` — Main migration tool
+2. **CREATE** `server/reports/templates/template_generator.py` — .ods template generator
+3. **CREATE** `server/sql/step-98-migration.sql` — SQL migration for progress tracking
+4. **CREATE** `src/reports/components/MigrationDashboard.tsx` — React migration UI
+5. **MODIFY** `server/index.cjs` — Add migration API endpoints
+6. **MODIFY** `src/reports/components/ReportListingPage.tsx` — Add Migration button
+7. **MODIFY** `src/reports/api/reportsApi.ts` — Add migration API functions

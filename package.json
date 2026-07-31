@@ -16,7 +16,10 @@
     "preview": "vite preview",
     "metadata:export": "./src/metadata/scripts/export-metadata.sh",
     "metadata:import": "./src/metadata/scripts/import-metadata.sh",
-    "metadata:promote": "./src/metadata/scripts/promote.sh"
+    "metadata:promote": "./src/metadata/scripts/promote.sh",
+    "reports:migrate": "python3 server/reports/migrate_reports.py",
+    "reports:scan": "python3 server/reports/migrate_reports.py scan",
+    "reports:status": "python3 server/reports/migrate_reports.py status"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

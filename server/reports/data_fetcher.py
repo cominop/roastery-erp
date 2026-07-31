@@ -33,7 +33,12 @@ SCHEMA = "db_fcc_erp"
 
 
 def get_conn():
-    return psycopg2.connect(**DB_CONFIG)
+    conn = psycopg2.connect(**DB_CONFIG)
+    conn.autocommit = True
+    with conn.cursor() as cur:
+        cur.execute(f"SET search_path TO {SCHEMA}, public, shared")
+    conn.autocommit = False
+    return conn
 
 
 # ─── Report data builders ───────────────────────────────────
@@ -415,6 +420,126 @@ def fetch_work_order(params: dict) -> dict:
         conn.close()
 
 
+# ─── Generic fetcher for bulk-migrated reports ──────────────────
+# Reports migrated by server/reports/migrate_reports.py store their
+# SQL in shared.report_definitions.data_query. This fallback executes
+# that query and builds the standard band data shape.
+
+def _build_band_data(rows, columns, params, report_name, caption):
+    """Convert query rows into band data (title/header/detail/footer)."""
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # Parameter overrides for the title (date ranges, ids, etc.)
+    title_data = {
+        "title": caption or report_name.replace("-", " ").title(),
+        "report_name": report_name,
+        "generated_at": now,
+    }
+    for key, value in params.items():
+        title_data[key] = str(value)
+
+    # Column labels: humanize snake_case → Title Case
+    labels = {}
+    for col in columns:
+        label = col.replace("_", " ").replace("-", " ").strip()
+        label = " ".join(w.capitalize() for w in label.split()) if label else col
+        labels[col] = label
+
+    # Detail rows: stringify values for the template markers
+    detail = []
+    for row in rows:
+        detail_row = {}
+        for col in columns:
+            val = row.get(col)
+            if val is None:
+                detail_row[col] = ""
+            elif isinstance(val, (datetime,)):
+                detail_row[col] = val.strftime("%Y-%m-%d %H:%M") if val.hour or val.minute else val.strftime("%Y-%m-%d")
+            elif isinstance(val, (int, float)) and not isinstance(val, bool):
+                detail_row[col] = f"{val:,}" if isinstance(val, int) else f"{val:,.2f}"
+            elif isinstance(val, bool):
+                detail_row[col] = "Yes" if val else "No"
+            else:
+                detail_row[col] = str(val)
+        detail.append(detail_row)
+
+    # Summary: totals for numeric columns
+    summary = {"row_count": str(len(rows)), "generated_at": now}
+    if rows:
+        for col in columns:
+            numeric = [row.get(col) for row in rows]
+            if numeric and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in numeric):
+                total = sum(float(v) for v in numeric)
+                summary[f"{col}_total"] = f"{total:,.2f}"
+
+    header = {col: labels[col] for col in columns}
+
+    return {
+        "title": title_data,
+        "header": header,
+        "detail": detail,
+        "summary": summary,
+        "footer": {"generated_at": now},
+    }
+
+
+def fetch_generated_report(params: dict) -> dict:
+    """Fetch data for a bulk-migrated report by looking up its data_query.
+
+    Expects params['report_name'] to contain the report definition name.
+    """
+    report_name = params.get("report_name")
+    if not report_name:
+        return {"error": "report_name is required for generated reports"}
+
+    conn = get_conn()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Look up the report definition
+        cur.execute(
+            """SELECT name, caption, data_query, parameters
+               FROM shared.report_definitions WHERE name = %s AND enabled = true""",
+            [report_name]
+        )
+        report = cur.fetchone()
+        if not report:
+            return {"error": f"Report definition not found or disabled: {report_name}"}
+        if not report["data_query"]:
+            return {"error": f"Report '{report_name}' has no data_query"}
+
+        # Extract declared parameter names so we only pass safe values
+        declared_params = {}
+        for p in (report["parameters"] or []):
+            if isinstance(p, dict) and p.get("name"):
+                declared_params[p["name"]] = p.get("type", "text")
+
+        # Execute the query — parameterize where we can with declared params
+        sql = report["data_query"]
+        query_params = []
+
+        # Substitute known parameters (simple named → positional)
+        import re as _re
+        for name, ptype in declared_params.items():
+            if name in params and params[name] not in (None, ""):
+                marker = _re.compile(rf"\b{_re.escape(name)}\b")
+                value = params[name]
+                if ptype == "date" and isinstance(value, str):
+                    # Keep ISO date strings
+                    pass
+                sql, n = marker.subn("?", sql, count=1)
+                if n:
+                    query_params.append(value)
+
+        cur.execute(f"SELECT * FROM ({sql}) AS _report_q LIMIT 500", query_params)
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description] if cur.description else []
+
+        return _build_band_data(rows, columns, params, report["name"], report["caption"])
+    finally:
+        conn.close()
+
+
 # ─── Dispatcher ─────────────────────────────────────────────
 
 FETCHERS = {
@@ -424,6 +549,14 @@ FETCHERS = {
     "inventory-list": fetch_inventory_list,
     "work-order": fetch_work_order,
 }
+
+
+def _get_fetcher(report_name: str):
+    """Resolve a fetcher: explicit handler, or generic generated-report fetch."""
+    fetcher = FETCHERS.get(report_name)
+    if fetcher:
+        return fetcher
+    return lambda params: fetch_generated_report({**params, "report_name": report_name})
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -437,7 +570,7 @@ def main(argv: list[str] | None = None) -> int:
     report_name = argv[0]
     params = json.loads(argv[1]) if len(argv) > 1 else {}
 
-    fetcher = FETCHERS.get(report_name)
+    fetcher = _get_fetcher(report_name)
     if not fetcher:
         print(json.dumps({"error": f"Unknown report: {report_name}"}))
         return 1
