@@ -1,0 +1,74 @@
+name: Metadata Deploy
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'src/metadata/export/definitions/*.json'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export metadata
+        run: |
+          chmod +x src/metadata/scripts/export-metadata.sh
+          ./src/metadata/scripts/export-metadata.sh --source "${{ github.ref_name }}"
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: metadata-archive
+          path: deploy/erp_metadata_*.zip
+          if-no-files-found: error
+
+  import:
+    needs: export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download archive
+        uses: actions/download-artifact@v4
+        with:
+          name: metadata-archive
+          path: deploy/
+
+      - name: Import metadata
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', github.ref_name)] }}
+        run: |
+          chmod +x src/metadata/scripts/import-metadata.sh
+          ARCHIVE=$(ls deploy/erp_metadata_*.zip | head -1)
+          echo "Importing archive: $ARCHIVE"
+          ./src/metadata/scripts/import-metadata.sh --archive "$ARCHIVE" --skip-validation

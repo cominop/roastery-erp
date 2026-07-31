@@ -9,4 +9,4 @@ build/
 playwright-report/
 test-results/
 __pycache__/
-*.pyc
+*.pycdeploy/*.zip

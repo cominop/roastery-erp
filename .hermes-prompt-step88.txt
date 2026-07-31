@@ -1,0 +1,212 @@
+# Step 88: Metadata Deployment 9 — CI/CD scripts (dev→staging→prod promotion)
+
+Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui
+
+## Context
+
+Steps 80-87 implemented the full metadata export/import system:
+- Step 80: Export — serialise all metadata to JSON files (`server/metadata-exporter.cjs`)
+- Step 81: Export — zip + manifest + checksums (`server/metadata-packager.cjs`)
+- Step 82: Import — validate manifest + checksums (`server/metadata-importer.cjs`)
+- Step 83: Import — UPSERT all metadata types (`server/metadata-importer-upsert.cjs`)
+- Step 84: Diff preview UI (`src/metadata/components/DiffPreview.tsx`)
+- Step 85: Automatic backup before import (`server/metadata-backup.cjs`)
+- Step 86: Rollback from backup (`src/metadata/components/BackupList.tsx`, `server/metadata-rollback.cjs`)
+- Step 87: Export/Import UI dialogs (`src/metadata/components/ExportDialog.tsx`, `ImportDialog.tsx`)
+
+Existing API routes in `server/index.cjs`:
+- POST /api/metadata/export — run export + package pipeline
+- GET /api/metadata/archives — list available export archives
+- POST /api/metadata/import/validate — validate an archive before importing
+- POST /api/metadata/import — run full import pipeline: backup + validate + upsert
+- GET /api/metadata/diff?archive=<path>
+- POST /api/metadata/backup
+- GET /api/metadata/backups
+- POST /api/metadata/rollback/:backupId
+- POST /api/metadata/rollback/preview/:backupId
+
+Existing deploy directory: `/home/fcc-student/Desktop/_DEV/roastery-ui/deploy/` — already has `erp_metadata_2026-07-30.zip` and `auto-backup-2026-07-30-161107-before-import.zip`.
+
+The packager outputs archives into `deploy/` automatically (this is already wired).
+
+## What to Build
+
+### 1. Shell Scripts — `/home/fcc-student/Desktop/_DEV/roastery-ui/src/metadata/scripts/`
+
+Create these CLI scripts that can be used in CI/CD pipelines:
+
+#### `export-metadata.sh`
+A shell script that:
+1. Runs the exporter: `node server/metadata-exporter.cjs`
+2. Runs the packager with metadata info: `node server/metadata-packager.cjs --description "<commit-message>" --source "<env>" --output deploy/erp_metadata_$(date +%Y-%m-%d).zip`
+3. Commits the resulting .zip to git:
+   ```bash
+   git add deploy/erp_metadata_*.zip
+   git commit -m "chore: metadata export $(date +%Y-%m-%d)"
+   git tag "deploy/v$(node -e "console.log(require('./package.json').version)")"
+   ```
+4. Accept `--source` (dev/staging/prod) and `--message` (description) arguments
+5. Handle errors gracefully — exit with code 1 on failure, print clear messages
+6. Print the path to the generated archive on success
+
+Usage:
+```bash
+./src/metadata/scripts/export-metadata.sh --source staging --message "Pre-deployment export"
+./src/metadata/scripts/export-metadata.sh --help
+```
+
+#### `import-metadata.sh`
+A shell script that:
+1. Accepts an archive path: `--archive deploy/erp_metadata_2026-07-30.zip`
+2. Validates first: `node server/metadata-importer.cjs --archive "$ARCHIVE"`
+3. If validation fails, exits with error and suggests checking the archive
+4. If validation passes, runs the full import:
+   - Backup: `node server/metadata-backup.cjs --reason pre_import`
+   - UPSERT: `node server/metadata-importer-upsert.cjs --archive "$ARCHIVE"`
+5. Print summary of what was imported (forms, fields, events counts)
+6. Accept `--skip-validation` flag for automated pipelines that validated separately
+
+Usage:
+```bash
+./src/metadata/scripts/import-metadata.sh --archive deploy/erp_metadata_2026-07-30.zip
+./src/metadata/scripts/import-metadata.sh --archive deploy/erp_metadata_2026-07-30.zip --skip-validation
+```
+
+#### `promote.sh`
+A promotion pipeline script that combines export-import across environments:
+1. Accepts: `--from dev --to staging` or `--from staging --to prod`
+2. Runs `export-metadata.sh` on the source env (connects to source DB via env vars)
+3. Transfers the archive (for now, just copies it locally — in a real setup this would be scp)
+4. Runs `import-metadata.sh` on the target env
+5. Prints a summary of the promotion
+
+Usage:
+```bash
+./src/metadata/scripts/promote.sh --from dev --to staging
+```
+
+For now, since we're in a single-machine dev setup, the `promote.sh` script should:
+- Export from the current database
+- Copy the archive to `deploy/promotion-<env>-<date>.zip`
+- Re-import (simulating a staging/prod import on the same DB)
+- This is the pattern that would be extended for real multi-env promotion
+
+### 2. GitHub Actions Workflow — `.github/workflows/metadata-deploy.yml`
+
+Create a GitHub Actions workflow for automatic metadata deployment:
+
+```yaml
+name: Metadata Deploy
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'src/metadata/export/definitions/*.json'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Export metadata
+        run: |
+          chmod +x src/metadata/scripts/export-metadata.sh
+          ./src/metadata/scripts/export-metadata.sh --source ${{ github.ref_name }}
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: metadata-archive
+          path: deploy/erp_metadata_*.zip
+
+  import:
+    needs: export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download archive
+        uses: actions/download-artifact@v4
+        with:
+          name: metadata-archive
+      - name: Import metadata
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', github.ref_name)] }}
+        run: |
+          chmod +x src/metadata/scripts/import-metadata.sh
+          ./src/metadata/scripts/import-metadata.sh --archive deploy/erp_metadata_*.zip
+```
+
+### 3. npm Scripts — Add to `package.json`
+
+Add these convenience scripts to `package.json`:
+
+```json
+{
+  "scripts": {
+    "metadata:export": "./src/metadata/scripts/export-metadata.sh",
+    "metadata:import": "./src/metadata/scripts/import-metadata.sh",
+    "metadata:promote": "./src/metadata/scripts/promote.sh"
+  }
+}
+```
+
+### 4. Documentation — Create `src/metadata/DEPLOYMENT_GUIDE.md`
+
+Create a short deployment guide documenting:
+1. How to export metadata manually
+2. How to import metadata manually
+3. The dev→staging→prod promotion flow
+4. How to verify a deployment
+5. How to roll back using BackupList or the CLI
+6. CI/CD pipeline explanation
+
+## Code Style & Guidelines
+
+- Shell scripts: Bash scripts with `set -euo pipefail`, clear error handling, `--help` flag, color-coded output (green for success, red for error, yellow for warning)
+- Use `#!/usr/bin/env bash` shebang
+- Make scripts executable: `chmod +x`
+- Use consistent indentation (2 spaces for YAML, 4 spaces for scripts where it matters)
+- Keep the GitHub Actions workflow simple — it documents the intended CI pattern even if the self-hosted runner doesn't have all secrets configured yet
+- All scripts should work standalone (just need node and the codebase)
+
+## Testing
+
+After making changes:
+1. Make scripts executable: `chmod +x src/metadata/scripts/*.sh`
+2. Verify each script's `--help` flag works
+3. Run `export-metadata.sh` to verify it can create an export:
+   ```bash
+   ./src/metadata/scripts/export-metadata.sh --source development --message "Test export from step 88"
+   ```
+4. Verify the archive appears in `deploy/`
+5. Run `import-metadata.sh --archive deploy/erp_metadata_*.zip` to verify import works
+6. Check `npm run build` still compiles without errors
+7. Check `npx vitest run` passes
+
+## Files to Create/Modify
+
+CREATE:
+- src/metadata/scripts/export-metadata.sh
+- src/metadata/scripts/import-metadata.sh
+- src/metadata/scripts/promote.sh
+- .github/workflows/metadata-deploy.yml
+- src/metadata/DEPLOYMENT_GUIDE.md
+
+MODIFY:
+- package.json (add 3 npm scripts)
+
+Do NOT modify any other files. Do not touch server/index.cjs, MetadataManager.tsx, or any existing components.
