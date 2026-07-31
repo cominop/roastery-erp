@@ -1,0 +1,94 @@
+Implement Step 90: Reports 1 — Python rendering engine (load .ods, fill markers, export PDF via LibreOffice headless)
+
+## Codebase Context
+- Working directory: /home/fcc-student/Desktop/_DEV/roastery-ui/
+- Full spec: /home/fcc-student/Documents/Obsidian Vaults/FCC Email Knowledge Base/Roastery ERP - SPEC - Reports.md
+- The project is a Roastery ERP system with a Node.js/Express server (server/index.cjs) and React/TypeScript frontend (src/).
+- Server uses Python for backend scripts. Check existing Python scripts under server/ for patterns.
+- The project already has a connection to PostgreSQL (the DB connection is managed through the Node.js server).
+
+## What to Build
+
+### 1. Install Dependencies (if not already present)
+Check if these are installed, install if needed:
+- `python3` available
+- `python3 -c "import odf"` — if not, `pip install odfpy`
+- `libreoffice --headless --version` — if not, `sudo apt-get install -y libreoffice-calc libreoffice-writer`
+
+### 2. Create `server/renderer.py`
+The main rendering engine. See section 9.1 of the spec for the core logic pattern.
+
+```python
+# server/renderer.py — Python rendering engine
+# Loads .ods templates, finds %(var)s markers, fills them with data,
+# clones detail rows, and exports to PDF via LibreOffice headless.
+```
+
+Requirements:
+- Function `render_report(template_path, data, output_path, output_format='pdf')`
+- data is a dict with band keys: title, header, detail (list of dicts), summary, footer
+- Use odfpy to load and manipulate the .ods file
+- Find cells containing %(var)s markers in each band
+- For detail band: clone the detail row for each record in data['detail'], filling markers
+- For title/summary/header/footer: replace single-value markers
+- Save the filled .ods, then convert to PDF via subprocess call to libreoffice --headless --convert-to pdf
+- Also support output_format='csv' and 'xlsx' (use libreoffice conversion for these too)
+- Handle formatting markers like %(var: fmt)s (e.g., %(total: $%.2f)s)
+
+### 3. Create `server/marker_parser.py`
+Utility module for finding and replacing markers:
+- Function `find_markers(text)` — returns list of (var_name, format_str) tuples
+- Function `replace_markers(text, context)` — replaces all %(var)s with context[var]
+- Function `find_cells_with_markers(sheet, band_name)` — find cells in a band that have markers
+- Support format strings: %(var: format_spec)s → apply format_spec via Python string formatting
+
+### 4. Create `server/band_processor.py`
+Band handling logic:
+- Function `process_title(sheet, band_config, data)` — fill single-value markers
+- Function `process_detail(sheet, band_config, records)` — clone detail row per record
+- Function `process_summary(sheet, band_config, data)` — fill aggregate markers
+- Function `process_header_footer(sheet, band_config, page_context)` — per-page elements
+- Band config: {start_row: int, end_row: int, repeat_per_page: bool}
+
+### 5. Test Template
+Create a simple test template:
+- Create a minimal .ods file (via Python/odfpy) that has a title band, detail row with markers, and summary
+- Write a test script `server/__tests__/test_renderer.py` that:
+  - Creates a test template programmatically
+  - Calls render_report with sample data
+  - Verifies the output .ods file is created and markers are replaced
+  - If possible with the environment, verify PDF conversion works
+
+### 6. Example Usage
+The server should be able to call this Python script from Node.js via:
+```javascript
+const { execSync } = require('child_process');
+execSync(`python3 server/renderer.py ${templatePath} ${JSON.stringify(data)} ${outputPath}`, ...);
+```
+Or better, wrap it in a small CLI interface in renderer.py:
+```bash
+python3 server/renderer.py --template invoice.ods --data data.json --output report.pdf
+```
+
+## Important Notes
+- Create the directory `server/reports/` and put the Python files there instead if you prefer organization
+- Write tests that actually exercise the code (unit tests, not just imports)
+- Do NOT break existing functionality — the dev servers must still start
+- Use argparse for the CLI interface
+- Handle errors gracefully (missing template, missing markers, LibreOffice not found)
+- Log progress with print() statements
+
+## Files to Create
+1. server/reports/__init__.py
+2. server/reports/marker_parser.py
+3. server/reports/band_processor.py  
+4. server/reports/renderer.py (with CLI entry point)
+5. server/__tests__/test_renderer.py (tests)
+
+## Test
+After implementing, run the tests with:
+```bash
+cd /home/fcc-student/Desktop/_DEV/roastery-ui && python3 -m pytest server/__tests__/test_renderer.py -v
+```
+
+Do NOT modify any existing files unless absolutely necessary. Create new files only.
