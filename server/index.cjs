@@ -4127,6 +4127,162 @@ app.delete("/api/reports/:id", async (req, res) => {
   }
 });
 
+// ─── Report Render & Lookup API ─────────────────────────
+
+/**
+ * POST /api/reports/lookup/:table — fetch id + name rows for a lookup dropdown
+ *
+ * Used by the parameter form when a ReportParameter has type="lookup".
+ * Returns { value, label }[] where value = the PK column, label = the name column.
+ * Supports optional search query param for filtering.
+ */
+app.post("/api/reports/lookup/:table", async (req, res) => {
+  try {
+    const { table } = req.params;
+    const { search, idColumn, labelColumn } = req.body || {};
+
+    // Sanitise: alphanumeric + underscore only — prevents SQL injection
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)) {
+      return res.status(400).json({ error: "Invalid table name" });
+    }
+
+    // Detect common PK and label columns
+    const idCol = idColumn || "id";
+    const labelCol = labelColumn || "name";
+
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(idCol) || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(labelCol)) {
+      return res.status(400).json({ error: "Invalid column names" });
+    }
+
+    let sql = `SELECT DISTINCT "${idCol}" AS value, "${labelCol}" AS label
+               FROM db_fcc_erp.${table}`;
+    const params = [];
+
+    if (search && typeof search === "string" && search.trim()) {
+      sql += ` WHERE "${labelCol}" ILIKE $1`;
+      params.push(`%${search.trim()}%`);
+    }
+
+    sql += ` ORDER BY "${labelCol}" LIMIT 500`;
+
+    const { rows } = await pool.query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/reports/:id/render — render a report with parameters
+ *
+ * Fetches the report definition, validates parameters, and shells out
+ * to the Python rendering engine (server/reports/renderer.py).
+ * Returns a download URL for the generated file.
+ *
+ * Body: { parameters: Record<string, unknown>, format?: string }
+ */
+app.post("/api/reports/:id/render", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { parameters = {}, format = "pdf" } = req.body;
+
+    // Fetch the report definition
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.report_definitions WHERE id = $1 AND enabled = true`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found or disabled" });
+    }
+
+    const report = rows[0];
+
+    // Validate format is in allowed list
+    if (!report.output_formats.includes(format)) {
+      return res.status(400).json({
+        error: `Format '${format}' not allowed. Allowed: ${report.output_formats.join(", ")}`,
+      });
+    }
+
+    // Validate required parameters
+    const params = report.parameters || [];
+    const missing = [];
+    for (const p of params) {
+      if (p.required && (parameters[p.name] === undefined || parameters[p.name] === null || parameters[p.name] === "")) {
+        missing.push(p.label || p.name);
+      }
+    }
+    if (missing.length > 0) {
+      return res.status(400).json({
+        error: `Missing required parameters: ${missing.join(", ")}`,
+      });
+    }
+
+    // Build the Python render command
+    const { spawn } = require("child_process");
+    const path = require("path");
+
+    const rendererScript = path.resolve(__dirname, "reports/renderer.py");
+    const templateDir = path.resolve(__dirname, "templates");
+    const outputDir = path.resolve(__dirname, "output");
+
+    const renderArgs = [
+      rendererScript,
+      "--template", path.join(templateDir, report.template_file),
+      "--output-dir", outputDir,
+      "--format", format,
+      "--parameters", JSON.stringify(parameters),
+    ];
+
+    if (report.source_table) {
+      // Pass source query info
+      renderArgs.push("--source-table", report.source_table);
+    }
+
+    // Call the Python renderer as a child process
+    const pythonBin = process.env.PYTHON || "python3";
+    const child = spawn(pythonBin, renderArgs, {
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 60000,
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        return res.status(500).json({
+          error: `Render process exited with code ${code}`,
+          details: stderr.trim(),
+        });
+      }
+
+      try {
+        const result = JSON.parse(stdout);
+        res.json(result);
+      } catch {
+        // Fallback: return stdout as the output path
+        const outputFile = stdout.trim();
+        res.json({
+          success: true,
+          output: outputFile,
+          url: `/api/reports/output/${path.basename(outputFile)}`,
+        });
+      }
+    });
+
+    child.on("error", (err) => {
+      res.status(500).json({ error: `Failed to start renderer: ${err.message}` });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {

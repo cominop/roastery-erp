@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ReportDefinition } from "@/reports/schema/reportSchema";
+import ReportParameterForm from "@/reports/components/ReportParameterForm";
 
 // ─── Format icon map ──────────────────────────────────
 
@@ -189,6 +190,10 @@ export default function ReportListingPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Parameter dialog state
+  const [selectedReport, setSelectedReport] = useState<ReportDefinition | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   // Fetch all reports on mount
   useEffect(() => {
     setLoading(true);
@@ -241,9 +246,31 @@ export default function ReportListingPage() {
     [reports]
   );
 
-  const handleRunReport = useCallback((_report: ReportDefinition) => {
-    // Step 93+ will wire this to the report runner/parameter dialog
-    // For now, this is a no-op placeholder
+  const handleRunReport = useCallback((report: ReportDefinition) => {
+    // If filterable or has parameters, open the parameter dialog
+    if (report.filterable || (report.parameters && report.parameters.length > 0)) {
+      setSelectedReport(report);
+      setDialogOpen(true);
+    } else {
+      // No parameters needed — trigger render directly
+      // For now, open the dialog anyway so the user has a "Run" confirmation
+      // since the render endpoint expects a POST with parameters.
+      setSelectedReport(report);
+      setDialogOpen(true);
+    }
+  }, []);
+
+  const handleRenderComplete = useCallback((_result: { url: string; output: string }) => {
+    // Step 94+ will add download/toast notification
+    // For now, the dialog closes and the report is rendered
+  }, []);
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      // Clear selected report after dialog closes
+      setTimeout(() => setSelectedReport(null), 200);
+    }
   }, []);
 
   const handleClearSearch = useCallback(() => {
@@ -389,6 +416,16 @@ export default function ReportListingPage() {
             )
         )}
       </div>
+
+      {/* Parameter form dialog */}
+      {selectedReport && (
+        <ReportParameterForm
+          report={selectedReport}
+          open={dialogOpen}
+          onOpenChange={handleDialogOpenChange}
+          onRenderComplete={handleRenderComplete}
+        />
+      )}
     </div>
   );
 }

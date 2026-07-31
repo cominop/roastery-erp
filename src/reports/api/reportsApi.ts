@@ -89,3 +89,51 @@ export function deleteReport(id: string): Promise<{ success: true; id: string }>
     { method: 'DELETE' },
   );
 }
+
+// ─── Report Render & Lookup ──────────────────────────────
+
+export interface LookupOption {
+  value: string | number;
+  label: string;
+}
+
+/**
+ * Fetch options for a lookup-type parameter from the given table.
+ * Returns { value, label }[] for populating a dropdown.
+ */
+export function fetchLookupData(
+  table: string,
+  options?: { search?: string; idColumn?: string; labelColumn?: string },
+): Promise<LookupOption[]> {
+  return request<LookupOption[]>('/reports/lookup/' + encodeURIComponent(table), {
+    method: 'POST',
+    body: JSON.stringify(options || {}),
+  });
+}
+
+export interface RenderReportRequest {
+  parameters: Record<string, unknown>;
+  format?: string;
+}
+
+export interface RenderReportResponse {
+  success: boolean;
+  output: string;
+  url: string;
+  error?: string;
+  details?: string;
+}
+
+/**
+ * Render a report with the given parameters.
+ * Returns a download URL for the generated file.
+ */
+export function renderReport(
+  id: string,
+  req: RenderReportRequest,
+): Promise<RenderReportResponse> {
+  return request<RenderReportResponse>(`/reports/${encodeURIComponent(id)}/render`, {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
