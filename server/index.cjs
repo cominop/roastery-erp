@@ -3867,6 +3867,266 @@ app.get("/api/metadata/backups", async (req, res) => {
   }
 });
 
+// ─── Report Definitions API ──────────────────────────────
+
+/**
+ * GET /api/reports/categories — list distinct categories
+ */
+app.get("/api/reports/categories", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT category FROM shared.report_definitions
+       WHERE enabled = true
+       ORDER BY category`
+    );
+    res.json(rows.map((r) => r.category));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/reports — list accessible report definitions
+ *
+ * Filters by visible_to_roles (user must have at least one matching role),
+ * plus optional query params: category, format, enabled, search.
+ */
+app.get("/api/reports", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { roleNames, isAdmin } = await getUserRoleIds(userId, companyId);
+
+    const { category, format, enabled, search } = req.query;
+    const conditions = ["company_id = $1"];
+    const params = [companyId];
+    let idx = 2;
+
+    // Admin sees all; others filtered by visible_to_roles overlap
+    if (!isAdmin && roleNames.length > 0) {
+      conditions.push(`(visible_to_roles = '{}' OR visible_to_roles && $${idx}::text[])`);
+      params.push(roleNames);
+      idx++;
+    } else if (!isAdmin) {
+      // No roles = no reports visible
+      return res.json([]);
+    }
+
+    if (category) {
+      conditions.push(`category = $${idx}`);
+      params.push(category);
+      idx++;
+    }
+    if (format) {
+      conditions.push(`$${idx}::text = ANY(output_formats)`);
+      params.push(format);
+      idx++;
+    }
+    if (enabled !== undefined) {
+      conditions.push(`enabled = $${idx}`);
+      params.push(enabled === "true");
+      idx++;
+    }
+    if (search) {
+      conditions.push(`(name ILIKE $${idx} OR caption ILIKE $${idx})`);
+      params.push(`%${search}%`);
+      idx++;
+    }
+
+    const sql = `SELECT * FROM shared.report_definitions
+                 WHERE ${conditions.join(" AND ")}
+                 ORDER BY category, name`;
+
+    const { rows } = await pool.query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/reports/:id — get single report definition by UUID
+ */
+app.get("/api/reports/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.report_definitions WHERE id = $1`,
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/reports — create a new report definition (admin only)
+ */
+app.post("/api/reports", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { isAdmin } = await getUserRoleIds(userId, companyId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin role required to create report definitions" });
+    }
+
+    const {
+      name, caption, description, category, template_file,
+      output_formats, source_table, filterable, parameters,
+      bands, visible_to_roles, auto_generate, enabled,
+    } = req.body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "name is required" });
+    }
+    if (!caption || typeof caption !== "string" || !caption.trim()) {
+      return res.status(400).json({ error: "caption is required" });
+    }
+    if (!template_file || typeof template_file !== "string" || !template_file.trim()) {
+      return res.status(400).json({ error: "template_file is required" });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO shared.report_definitions
+       (name, caption, description, category, template_file,
+        output_formats, source_table, filterable, parameters,
+        bands, visible_to_roles, auto_generate, enabled,
+        company_id, created_by, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       RETURNING *`,
+      [
+        name.trim(),
+        caption.trim(),
+        description || null,
+        category || "Other",
+        template_file.trim(),
+        output_formats || ["pdf"],
+        source_table || null,
+        filterable !== undefined ? filterable : false,
+        parameters ? JSON.stringify(parameters) : "[]",
+        bands ? JSON.stringify(bands) : "{}",
+        visible_to_roles || [],
+        auto_generate ? JSON.stringify(auto_generate) : null,
+        enabled !== undefined ? enabled : true,
+        companyId,
+        req.headers["x-user-name"] || null,
+        req.headers["x-user-name"] || null,
+      ]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "A report definition with this name already exists" });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/reports/:id — update a report definition (admin only)
+ */
+app.put("/api/reports/:id", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { isAdmin } = await getUserRoleIds(userId, companyId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin role required to update report definitions" });
+    }
+
+    const { id } = req.params;
+    const {
+      name, caption, description, category, template_file,
+      output_formats, source_table, filterable, parameters,
+      bands, visible_to_roles, auto_generate, enabled,
+    } = req.body;
+
+    // Build dynamic SET clause
+    const sets = [];
+    const params = [];
+    let idx = 1;
+
+    if (name !== undefined) { sets.push(`name = $${idx++}`); params.push(name.trim()); }
+    if (caption !== undefined) { sets.push(`caption = $${idx++}`); params.push(caption.trim()); }
+    if (description !== undefined) { sets.push(`description = $${idx++}`); params.push(description || null); }
+    if (category !== undefined) { sets.push(`category = $${idx++}`); params.push(category); }
+    if (template_file !== undefined) { sets.push(`template_file = $${idx++}`); params.push(template_file.trim()); }
+    if (output_formats !== undefined) { sets.push(`output_formats = $${idx++}`); params.push(output_formats); }
+    if (source_table !== undefined) { sets.push(`source_table = $${idx++}`); params.push(source_table || null); }
+    if (filterable !== undefined) { sets.push(`filterable = $${idx++}`); params.push(filterable); }
+    if (parameters !== undefined) { sets.push(`parameters = $${idx++}::jsonb`); params.push(JSON.stringify(parameters)); }
+    if (bands !== undefined) { sets.push(`bands = $${idx++}::jsonb`); params.push(JSON.stringify(bands)); }
+    if (visible_to_roles !== undefined) { sets.push(`visible_to_roles = $${idx++}`); params.push(visible_to_roles); }
+    if (auto_generate !== undefined) { sets.push(`auto_generate = $${idx++}::jsonb`); params.push(auto_generate ? JSON.stringify(auto_generate) : null); }
+    if (enabled !== undefined) { sets.push(`enabled = $${idx++}`); params.push(enabled); }
+
+    sets.push(`updated_by = $${idx++}`);
+    params.push(req.headers["x-user-name"] || null);
+
+    if (sets.length === 1) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    params.push(id);
+    const { rows } = await pool.query(
+      `UPDATE shared.report_definitions
+       SET ${sets.join(", ")}
+       WHERE id = $${idx}
+       RETURNING *`,
+      params
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "A report definition with this name already exists" });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/reports/:id — soft-delete (set enabled=false, admin only)
+ */
+app.delete("/api/reports/:id", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { isAdmin } = await getUserRoleIds(userId, companyId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin role required to delete report definitions" });
+    }
+
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `UPDATE shared.report_definitions
+       SET enabled = false, updated_by = $2, updated_at = NOW()
+       WHERE id = $1 AND enabled = true
+       RETURNING *`,
+      [id, req.headers["x-user-name"] || null]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found or already disabled" });
+    }
+    res.json({ success: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Start ────────────────────────────────────────────
 
 app.listen(PORT, () => {
