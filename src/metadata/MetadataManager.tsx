@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, XCircle, Archive, Database, Upload, DownloadCloud } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Archive, Database, Upload, DownloadCloud, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BackupList from "./components/BackupList";
 import ExportDialog from "./components/ExportDialog";
 import ImportDialog from "./components/ImportDialog";
+import ImportHistory from "./components/ImportHistory";
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -145,6 +146,10 @@ export default function MetadataManager() {
               <Archive className="h-3.5 w-3.5" />
               Backups
             </TabsTrigger>
+            <TabsTrigger value="history">
+              <List className="h-3.5 w-3.5" />
+              History
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -158,6 +163,10 @@ export default function MetadataManager() {
 
         <TabsContent value="backups" className="flex-1 overflow-y-auto m-0 p-4">
           <BackupList onRollbackComplete={() => {}} />
+        </TabsContent>
+
+        <TabsContent value="history" className="flex-1 overflow-y-auto m-0 p-4">
+          <ImportHistory />
         </TabsContent>
       </Tabs>
     </div>

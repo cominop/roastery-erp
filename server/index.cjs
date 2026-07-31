@@ -3448,9 +3448,35 @@ app.post("/api/metadata/import", async (req, res) => {
 
     const stdout = typeof upsertResult === "string" ? upsertResult : upsertResult.stdout?.toString() || "";
     const hasErrors = stdout.includes("✗") && stdout.includes("IMPORT COMPLETE") === false;
+    const success = !hasErrors;
+
+    // 3. Log the import to metadata_imports table
+    try {
+      const filename = path.basename(archivePath);
+      const checksum = (() => {
+        try {
+          const crypto = require("crypto");
+          const content = fs.readFileSync(archivePath);
+          return "sha256:" + crypto.createHash("sha256").update(content).digest("hex");
+        } catch { return "unknown"; }
+      })();
+      await pool.query(
+        `INSERT INTO shared.metadata_imports (filename, checksum, status, backup_path, import_log)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          filename,
+          checksum,
+          success ? "completed" : "failed",
+          backupResult?.path || null,
+          stdout.slice(0, 5000),
+        ]
+      );
+    } catch (logErr) {
+      // Non-fatal — log failure shouldn't block the response
+    }
 
     res.json({
-      success: !hasErrors,
+      success,
       backupCreated: !!backupResult,
       backup: backupResult,
       output: stdout,
@@ -3462,6 +3488,37 @@ app.post("/api/metadata/import", async (req, res) => {
       error: `Import failed: ${err.message}`,
       stderr: stderr.slice(0, 2000),
     });
+  }
+});
+
+/**
+ * GET /api/metadata/imports — list import history
+ *
+ * Returns records from shared.metadata_imports, newest first.
+ * Query params:
+ *   ?limit=20     — max records to return (default: 20)
+ *   ?status=      — filter by status (optional)
+ */
+app.get("/api/metadata/imports", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || "20", 10);
+    const statusFilter = req.query.status;
+
+    let sql = `SELECT * FROM shared.metadata_imports`;
+    const params = [];
+
+    if (statusFilter) {
+      sql += ` WHERE status = $1`;
+      params.push(statusFilter);
+    }
+
+    sql += ` ORDER BY imported_at DESC LIMIT $${params.length + 1}`;
+    params.push(Math.min(limit, 100));
+
+    const result = await pool.query(sql, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
