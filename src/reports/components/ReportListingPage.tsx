@@ -22,11 +22,16 @@ import {
   Loader2,
   Check,
   AlertTriangle,
+  Clock,
+  CalendarDays,
+  Calendar,
+  CalendarRange,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ReportDefinition, BandConfig } from "@/reports/schema/reportSchema";
+import type { ReportDefinition, BandConfig, ScheduleConfig } from "@/reports/schema/reportSchema";
 import ReportParameterForm from "@/reports/components/ReportParameterForm";
 import BandConfigEditor from "@/reports/components/BandConfigEditor";
+import ScheduleDialog from "@/reports/components/ScheduleDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // ─── Format icon map ──────────────────────────────────
@@ -62,6 +67,41 @@ function FormatBadge({ format }: { format: string }) {
   );
 }
 
+// ─── Cron schedule badge ───────────────────────────────
+
+const CRON_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  daily: CalendarDays,
+  weekly: Calendar,
+  monthly: CalendarRange,
+};
+
+const CRON_LABELS: Record<string, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
+function CronBadge({ schedule }: { schedule: ScheduleConfig | null }) {
+  if (!schedule?.cron) return null;
+  const cron = schedule.cron;
+  const Icon = CRON_ICONS[cron];
+  const label = CRON_LABELS[cron];
+  if (!label) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+        <Clock className="h-2.5 w-2.5" />
+        {cron}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+      {Icon && <Icon className="h-2.5 w-2.5" />}
+      {label}
+    </span>
+  );
+}
+
 // ─── Category group — collapsible section ──────────────
 
 function CategorySection({
@@ -69,12 +109,14 @@ function CategorySection({
   reports,
   onRunReport,
   onEditBands,
+  onEditSchedule,
   searchQuery,
 }: {
   category: string;
   reports: ReportDefinition[];
   onRunReport: (report: ReportDefinition) => void;
   onEditBands: (report: ReportDefinition) => void;
+  onEditSchedule: (report: ReportDefinition) => void;
   searchQuery: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -154,11 +196,29 @@ function CategorySection({
                       </span>
                     </>
                   )}
+
+                  {/* Schedule badge */}
+                  {report.auto_generate && (
+                    <>
+                      <span className="text-muted-foreground/20">·</span>
+                      <CronBadge schedule={report.auto_generate} />
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => onEditSchedule(report)}
+                  title="Configure auto-generation schedule"
+                >
+                  <Clock className="h-3 w-3" />
+                  Schedule
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -219,6 +279,10 @@ export default function ReportListingPage() {
   const [bandSaveLoading, setBandSaveLoading] = useState(false);
   const [bandSaveError, setBandSaveError] = useState<string | null>(null);
   const [bandSaveSuccess, setBandSaveSuccess] = useState(false);
+
+  // Schedule dialog state
+  const [scheduleReport, setScheduleReport] = useState<ReportDefinition | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   // Fetch all reports on mount
   useEffect(() => {
@@ -290,6 +354,18 @@ export default function ReportListingPage() {
     setBandSaveError(null);
     setBandSaveSuccess(false);
     setBandEditOpen(true);
+  }, []);
+
+  // Schedule dialog state
+  const handleEditSchedule = useCallback((report: ReportDefinition) => {
+    setScheduleReport(report);
+    setScheduleOpen(true);
+  }, []);
+
+  const handleScheduleUpdated = useCallback((updated: ReportDefinition) => {
+    setReports((prev) =>
+      prev.map((r) => (r.id === updated.id ? updated : r)),
+    );
   }, []);
 
   const handleRenderComplete = useCallback((result: { url: string; output: string }) => {
@@ -444,6 +520,7 @@ export default function ReportListingPage() {
                 reports={catReports}
                 onRunReport={handleRunReport}
                 onEditBands={handleEditBands}
+                onEditSchedule={handleEditSchedule}
                 searchQuery={searchQuery}
               />
             )
@@ -571,6 +648,21 @@ export default function ReportListingPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Schedule dialog */}
+      {scheduleReport && (
+        <ScheduleDialog
+          report={scheduleReport}
+          open={scheduleOpen}
+          onOpenChange={(open) => {
+            setScheduleOpen(open);
+            if (!open) {
+              setTimeout(() => setScheduleReport(null), 200);
+            }
+          }}
+          onScheduleUpdated={handleScheduleUpdated}
+        />
       )}
     </div>
   );

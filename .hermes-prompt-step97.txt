@@ -1,0 +1,189 @@
+# Step 97: Reports 8 — Scheduled Auto-Generation (Daily/Weekly/Monthly Cron)
+
+## Context
+You are implementing Step 97 of the Roastery ERP project. The reports system already has:
+
+- **Python rendering engine** at `server/reports/renderer.py` — loads .ods templates, fills `%(marker)s` cells, clones detail rows, exports to PDF/CSV/XLSX/HTML.
+- **Data fetcher** at `server/reports/data_fetcher.py` — fetches DB data for each report type.
+- **5 template .ods files** in `server/templates/` (invoice, invoice-summary, credit-note, customer-statement, inventory-list, work-order).
+- **Report definition table** `shared.report_definitions` with an `auto_generate` JSONB column (schema: `ScheduleConfig` with `cron`, `format`, `recipients`, `subject`).
+- **CRUD API endpoints** at `/api/reports` (GET/POST/PUT/DELETE) in `server/index.cjs` — the PUT endpoint already supports `auto_generate` field updates.
+- **Render endpoint** at `POST /api/reports/:id/render` — shells out to Python renderer.
+- **React frontend** at `src/reports/components/ReportListingPage.tsx` — grouped listing with search, Run button, Band editor.
+- **ReportParameterForm** at `src/reports/components/ReportParameterForm.tsx` — parameter entry dialog.
+- **Existing cron pattern** at `server/cron/audit-writer.cjs` — standalone Node.js script using `pg` Pool, designed for system cron.
+- **TypeScript schema** at `src/reports/schema/reportSchema.ts` — `ScheduleConfig` interface with `cron: string`, `format: string`, `recipients: string[]`, `subject?: string`.
+
+## What to Build
+
+### Goal
+Create a scheduled auto-generation system that checks report definitions with `auto_generate` set, renders them on schedule, and delivers the output. Users should be able to configure schedules from the UI.
+
+### Implementation Order
+
+#### 1. Install nodemailer for email delivery
+```bash
+cd /home/fcc-student/Desktop/_DEV/roastery-ui && npm install nodemailer
+```
+
+#### 2. Create `server/cron/report-scheduler.cjs`
+A standalone Node.js cron script (following the pattern of `server/cron/audit-writer.cjs`):
+
+```javascript
+#!/usr/bin/env node
+/**
+ * report-scheduler.cjs — Scheduled report auto-generation
+ *
+ * Reads shared.report_definitions where auto_generate IS NOT NULL,
+ * checks if each report is due based on its cron expression, renders
+ * it, and saves the output. Optionally emails the result.
+ *
+ * Can be run:
+ *   1. As a system cron job (recommended: every 5 minutes)
+ *      */5 * * * * cd /path/to/roastery-ui && node server/cron/report-scheduler.cjs >> /var/log/report-scheduler.log 2>&1
+ *
+ *   2. Directly from the command line
+ *      node server/cron/report-scheduler.cjs                # check and generate
+ *      node server/cron/report-scheduler.cjs --dry-run      # preview only
+ *      node server/cron/report-scheduler.cjs --force-all    # generate all regardless of schedule
+ *      node server/cron/report-scheduler.cjs --report=invoice  # generate specific report
+ *
+ * Logs to stdout. Sets exit code 0 on success, 1 on failure.
+ */
+```
+
+The script should:
+1. Connect to PostgreSQL (same pattern as audit-writer.cjs — `new Pool({ database: "polyaccess" })`)
+2. Query `SELECT * FROM shared.report_definitions WHERE auto_generate IS NOT NULL AND enabled = true`
+3. For each report with auto_generate set:
+   a. Parse the cron expression (support basic: `*/5 * * * *`, `0 6 * * *`, `0 6 * * 1`, `0 6 1 * *`)
+   b. Check if the report is due — store last generation time in a `shared.report_schedule_log` table
+   c. If due, call the render pipeline:
+      - Spawn `python3 server/reports/renderer.py` with the correct arguments
+      - Or use the data_fetcher + renderer approach from the POST /api/reports/:id/render handler
+   d. Save output to `server/output/scheduled/` directory
+   e. If recipients are set, send email via nodemailer
+   f. Log the generation result to `shared.report_schedule_log`
+
+4. Create a `shared.report_schedule_log` table with:
+   - id (UUID PK)
+   - report_id (UUID FK to report_definitions)
+   - report_name (VARCHAR)
+   - scheduled_at (TIMESTAMPTZ — when it was supposed to run)
+   - generated_at (TIMESTAMPTZ — when it actually ran)
+   - format (VARCHAR)
+   - output_path (TEXT)
+   - recipients (TEXT[] — who was emailed)
+   - status (VARCHAR — 'success' | 'failed' | 'skipped')
+   - error_message (TEXT)
+   - file_size_bytes (BIGINT)
+   - created_at (TIMESTAMPTZ DEFAULT NOW())
+
+5. Cron expression parsing — implement a simple parser:
+   - Format: `minute hour day-of-month month day-of-week`
+   - Support `*` (any), `*/N` (every N), `N` (specific value), `N,M` (list)
+   - Support common patterns: `0 6 * * *` (daily at 6am), `0 6 * * 1` (weekly Monday 6am), `0 6 1 * *` (monthly 1st at 6am), `*/5 * * * *` (every 5 min)
+   - Store `last_run_at` in the schedule_log to determine if it's due
+
+#### 3. Create `src/reports/components/ReportScheduler.tsx`
+A React component for configuring the schedule on a report definition:
+
+```tsx
+/**
+ * ReportScheduler — configure auto-generation schedule for a report.
+ *
+ * Uses the existing ScheduleConfig interface from schema/reportSchema.ts.
+ * Written as a Dialog component, similar to BandConfigEditor.
+ */
+```
+
+The component should:
+- Open as a dialog from the ReportListingPage
+- Show current schedule config if set (pre-fill from report.auto_generate)
+- Fields:
+  - **Frequency** — dropdown: "Daily", "Weekly (Monday)", "Weekly (Tuesday)", ..., "Monthly (1st)", "Monthly (15th)", "Custom cron"
+  - **Time** — time picker (hour:minute, 24h format)
+  - **Format** — dropdown of report's output_formats (PDF, CSV, XLSX)
+  - **Recipients** — tag input for email addresses
+  - **Subject** — optional text input for email subject override
+  - **Custom cron** — text input (shown only when "Custom cron" is selected)
+- "Save Schedule" button — calls PUT /api/reports/:id with auto_generate JSON
+- "Remove Schedule" button — clears auto_generate (sets to null)
+- Preview section showing the next 3 trigger times based on the current config
+
+#### 4. Add "Schedule" button to ReportListingPage
+In `src/reports/components/ReportListingPage.tsx`:
+- Add a "Schedule" button next to the existing "Run" and "Bands" buttons
+- The button opens the ReportScheduler dialog
+- Import ReportScheduler and add the dialog
+
+#### 5. Add a schedule_log API endpoint
+Add to `server/index.cjs`:
+
+```
+GET /api/reports/:id/schedule-log — fetch generation history for a report
+  Returns rows from shared.report_schedule_log ordered by created_at DESC
+  Supports ?limit=N and ?offset=N for pagination
+```
+
+#### 6. Add a "Schedule History" view to the scheduler dialog
+In ReportScheduler.tsx, add a tab or section showing the last 10 generations:
+- Timestamp, format, status, file size
+- "Download" link for successful generations
+- Error message for failed generations
+
+#### 7. Create the SQL migration
+Create `server/sql/step-97-report-scheduler.sql`:
+- CREATE TABLE IF NOT EXISTS shared.report_schedule_log (...)
+- CREATE INDEX on report_id, created_at
+- Create a function to check if a report is due and record the last_run_at
+
+### Database Schema Reference
+```sql
+-- Current report_definitions table (excerpt)
+CREATE TABLE shared.report_definitions (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name            VARCHAR(255) NOT NULL,
+  ...
+  auto_generate   JSONB,  -- { "cron": "0 6 * * *", "format": "pdf", "recipients": ["user@example.com"], "subject": "Daily Invoice Report" }
+  ...
+);
+
+-- New table to create
+CREATE TABLE shared.report_schedule_log (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id       UUID NOT NULL REFERENCES shared.report_definitions(id),
+  report_name     VARCHAR(255) NOT NULL,
+  scheduled_at    TIMESTAMPTZ NOT NULL,
+  generated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  format          VARCHAR(10) NOT NULL,
+  output_path     TEXT,
+  recipients      TEXT[],
+  status          VARCHAR(20) NOT NULL DEFAULT 'success',
+  error_message   TEXT,
+  file_size_bytes BIGINT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_report_schedule_log_report_id ON shared.report_schedule_log (report_id);
+CREATE INDEX idx_report_schedule_log_created_at ON shared.report_schedule_log (created_at DESC);
+```
+
+### Files to Create/Modify
+
+1. **CREATE** `server/sql/step-97-report-scheduler.sql` — SQL migration
+2. **CREATE** `server/cron/report-scheduler.cjs` — standalone cron script
+3. **CREATE** `src/reports/components/ReportScheduler.tsx` — React component
+4. **MODIFY** `src/reports/components/ReportListingPage.tsx` — add Schedule button + dialog
+5. **MODIFY** `server/index.cjs` — add GET /api/reports/:id/schedule-log endpoint
+6. **MODIFY** `src/reports/api/reportsApi.ts` — add fetchScheduleLog function
+
+### Testing
+After implementing:
+1. Run the SQL migration to create the schedule_log table
+2. Verify the cron script works: `node server/cron/report-scheduler.cjs --dry-run`
+3. Set auto_generate on a test report via API: `PUT /api/reports/:id` with `{"auto_generate": {"cron": "*/5 * * * *", "format": "pdf", "recipients": ["test@example.com"]}}`
+4. Run the scheduler: `node server/cron/report-scheduler.cjs --force-all`
+5. Check the schedule_log for entries
+6. Run `npx vitest run` to ensure no regressions
+7. Check the frontend compiles: `npx vite build 2>&1 | tail -5`

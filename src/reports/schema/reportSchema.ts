@@ -63,7 +63,60 @@ export interface ScheduleConfig {
   subject?: string;         // Email subject override
 }
 
-// ─── API Request/Response types ───
+// ─── Schedule & log types ────────────────────────────────
+
+export interface ScheduleInfo {
+  id: string;
+  name: string;
+  caption: string;
+  category: string;
+  auto_generate: ScheduleConfig | null;
+  enabled: boolean;
+  output_formats: string[];
+  last_run_at: string | null;
+  last_status: string | null;
+  last_output: string | null;
+  last_format: string | null;
+  last_error: string | null;
+  total_runs: number;
+  success_runs: number;
+  error_runs: number;
+}
+
+export interface ScheduleLogEntry {
+  id: string;
+  report_id: string;
+  report_name: string;
+  caption: string;
+  triggered_by: 'cron' | 'manual' | 'api';
+  format: string;
+  output_file: string | null;
+  output_size: number | null;
+  status: 'pending' | 'running' | 'success' | 'error';
+  error_message: string | null;
+  parameters: Record<string, unknown>;
+  started_at: string;
+  finished_at: string | null;
+  created_at: string;
+  // Joined fields (from /api/reports/schedule-log)
+  category?: string;
+}
+
+export interface GenerateReportResponse {
+  success: boolean;
+  output: string;
+  outputFileName: string;
+  outputSize: number;
+  url: string;
+  logId: string;
+}
+
+export interface UpdateScheduleRequest {
+  cron: string;
+  format: string;
+  recipients: string[];
+  subject?: string;
+}
 
 export interface CreateReportDefinitionRequest {
   name: string;

@@ -10,6 +10,10 @@ import type {
   CreateReportDefinitionRequest,
   UpdateReportDefinitionRequest,
   ReportListQueryParams,
+  ScheduleInfo,
+  ScheduleLogEntry,
+  GenerateReportResponse,
+  UpdateScheduleRequest,
 } from '../schema/reportSchema';
 
 const API_BASE = '/api';
@@ -135,5 +139,65 @@ export function renderReport(
   return request<RenderReportResponse>(`/reports/${encodeURIComponent(id)}/render`, {
     method: 'POST',
     body: JSON.stringify(req),
+  });
+}
+
+// ─── Schedule & Auto-Generation API ────────────────────────
+
+/** Fetch all reports with schedule info. */
+export function fetchSchedules(): Promise<ScheduleInfo[]> {
+  return request<ScheduleInfo[]>('/reports/schedules');
+}
+
+/** Fetch the generation log. */
+export function fetchScheduleLog(
+  params?: { limit?: number; status?: string; report_id?: string },
+): Promise<ScheduleLogEntry[]> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.status) qs.set('status', params.status);
+  if (params?.report_id) qs.set('report_id', params.report_id);
+  const query = qs.toString();
+  return request<ScheduleLogEntry[]>(`/reports/schedule-log${query ? `?${query}` : ''}`);
+}
+
+/** Fetch generation log for a specific report. */
+export function fetchReportScheduleLog(
+  id: string,
+  limit?: number,
+): Promise<ScheduleLogEntry[]> {
+  const qs = limit ? `?limit=${limit}` : '';
+  return request<ScheduleLogEntry[]>(`/reports/${encodeURIComponent(id)}/schedule-log${qs}`);
+}
+
+/** Update (or clear) a report's auto_generate schedule. */
+export function updateReportSchedule(
+  id: string,
+  schedule: UpdateScheduleRequest | null,
+): Promise<ReportDefinition> {
+  return request<ReportDefinition>(`/reports/${encodeURIComponent(id)}/schedule`, {
+    method: 'PUT',
+    body: JSON.stringify(schedule || {}),
+  });
+}
+
+/** Remove a report's auto_generate schedule. */
+export function deleteReportSchedule(
+  id: string,
+): Promise<{ success: true; id: string }> {
+  return request<{ success: true; id: string }>(
+    `/reports/${encodeURIComponent(id)}/schedule`,
+    { method: 'DELETE' },
+  );
+}
+
+/** Manually trigger report generation ("Generate Now"). */
+export function generateReportNow(
+  id: string,
+  options?: { format?: string; parameters?: Record<string, unknown> },
+): Promise<GenerateReportResponse> {
+  return request<GenerateReportResponse>(`/reports/${encodeURIComponent(id)}/generate`, {
+    method: 'POST',
+    body: JSON.stringify(options || {}),
   });
 }

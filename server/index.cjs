@@ -3944,6 +3944,404 @@ app.get("/api/reports", async (req, res) => {
   }
 });
 
+// ─── Report Schedule / Auto-Generation API ─────────────────
+// NOTE: These routes MUST be defined BEFORE /api/reports/:id so Express
+// matches literal paths (schedules, schedule-log) before the UUID param.
+
+/**
+ * GET /api/reports/schedules — list all reports with schedule info
+ *
+ * Returns each report that has auto_generate configured, along with
+ * its last-run info from the schedule_log table.
+ */
+app.get("/api/reports/schedules", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { roleNames, isAdmin } = await getUserRoleIds(userId, companyId);
+
+    const { rows } = await pool.query(
+      `SELECT rd.id, rd.name, rd.caption, rd.category, rd.auto_generate,
+              rd.enabled, rd.output_formats,
+              sl.last_run_at, sl.last_status, sl.last_output,
+              sl.last_format, sl.last_error,
+              sl.total_runs, sl.success_runs, sl.error_runs
+       FROM shared.report_definitions rd
+       LEFT JOIN LATERAL shared.fn_get_report_last_run(rd.id) sl ON true
+       WHERE rd.company_id = $1
+         AND rd.auto_generate IS NOT NULL
+         ${isAdmin ? "" : "AND (rd.visible_to_roles = '{}' OR rd.visible_to_roles && $2::text[])"}
+       ORDER BY rd.category, rd.name`,
+      isAdmin ? [companyId] : [companyId, roleNames]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/reports/schedule-log — view recent generation log entries
+ *
+ * Query params:
+ *   ?limit=20        — max entries (default 20, max 100)
+ *   ?status=error    — filter by status
+ *   ?report_id=...   — filter by report
+ */
+app.get("/api/reports/schedule-log", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "20", 10), 100);
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+
+    if (req.query.status) {
+      conditions.push(`sl.status = $${idx++}`);
+      params.push(req.query.status);
+    }
+    if (req.query.report_id) {
+      conditions.push(`sl.report_id = $${idx++}`);
+      params.push(req.query.report_id);
+    }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const { rows } = await pool.query(
+      `SELECT sl.*, rd.caption, rd.category
+       FROM shared.report_schedule_log sl
+       LEFT JOIN shared.report_definitions rd ON sl.report_id = rd.id
+       ${where}
+       ORDER BY sl.created_at DESC
+       LIMIT $${idx}`,
+      [...params, limit]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/reports/:id/schedule-log — per-report generation log entries
+ */
+app.get("/api/reports/:id/schedule-log", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const limit = Math.min(parseInt(req.query.limit || "20", 10), 100);
+
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.report_schedule_log
+       WHERE report_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [id, limit]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/reports/:id/schedule — update auto_generate schedule config
+ *
+ * Body: { cron: "daily"|"weekly"|"monthly", format: "pdf"|"csv"|"xlsx",
+ *         recipients: string[], subject?: string }
+ * Pass empty object {} to clear the schedule.
+ */
+app.put("/api/reports/:id/schedule", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { isAdmin } = await getUserRoleIds(userId, companyId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin role required to update report schedules" });
+    }
+
+    const { id } = req.params;
+    const { cron, format, recipients, subject } = req.body;
+
+    // Determine if we're setting or clearing the schedule
+    let autoGenerateValue;
+    if (!cron && !format && !recipients && !subject) {
+      // Clear the schedule (pass null)
+      autoGenerateValue = null;
+    } else {
+      // Validate cron expression
+      const validCron = ["daily", "weekly", "monthly"];
+      if (cron && !validCron.includes(cron) && !/^(\d+|\*)\s+(\d+|\*)\s+(\d+|\*)\s+(\d+|\*)\s+(\d+|\*)$/.test(cron)) {
+        return res.status(400).json({
+          error: `Invalid cron expression. Use one of: ${validCron.join(", ")} or a standard 5-field cron expression`,
+        });
+      }
+
+      const schedule = {
+        cron: cron || "daily",
+        format: format || "pdf",
+        recipients: recipients || [],
+      };
+      if (subject) schedule.subject = subject;
+      autoGenerateValue = JSON.stringify(schedule);
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE shared.report_definitions
+       SET auto_generate = $1::jsonb,
+           updated_by = $3,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [autoGenerateValue, id, req.headers["x-user-name"] || null]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/reports/:id/schedule — remove the auto_generate schedule
+ */
+app.delete("/api/reports/:id/schedule", async (req, res) => {
+  try {
+    const { extractUser, getUserRoleIds } = require("./permission-middleware.cjs");
+    const { userId, companyId } = extractUser(req);
+    const { isAdmin } = await getUserRoleIds(userId, companyId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Admin role required to remove report schedules" });
+    }
+
+    const { id } = req.params;
+
+    const { rows } = await pool.query(
+      `UPDATE shared.report_definitions
+       SET auto_generate = NULL,
+           updated_by = $2,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id, req.headers["x-user-name"] || null]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found" });
+    }
+
+    res.json({ success: true, id: rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/reports/:id/generate — manually trigger report generation
+ *
+ * Triggers the full render pipeline for a report, using the same
+ * logic as the cron script. Also logs the run to report_schedule_log.
+ *
+ * Body: { format?: string, parameters?: Record<string, unknown> }
+ * If no parameters are provided, uses empty defaults.
+ */
+app.post("/api/reports/:id/generate", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { format, parameters = {} } = req.body;
+
+    // Fetch the report definition
+    const { rows } = await pool.query(
+      `SELECT * FROM shared.report_definitions WHERE id = $1 AND enabled = true`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Report definition not found or disabled" });
+    }
+
+    const report = rows[0];
+    const outputFormat = format || (report.auto_generate && report.auto_generate.format) || report.output_formats[0] || "pdf";
+
+    // Validate format
+    if (!report.output_formats.includes(outputFormat)) {
+      return res.status(400).json({
+        error: `Format '${outputFormat}' not allowed. Allowed: ${report.output_formats.join(", ")}`,
+      });
+    }
+
+    // Log the run start
+    const logResult = await pool.query(
+      `INSERT INTO shared.report_schedule_log
+       (report_id, report_name, caption, triggered_by, format, status, parameters)
+       VALUES ($1, $2, $3, 'manual', $4, 'running', $5::jsonb)
+       RETURNING id`,
+      [report.id, report.name, report.caption, outputFormat, JSON.stringify(parameters)]
+    );
+    const logId = logResult.rows[0].id;
+
+    // Use the same generation logic as the cron script
+    const { spawn } = require("child_process");
+    const path = require("path");
+    const fs = require("fs");
+
+    const serverDir = __dirname;
+    const templateDir = path.resolve(serverDir, "templates");
+    const outputDir = path.resolve(serverDir, "output");
+    const dataFetcher = path.resolve(serverDir, "reports/data_fetcher.py");
+    const rendererScript = path.resolve(serverDir, "reports/renderer.py");
+
+    // Prefer the project venv Python
+    const pythonBin = path.resolve(serverDir, "..", ".venv", "bin", "python3");
+    const pythonExists = fs.existsSync(pythonBin);
+
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Strip "templates/" prefix
+    let templateFile = report.template_file;
+    if (templateFile.startsWith("templates/")) {
+      templateFile = templateFile.slice("templates/".length);
+    }
+
+    const templatePath = path.resolve(templateDir, templateFile);
+    if (!fs.existsSync(templatePath)) {
+      await pool.query(
+        `UPDATE shared.report_schedule_log SET status = 'error', error_message = $2, finished_at = NOW() WHERE id = $1`,
+        [logId, `Template file not found: ${templatePath}`]
+      );
+      return res.status(500).json({ error: `Template file not found: ${templatePath}` });
+    }
+
+    const reportName = report.name;
+    const paramsJson = JSON.stringify(parameters);
+
+    // Step 1: Call data_fetcher.py
+    const dataResult = await new Promise((resolve, reject) => {
+      const child = spawn(pythonExists ? pythonBin : "python3", [dataFetcher, reportName, paramsJson], {
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 30000,
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `Exit code ${code}`));
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+      child.on("error", reject);
+    });
+
+    let reportData;
+    try {
+      reportData = JSON.parse(dataResult);
+    } catch {
+      const errMsg = "Failed to parse data_fetcher output";
+      await pool.query(
+        `UPDATE shared.report_schedule_log SET status = 'error', error_message = $2, finished_at = NOW() WHERE id = $1`,
+        [logId, errMsg]
+      );
+      return res.status(500).json({ error: errMsg, details: dataResult });
+    }
+
+    // Write data to temp file
+    const dataFilePath = path.resolve(outputDir, `${reportName}_data_${Date.now()}.json`);
+    fs.writeFileSync(dataFilePath, JSON.stringify(reportData, null, 2), "utf-8");
+
+    // Step 2: Call renderer.py
+    const outputFileName = `${reportName}_${Date.now()}.${outputFormat}`;
+    const outputPath = path.resolve(outputDir, outputFileName);
+
+    const renderArgs = [
+      "--template", templatePath,
+      "--data", dataFilePath,
+      "--output", outputPath,
+      "--format", outputFormat,
+    ];
+
+    if (report.bands && Object.keys(report.bands).length > 0) {
+      const bandConfigPath = path.resolve(outputDir, `${reportName}_bands_${Date.now()}.json`);
+      fs.writeFileSync(bandConfigPath, JSON.stringify(report.bands, null, 2), "utf-8");
+      renderArgs.push("--band-config", bandConfigPath);
+    }
+
+    const renderResult = await new Promise((resolve, reject) => {
+      const child = spawn(pythonExists ? pythonBin : "python3", [rendererScript, ...renderArgs], {
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 120000,
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `Exit code ${code}`));
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+      child.on("error", reject);
+    });
+
+    // Clean up temp files
+    try {
+      if (fs.existsSync(dataFilePath)) fs.unlinkSync(dataFilePath);
+      const bandConfigPath = path.resolve(outputDir, `${reportName}_bands_${Date.now()}.json`);
+      if (fs.existsSync(bandConfigPath)) fs.unlinkSync(bandConfigPath);
+    } catch { /* ignore */ }
+
+    // Verify output
+    let finalPath = outputPath;
+    if (!fs.existsSync(outputPath)) {
+      const base = path.basename(templatePath, ".ods");
+      const altPath = path.resolve(outputDir, `${base}.${outputFormat}`);
+      if (fs.existsSync(altPath)) {
+        finalPath = altPath;
+      } else {
+        await pool.query(
+          `UPDATE shared.report_schedule_log SET status = 'error', error_message = $2, finished_at = NOW() WHERE id = $1`,
+          [logId, "Renderer did not produce output file"]
+        );
+        return res.status(500).json({ error: "Renderer did not produce output file", details: renderResult });
+      }
+    }
+
+    const stats = fs.statSync(finalPath);
+
+    // Log success
+    await pool.query(
+      `UPDATE shared.report_schedule_log
+       SET status = 'success', output_file = $2, output_size = $3, finished_at = NOW()
+       WHERE id = $1`,
+      [logId, finalPath, stats.size]
+    );
+
+    res.json({
+      success: true,
+      output: finalPath,
+      outputFileName: path.basename(finalPath),
+      outputSize: stats.size,
+      url: `/api/reports/output/${path.basename(finalPath)}`,
+      logId: logId,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /**
  * GET /api/reports/:id — get single report definition by UUID
  */
