@@ -453,6 +453,15 @@ BEGIN
     v_admin_created := v_admin_created + 1;
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM shared.nav_tree
+    WHERE parent_id = v_group_admin AND target_name = 'reports' AND company_id = p_company_id
+  ) THEN
+    INSERT INTO shared.nav_tree (parent_id, label, icon, target_type, target_name, sort_order, color, company_id)
+    VALUES (v_group_admin, 'Reports', 'FileText', 'link', 'reports', 35, '#6B7280', p_company_id);
+    v_admin_created := v_admin_created + 1;
+  END IF;
+
   -- ══════════════════════════════════════════════════════════
   -- 6. Return summary
   -- ══════════════════════════════════════════════════════════

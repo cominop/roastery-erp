@@ -32,6 +32,7 @@ import { RoleManager, PermissionMatrix, RowFilterEditor } from "@/permissions";
 import CalculatedFieldsAdmin from "@/calculated-fields/admin/CalculatedFieldsAdmin";
 import AuditLogPage from "@/components/AuditLogPage";
 import MetadataManager from "@/metadata/MetadataManager";
+import ReportListingPage from "@/reports/components/ReportListingPage";
 import { useUser } from "@/hooks/useUser";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -44,6 +45,7 @@ type ActiveView =
   | { type: "calculated-fields" }
   | { type: "audit-log" }
   | { type: "metadata" }
+  | { type: "reports" }
   | null;
 
 // ─── Appearance Settings ───────────────────────────────
@@ -752,6 +754,9 @@ export default function App() {
         )}
         {active?.type === "metadata" && (
           <MetadataManager />
+        )}
+        {active?.type === "reports" && (
+          <ReportListingPage />
         )}
         {!active && (
           <div className="flex items-center justify-center h-full text-muted-foreground">
