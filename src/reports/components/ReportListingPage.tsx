@@ -292,9 +292,9 @@ export default function ReportListingPage() {
     setBandEditOpen(true);
   }, []);
 
-  const handleRenderComplete = useCallback((_result: { url: string; output: string }) => {
-    // Step 94+ will add download/toast notification
-    // For now, the dialog closes and the report is rendered
+  const handleRenderComplete = useCallback((result: { url: string; output: string }) => {
+    // Open the rendered file URL in a new tab to trigger download
+    window.open(result.url, '_blank');
   }, []);
 
   const handleDialogOpenChange = useCallback((open: boolean) => {

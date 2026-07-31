@@ -40,6 +40,7 @@ Output formats (via LibreOffice headless conversion):
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import subprocess
@@ -178,6 +179,14 @@ def render_report(
     if not os.path.isfile(template_path):
         raise FileNotFoundError(f"template not found: {template_path}")
 
+    # ── CSV-specific path: write clean CSV from detail data only ──
+    # Skip band processing and LibreOffice conversion entirely.
+    if output_format == "csv" and "detail" in data and isinstance(data["detail"], list):
+        out_path = _resolve_output_path(template_path, output_path, output_format)
+        _write_csv_from_detail(data["detail"], out_path)
+        print(f"  [ok] CSV report written: {out_path}")
+        return out_path
+
     # Load the template
     doc = ods_load(template_path)
     # ods_load returns OpenDocument — spreadsheet body is the first child
@@ -289,6 +298,41 @@ def _auto_band_config(data: dict) -> dict:
     if "detail" in data and "detail" not in config:
         config["detail"] = {"start_row": next_row, "end_row": next_row}
     return config
+
+
+def _resolve_output_path(
+    template_path: str,
+    output_path: str | None,
+    output_format: str,
+) -> str:
+    """Resolve the output file path, defaulting from the template name."""
+    if output_path is not None:
+        return output_path
+    base = os.path.splitext(os.path.basename(template_path))[0]
+    return f"{base}.{output_format}"
+
+
+def _write_csv_from_detail(detail_data: list[dict], output_path: str) -> None:
+    """Write a clean CSV file from the detail band data only.
+
+    The first row is a header row derived from the keys of the first dict.
+    All subsequent rows are the data values in the same key order.
+    """
+    if not detail_data:
+        # Write an empty file with just a header
+        with open(output_path, "w", newline="") as fh:
+            pass
+        return
+
+    # Derive column headers from the keys of the first record
+    # Use a stable sorted order so the output is predictable
+    fieldnames = list(detail_data[0].keys())
+
+    with open(output_path, "w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in detail_data:
+            writer.writerow(row)
 
 
 # ─── CLI entry point ────────────────────────────────────────

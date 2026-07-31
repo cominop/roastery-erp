@@ -4398,8 +4398,10 @@ app.get("/api/reports/output/:file", async (req, res) => {
   };
   const contentType = contentTypes[ext] || "application/octet-stream";
 
+  // Determine disposition: inline for PDF/HTML, attachment for downloads
+  const disposition = ext === ".pdf" || ext === ".html" ? "inline" : "attachment";
   res.setHeader("Content-Type", contentType);
-  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Content-Disposition", `${disposition}; filename="${fileName}"`);
   res.setHeader("Content-Length", fs.statSync(filePath).size);
   fs.createReadStream(filePath).pipe(res);
 });
